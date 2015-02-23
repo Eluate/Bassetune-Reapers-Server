@@ -1,67 +1,115 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
+var cluster = require('cluster');
 
-var routes = require('./routes/index');
-var users = require('./routes/users');
-var login = require('./routes/login');
-var games = require('./routes/games');
-
-var app = express();
-
-
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-
-//app.use(cookieParser());
-//app.use(express.static(path.join(__dirname, 'public')));
-
-function checkAuth(req, res, next)
+if(cluster.isMaster) 
 {
-    //check if user is logged in (check req.checkOK)
-    //if yes then next
-    console.log("checkAuth called");
-    next(); 
-}
+    var express = require('express');
+    //master should communicate with face instances using http on startPort
+    var startPort = process.env.PORT || 3000;//startPort is reserved for http server to communicate with backendFace
+    
+    var redisClient = require('./modules/redisHandler').redisClient;
+    redisClient.incr('numGameInstances');
+    
+    
+    // Count the machine's CPUs
+    var cpuCount = require('os').cpus().length;
 
+    var workers = {};
+    
 
-app.use('/', routes);
-app.use('/login', login);
-app.use('/users',checkAuth, users);
-app.use('/games',checkAuth,games);
-
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-    var err = new Error('Not Found');
-    err.status = 404;
-    next(err);
-});
-
-// error handlers
-
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') 
-{
-    app.use(function(err, req, res, next) 
+    var app = express();
+    
+    app.set('port', startPort );
+    
+    var http = require("http").Server(app);
+    var server;
+    redisClient.get('numGameInstances').then(function (value) 
     {
-        res.status(err.status || 500)
-        .send('error');
+            app.ID = value;
+            server = app.listen(app.get('port'), function() 
+        {
+            console.log('master game server listening on address ' + server.address().address + ' and port ' + server.address().port);
+            init();
+        
+        });
+    });
+     
+    var init = function()
+    {
+        //cluster starts with 0 games
+        
+        var address = server.address().address;      
+        var ipObject = {};
+        ipObject["ip"] = address;
+        ipObject["totalgames"] = 0;
+        //create worker for cpu and add it to the list of workers with its port
+        for(var i = 1; i< cpuCount+1; i += 1)
+        {
+            var nport = server.address().port + i;
+            var w = cluster.fork({newPort: nport});
+            var workerHandler = {worker : w , port : nport};
+            workers[w.id] = workerHandler;
+            ipObject[w.id] = nport;
+        }
+        redisClient.multi();
+        redisClient.hmset(app.ID,ipObject);
+        redisClient.sadd("backendGameInstances",app.ID);
+        redisClient.exec();
+        console.log(app.ID);
+    };
+
+    
+
+    // Listen for dying workers
+    cluster.on('exit', function (worker) 
+    {
+        // Replace the dead worker, we're not sentimental
+        console.log('Worker ' + worker.id + ' died :(');
+        //some code to respawn the new worker with the same port and update redis
+        workers[worker.id] = undefined;
+        //make new worker
+        //cluster.fork();
         
     });
 }
+else//worker
+{
+var redisClient = require('./modules/redisHandler').redisClient;
 
-// production error handler
-// no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-    res.status(err.status || 500)
-    .send('error');
+var app = require('express')();
+app.set('port', process.env.newPort );
+var http = require("http").Server(app);
+console.log("newPort : " + process.env.newPort );
+var server = app.listen(app.get('port'), function() 
+{
+  console.log('Worker Game Express server listening on address : ' + server.address().address + ' on port ' + server.address().port);
+  
 });
+
+var io = require("socket.io").listen(server);
+
+if(io) console.log("socket io running and accepting connections.");
+
+io.on('connection', function (socket) 
+{
+    console.log("connection");
+    var socketId = socket.id;
+    var clientIp = socket.request.connection.remoteAddress;
+    console.log(cluster.worker.id + ' : ' + clientIp + " just connected.")
+    socket.emit('ok');
+
+    socket.on('event1', function (data) 
+    {
+        console.log(data);
+    });
+    //etc
+});
+
+}
+
+
+
+
+
 
 
 module.exports = app;
