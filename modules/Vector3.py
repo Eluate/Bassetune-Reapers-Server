@@ -167,9 +167,18 @@ Vector3.angleBetween = function(a, b) {
   return a.angleTo(b);
 };
 
+Vector3.difference = function (a, b)
+{
+  return new Vector3(Math.abs(Math.abs(a.x) - Math.abs(b.x)),
+	                 Math.abs(Math.abs(a.y) - Math.abs(b.y)), 
+	                 Math.abs(Math.abs(a.z) - Math.abs(b.z));
+};
+
 Vector3.distance = function (a, b)
 {
-	return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+  return Math.abs(Math.abs(a.x) - Math.abs(b.x)) + 
+         Math.abs(Math.abs(a.y) - Math.abs(b.y)) +
+         Math.abs(Math.abs(a.z) - Math.abs(b.z));
 };
 
 modules.exports = Vector3;
