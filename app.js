@@ -2,7 +2,6 @@ var cluster = require('cluster');
 
 if(cluster.isMaster) 
 {
-    var express = require('express');
     //master should communicate with face instances using http on startPort
     var startPort = process.env.PORT || 3000;//startPort is reserved for http server to communicate with backendFace
     
@@ -14,25 +13,8 @@ if(cluster.isMaster)
     var cpuCount = require('os').cpus().length;
 
     var workers = {};
+    init();
     
-
-    var app = express();
-    
-    app.set('port', startPort );
-    
-    var http = require("http").Server(app);
-    var server;
-    redisClient.get('numGameInstances').then(function (value) 
-    {
-            app.ID = value;
-            server = app.listen(app.get('port'), function() 
-        {
-            console.log('master game server listening on address ' + server.address().address + ' and port ' + server.address().port);
-            init();
-        
-        });
-    });
-     
     var init = function()
     {
         //cluster starts with 0 games
@@ -66,9 +48,7 @@ if(cluster.isMaster)
         console.log('Worker ' + worker.id + ' died :(');
         //some code to respawn the new worker with the same port and update redis
         workers[worker.id] = undefined;
-        //make new worker
-        //cluster.fork();
-        
+        //make new worker        
     });
 }
 else//worker
