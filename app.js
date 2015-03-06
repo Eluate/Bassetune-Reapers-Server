@@ -32,6 +32,7 @@ if(cluster.isMaster)
             workers[w.id] = workerHandler;
             ipObject[w.id] = nport;
         }
+        //NEED TO CHANGE SOME STUFF IN THIS INIT FCT
         redisClient.multi();
         redisClient.hmset(app.ID,ipObject);
         redisClient.sadd("backendGameInstances",app.ID);
