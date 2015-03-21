@@ -2,9 +2,11 @@
 	Method class for Vector3 (Vectors in a three dimensional space)
 */
 
-# add(), subtract(), multiply() and divide() all support one paremeter as a vector3 or an integer
-# lerp(), angleBetween(), distance() all require two vector3 paremeters
-# max(), min() can either have one or two vector3 paremeters given
+/*
+    add(), subtract(), multiply() and divide() all support one parameter as a vector3 or an integer
+    lerp(), angleBetween(), distance() all require two vector3 parameters
+    max(), min() can either have one or two vector3 parameters given
+*/
 
 function Vector3(x, y, z) {
   this.x = x || 0;
@@ -171,7 +173,7 @@ Vector3.difference = function (a, b)
 {
   return new Vector3(Math.abs(Math.abs(a.x) - Math.abs(b.x)),
 	                 Math.abs(Math.abs(a.y) - Math.abs(b.y)), 
-	                 Math.abs(Math.abs(a.z) - Math.abs(b.z));
+	                 Math.abs(Math.abs(a.z) - Math.abs(b.z)));
 };
 
 Vector3.distance = function (a, b)
