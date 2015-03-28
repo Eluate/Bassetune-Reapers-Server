@@ -1,8 +1,7 @@
-var Character = require('./Character');
-
 /*
 	Model class for knights. Inheritance from Character.
 */
+var Character = require('./Character');
 
 var Knight = function(location, owner, inventory) {
 	Character.call(this, location, owner);

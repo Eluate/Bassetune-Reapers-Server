@@ -54,6 +54,15 @@ Vector3.prototype = {
       this.x * v.y - this.y * v.x
     );
   },
+
+  normalize: function() {
+      var length = Vector3.length(new Vector3(this.x, this.y, this.z));
+      return new Vector3(
+          this.x / length,
+          this.y / length,
+          this.z / length
+      );
+  },
   
   length: function() {
     return Math.sqrt(this.dot(this));

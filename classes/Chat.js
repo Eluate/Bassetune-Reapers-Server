@@ -1,8 +1,7 @@
-var Event = require('./EventEnum');
-
 /*
 	Simple chat system
 */
+var Event = require('./EventEnum');
 
 var Chat = function(io,room) {
 	
