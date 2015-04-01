@@ -13,7 +13,6 @@ if(cluster.isMaster)
     var cpuCount = require('os').cpus().length;
 
     var workers = {};
-    init();
     
     var init = function()
     {
@@ -40,6 +39,7 @@ if(cluster.isMaster)
         console.log(app.ID);
     };
 
+    init();
     
 
     // Listen for dying workers

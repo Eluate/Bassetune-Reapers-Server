@@ -3,11 +3,13 @@
 */
 
 // constructor
-var Character = function(location, owner) {
+var Character = function(location, owner, type, object) {
 
 	this.id = ++this.prototype.Count;
 	this.location = location;
 	this.owner = owner; // player
+    this.type = type;
+    this.object = object;
 };
 
 Character.prototype = {
