@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "express": "~4.9.0",
-    "socket.io":"~1.0.0",
-    "then-redis":"*"
+    "socket.io": "~1.0.0",
+    "then-redis": "*"
   }
 }
