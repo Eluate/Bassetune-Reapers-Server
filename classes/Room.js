@@ -15,9 +15,9 @@ var Room = function (io, socket, game_uuid, config) {
    */
   socket.in(game_uuid).on('register', function (data) {
     players.forEach(function (player) {
-      // TODO: Read redis for username uuid, replace with currentPlayer.username on next line
+      // TODO: Read redis for username uuid, replace with cuAtrrentPlayer.username on next line
       if (currentPlayer.username = player.username)
-        players[player.socketID] = data.socketID;
+        players[player.socketID] = socket;
     });
   });
 
@@ -26,7 +26,7 @@ var Room = function (io, socket, game_uuid, config) {
    */
   function StartListening() {
     socket.in(game_uuid).on('disconnect', function () {
-      require('./Disconnect').disconnect(socket.id);
+      require('./Disconnect').disconnect(socket);
     });
     socket.in(game_uuid).on(Event.input.TALK, function (data) {
       chat.addMsg(players[socket.id].username, data.message);
