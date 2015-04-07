@@ -3,9 +3,9 @@
  */
 
 // TODO : add sessionId parameter
-var Player = function (socketId, username) {
+var Player = function (socketID, username) {
 
-  this.socketId = socketID;
+  this.socketID = socketID;
   this.username = username;
 
   // TODO: Add UUID for username identification
