@@ -18,7 +18,7 @@ var Room = function (io, socket, game_uuid, config) {
     players.forEach(function (player) {
       // TODO: Read redis for username uuid, replace with data.uuid on next line
       if (data.uuid == player.username) {
-        players[player.socketID] = socket;
+        players[player.socketID].socketID = socket;
       }
       else {
         // Delete socket connection
