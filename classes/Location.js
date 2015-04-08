@@ -22,7 +22,7 @@ var Location = function (io, room, map) {
           var p = map.model.children[i].geometry.vertices;
           for (var j = 0; j < map.model.children[i].geometry.vertices.length; j++) {
             if ((prevLocation.x <= p[j].x && p[j].x <= vector.x || vector.x <= p[j].x && p[j].x <= prevLocation.x) &&
-              (prevLocation.x <= p[j].y && p[j].y <= vector.y || vector.y <= p[j].y && p[j].y <= prevLocation.y)) {
+              (prevLocation.y <= p[j].y && p[j].y <= vector.y || vector.y <= p[j].y && p[j].y <= prevLocation.y)) {
               // Collision occurred, revert to prev position (generous, the bounds of model aren't tested)
               vector = prevLocation;
             }
