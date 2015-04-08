@@ -3,26 +3,49 @@
  */
 var THREE = require('three');
 
-var Location = function (io, room) {
+var Location = function (io, room, map) {
   var characters = [];
   var characterIndex = [];
   var charactersToUpdate = [];
 
-  this.UpdateCharacterLocation = function (character, vector) {
-    // TODO: Implement Collision
-    // TIP: Speed can be calculated/measured by normalizing the vector3, multiply by speed and add it to location
+  this.UpdateCharacterLocation = function (character, vector, speed) {
+    vector = new THREE.Vector2(vector.x, vector.y);
+    var prevLocation = characters[characterIndex.indexOf(characterLocation.id)].location;
+    // Handle Collisions and Speed Limits
+    if (prevLocation != vector && prevLocation.toString() != 'undefined') {
+      if (prevLocation.distanceTo(vector) > speed) {
+        // If character is moving to fast, move it at maximum speed to destination
+        vector = prevLocation.add(vector.sub(prevLocation)).normalize().multiplyScalar(speed);
+      }
+      for (var i = 0; i < map.model.children.length; i++) {
+        if (map.model.children[i].geometry) {
+          var p = map.model.children[i].geometry.vertices;
+          for (var j = 0; j < map.model.children[i].geometry.vertices.length; j++) {
+            if ((prevLocation.x <= p[j].x && p[j].x <= vector.x || vector.x <= p[j].x && p[j].x <= prevLocation.x) &&
+              (prevLocation.x <= p[j].y && p[j].y <= vector.y || vector.y <= p[j].y && p[j].y <= prevLocation.y)) {
+              // Collision occurred, revert to prev position (generous, the bounds of model aren't tested)
+              vector = prevLocation;
+            }
+          }
+        }
+      }
+    }
+    // Create characterLocation variable
     var characterLocation = {
       id: character.id,
       location: vector
     };
+
+    // Check whether character exists yet in array
     if (characterIndex.indexOf(characterLocation.id) == -1) {
       characters.push(characterLocation);
       characterIndex.push(characterLocation.id);
     }
     else {
-      if (characters[characterIndex.indexOf(characterLocation.id)].prevLocation != characterLocation.location) {
+      // Check whether location needs updating
+      if (prevLocation != characterLocation.location) {
         charactersToUpdate.push(characterLocation);
-        characterLocation.prevLocation = characters[characterIndex.indexOf(characterLocation.id)].location;
+        characterLocation.prevLocation = prevLocation;
         characters.splice(characterIndex.indexOf(characterLocation.id), 1);
         characters.push(characterLocation);
       }

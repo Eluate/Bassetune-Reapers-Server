@@ -5,8 +5,9 @@ var Room = function (io, socket, game_uuid, config) {
   var Location = require('./Location');
   var Map = require('./Map');
 
+  var map = new Map();
   var chat = new Chat(io, game_uuid);
-  var location = new Location(io, game_uuid);
+  var location = new Location(io, game_uuid, map);
 
   var players = [];
   var characters = [];
@@ -38,7 +39,7 @@ var Room = function (io, socket, game_uuid, config) {
     });
     socket.in(game_uuid).on(Event.input.MOVE, function (data) {
       if (players[socket.id].username == characters[data.characterID].owner) {
-        location.UpdateCharacterLocation(data.characterID, data.vector)
+        location.UpdateCharacterLocation(data.characterID, data.vector, characters[data.characterID].speed);
       }
     });
     socket.in(game_uuid).on(Event.input.LEAVE, function () {
