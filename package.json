@@ -4,9 +4,15 @@
   "private": true,
   "dependencies": {
     "express": "~4.9.0",
+<<<<<<< HEAD
     "socket.io":"~1.0.0",
     "then-redis":"*",
     "mysql" : "*",
     "node-uuid":"~1.4.2"
+=======
+    "socket.io": "~1.0.0",
+    "then-redis": "*",
+    "three": "*"
+>>>>>>> 919719e7e027307116d6b6eac2f27a9d156ca96c
   }
 }
