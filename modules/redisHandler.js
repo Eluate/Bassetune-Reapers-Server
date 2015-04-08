@@ -1,7 +1,7 @@
 var redis = require('then-redis');
 
 //this instance is to set and get data
-var redisClient = redis.createClient('tcp://127.0.0.1:6379', function () {
+var redisClient = redis.createClient("tcp://rediscluster.htotck.0001.use1.cache.amazonaws.com:6379", function () {
   console.log("redisHandler connection success.");
 });//("tcp://rediscluster.htotck.0001.use1.cache.amazonaws.com:6379");//link should be user here , optins may be added to call, look at redis-node doc
 
