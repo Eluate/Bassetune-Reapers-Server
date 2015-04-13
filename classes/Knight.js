@@ -2,24 +2,21 @@
  Model class for knights. Inheritance from Character.
  */
 var Character = require('./Character');
+var Inventory = require('./Inventory');
 
-var Knight = function (location, owner, inventory) {
-  Character.call(this, location, owner);
-  this.inventory = inventory;
+var Knight = function (location, owner) {
+  this.character = new Character(location, owner, "knight", 0, 0);
+  this.inventory = new Inventory();
+
+  this.UseWeapon = function (weapon, target) {
+    // TODO
+  };
+
+  this.UseAbility = function (weapon, target) {
+    // TODO
+  };
+
+  this.UseItem = function (weapon, target) {
+    // TODO
+  };
 };
-
-Knight.prototype = Object.create(Character.prototype, {
-
-  useWeapon: function (weapon, target) {
-    // TODO
-  },
-
-  useAbility: function (ability, target) {
-    // TODO
-  },
-
-  useItem: function (item, target) {
-    // TODO
-  }
-
-});

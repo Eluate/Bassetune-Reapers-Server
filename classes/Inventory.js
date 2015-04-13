@@ -20,6 +20,11 @@ var Inventory = function (weapons, abilities, items) {
   this.weapons = weapons;
   this.abilities = abilities;
   this.items = items;
+
+  // Specially equipped items
+  this.mainWeapon = null;
+  this.offWeapon = null;
+  this.armor = null;
 };
 
 Inventory.prototype.getMaxSpace = function () {
