@@ -12,6 +12,22 @@ var Ability = function (entityID) {
   this.ranged = store.ranged;
   this.range = store.range;
   this.description = store.description;
+  this.cooldown = store.cool_down;
+  this.castTime = store.cast_time;
+  this.curCooldown = 0;
+
+  this.UseAbility = function (weapon, target) {
+    if (!weapon.busy) {
+      if (new Date().getTime() - this.curCoolDown >= this.cooldown * 1000) {
+        weapon.busy = true;
+        setTimeout(function() {
+          weapon.busy = false;
+          // TODO: Effect HP
+          this.curCoolDown = new Date().getTime();
+        }, this.castTime * 1000);
+      }
+    }
+  };
 };
 
 Abilty.prototype.AbilityState = {
@@ -35,8 +51,7 @@ Ability.prototype.GetWeaponInfo = function (entityID) {
   store.weaponType = weapon.weapon_type;
   store.damage = weapon.damage;
   store.description = weapon.description;
-  store.cooldown = weapon.cool_down;
-  store.castTime = weapon.cast_time;
+  store.busy = false;
   return store;
 };
 

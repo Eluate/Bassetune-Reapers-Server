@@ -26,4 +26,13 @@ Inventory.prototype.getMaxSpace = function () {
   return 15;
 };
 
+Inventory.prototype.getMaxStackSize = function (isThrowing) {
+  if (isThrowing) {
+    return 200;
+  }
+  else {
+    return 15;
+  }
+};
+
 module.exports = Inventory;

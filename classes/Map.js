@@ -1,6 +1,7 @@
 /*
  Class for the map (useful for collisions in usage with location)
  */
+
 var THREE = require('three');
 var Map = function () {
   // Create an instance of the collada loader

@@ -43,7 +43,7 @@ var Room = function (io, socket, game_uuid, config) {
       }
     });
     socket.in(game_uuid).on(Event.input.LEAVE, function () {
-      require('./Disconnect').disconnect(socket);
+      io.sockets.connected[socket.id].disconnect();
     });
     socket.in(game_uuid).on(Event.input.knight.CHANGE_WEAPON, function (data) {
       // TODO: Access changing weapons
