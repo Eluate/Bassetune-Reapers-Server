@@ -4,7 +4,7 @@
 
 var Inventory = function (weapons, abilities, items) {
 
-  var slots = {};
+  this.slots = {};
 
   this.getFreeSpace = function () {
     var count = 0;

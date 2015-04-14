@@ -11,6 +11,8 @@ var Character = function (location, owner, type, entity, speed) {
   this.type = type; // creature, miniboss, boss, trap or knight
   this.entity = entity; // the characters entity (eg first trap is entity 1 if type trap is picked)
   this.speed = speed; // the speed at which character move at
+  this.hp = 100; // 100 by default
+  this.blockArmor = 0; // Any extra armor given by a block
 
 };
 
