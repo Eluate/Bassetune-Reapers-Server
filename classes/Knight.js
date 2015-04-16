@@ -3,6 +3,7 @@
  */
 var Character = require('./Character');
 var Inventory = require('./Inventory');
+var Ability = require('./Ability');
 var THREE = require('three');
 
 var Knight = function (location, owner) {
@@ -29,18 +30,18 @@ var Knight = function (location, owner) {
     }
   };
 
-  this.UseAbility = function (weapon, abilityID, target) {
+  this.UseAbility = function (weapon, abilityID, target, location) {
     if (weapon == 1) {
       for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
         if (abilityID == this.abilities[i].id) {
-          this.abilities[i].UseKnightAbility(inventory.mainWeapon, this, target);
+          Ability.UseKnightAbility(this.abilities[i], this.inventory.mainWeapon, this, target, location);
         }
       }
     }
     else if (weapon == 2) {
       for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
         if (abilityID == this.abilities[i].id) {
-          this.abilities[i].UseKnightAbility(inventory.offWeapon, this, target);
+          Ability.UseKnightAbility(this.abilities[i], this.inventory.offWeapon, this, target, location);
         }
       }
     }

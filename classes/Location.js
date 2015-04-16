@@ -4,13 +4,14 @@
 var THREE = require('three');
 
 var Location = function (io, room, map) {
-  var characters = [];
-  var characterIndex = [];
-  var charactersToUpdate = [];
+  this.characters = [];
+  this.characterIndex = [];
+  this.charactersToUpdate = [];
+  this.charactersToUpdateIndex = [];
 
   this.UpdateCharacterLocation = function (character, vector, speed) {
     vector = new THREE.Vector2(vector.x, vector.y);
-    var prevLocation = characters[characterIndex.indexOf(characterLocation.id)].location;
+    var prevLocation = this.characters[this.characterIndex.indexOf(characterLocation.id)].location;
     // Handle Collisions and Speed Limits
     if (prevLocation != vector && prevLocation.toString() != 'undefined') {
       if (prevLocation.distanceTo(vector) > speed) {
@@ -37,17 +38,18 @@ var Location = function (io, room, map) {
     };
 
     // Check whether character exists yet in array
-    if (characterIndex.indexOf(characterLocation.id) == -1) {
-      characters.push(characterLocation);
-      characterIndex.push(characterLocation.id);
+    if (this.characterIndex.indexOf(characterLocation.id) == -1) {
+      this.characters.push(characterLocation);
+      this.characterIndex.push(characterLocation.id);
     }
     else {
       // Check whether location needs updating
       if (prevLocation != characterLocation.location) {
-        charactersToUpdate.push(characterLocation);
+        this.charactersToUpdate.push(characterLocation);
+        this.charactersToUpdateIndex.push(characterLocation.id)
         characterLocation.prevLocation = prevLocation;
-        characters.splice(characterIndex.indexOf(characterLocation.id), 1);
-        characters.push(characterLocation);
+        this.characters.splice(this.characterIndex.indexOf(characterLocation.id), 1);
+        this.characters.push(characterLocation);
       }
     }
   };
@@ -62,6 +64,7 @@ var Location = function (io, room, map) {
       data.push(info);
     });
     io.to(room).emit(Event.output.CHAR_LOCATIONS, data);
+    charactersToUpdate = [];
   };
 };
 

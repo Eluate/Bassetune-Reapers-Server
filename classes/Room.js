@@ -11,6 +11,7 @@ var Room = function (io, socket, game_uuid, config) {
 
   var players = [];
   var characters = [];
+  var knights = [];
 
   /*
    Handle Reconnection
@@ -52,7 +53,9 @@ var Room = function (io, socket, game_uuid, config) {
       // TODO: Access changing armor
     });
     socket.in(game_uuid).on(Event.input.knight.USE_ABILITY, function (data) {
-      // TODO: Use Knight Ability
+      if (players[socket.id].username == knights[data.knightID].character.owner) {
+        knights[data.characterID].UseAbility(data.weapon, data.abilityID, data.target, location);
+      }
     });
     socket.in(game_uuid).on(Event.input.knight.USE_ITEM, function (data) {
       // TODO: Use Knight Item

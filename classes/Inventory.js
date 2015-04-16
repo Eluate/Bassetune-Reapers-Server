@@ -3,7 +3,6 @@
  */
 
 var Inventory = function (weapons, abilities, items) {
-
   this.slots = {};
 
   this.getFreeSpace = function () {

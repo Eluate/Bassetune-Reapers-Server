@@ -4,7 +4,6 @@
 
 // constructor
 var Character = function (location, owner, type, entity, speed) {
-
   this.id = ++this.prototype.Count;
   this.location = location;
   this.owner = owner; // player
@@ -13,7 +12,6 @@ var Character = function (location, owner, type, entity, speed) {
   this.speed = speed; // the speed at which character move at
   this.hp = 100; // 100 by default
   this.blockArmor = 0; // Any extra armor given by a block
-
 };
 
 Character.prototype = {
