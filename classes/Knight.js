@@ -30,18 +30,18 @@ var Knight = function (location, owner) {
     }
   };
 
-  this.UseAbility = function (weapon, abilityID, target, location) {
+  this.UseAbility = function (weapon, abilityID, target, location, characters, charactersIndex) {
     if (weapon == 1) {
       for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
         if (abilityID == this.abilities[i].id) {
-          Ability.UseKnightAbility(this.abilities[i], this.inventory.mainWeapon, this, target, location);
+          Ability.UseKnightAbility(this.abilities[i], this.inventory.mainWeapon, this, target, location, characters);
         }
       }
     }
     else if (weapon == 2) {
       for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
         if (abilityID == this.abilities[i].id) {
-          Ability.UseKnightAbility(this.abilities[i], this.inventory.offWeapon, this, target, location);
+          Ability.UseKnightAbility(this.abilities[i], this.inventory.offWeapon, this, target, location, characters);
         }
       }
     }

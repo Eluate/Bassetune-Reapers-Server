@@ -10,8 +10,7 @@ exports.input = {
   knight: {
     USE_ABILITY: 'a',
     USE_ITEM: 'i',
-    CHANGE_WEAPON: 'cw',
-    CHANGE_ARMOR: 'ca'
+    CHANGE_EQUIPPED: 'ce'
   },
 
   boss: {

@@ -36,26 +36,41 @@ var Room = function (io, socket, game_uuid, config) {
       require('./Disconnect').disconnect(socket);
     });
     socket.in(game_uuid).on(Event.input.TALK, function (data) {
-      chat.addMsg(players[socket.id].username, data.message);
+      players.forEach(function (player) {
+        if (player.socketID == socket.id) {
+          chat.addMsg(player.username, data.message);
+        }
+      });
     });
     socket.in(game_uuid).on(Event.input.MOVE, function (data) {
-      if (players[socket.id].username == characters[data.characterID].owner) {
-        location.UpdateCharacterLocation(data.characterID, data.vector, characters[data.characterID].speed);
-      }
+      characters.forEach(function (character) {
+        players.forEach(function (player) {
+          if (character.id == data.characterID && player.socketID == socket.id && player.username == character.owner) {
+            if (!character.stunned) {
+              location.UpdateCharacterLocation(data.characterID, data.vector, characters[data.characterID].speed);
+            }
+          }
+        });
+      });
     });
     socket.in(game_uuid).on(Event.input.LEAVE, function () {
       io.sockets.connected[socket.id].disconnect();
     });
-    socket.in(game_uuid).on(Event.input.knight.CHANGE_WEAPON, function (data) {
-      // TODO: Access changing weapons
-    });
-    socket.in(game_uuid).on(Event.input.knight.CHANGE_ARMOR, function (data) {
-      // TODO: Access changing armor
+    socket.in(game_uuid).on(Event.input.knight.CHANGE_EQUIPPED, function (data) {
+      if (players[socket.id].username == knights[data.knightID].character.owner) {
+        knights[data.knightID].ChangeEquipped(data.itemID, data.target);
+      }
     });
     socket.in(game_uuid).on(Event.input.knight.USE_ABILITY, function (data) {
-      if (players[socket.id].username == knights[data.knightID].character.owner) {
-        knights[data.characterID].UseAbility(data.weapon, data.abilityID, data.target, location);
-      }
+      knights.forEach(function (knight) {
+        players.forEach(function (player) {
+          if (knight.character.id == data.characterID && player.socketID == socket.id && player.username == knight.character.owner) {
+            if (!knight.character.stunned) {
+              knight.UseAbility(data.weapon, data.abilityID, data.target, location, characters);
+            }
+          }
+        });
+      });
     });
     socket.in(game_uuid).on(Event.input.knight.USE_ITEM, function (data) {
       // TODO: Use Knight Item
@@ -80,8 +95,8 @@ var Room = function (io, socket, game_uuid, config) {
     location.SendCharacterLocations();
   }
 
-  // Quick Game Loop, 12 Updates per second
-  setTimeout(SendUpdates(), 83);
+  // Quick Game Loop, 24 Updates per second
+  setTimeout(SendUpdates(), 41);
 };
 
 Room.prototype.stop = function () {

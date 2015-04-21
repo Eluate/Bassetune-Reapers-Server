@@ -56,7 +56,7 @@ var Location = function (io, room, map) {
 
   this.SendCharacterLocations = function () {
     var data = [];
-    charactersToUpdate.forEach(function (character) {
+    this.charactersToUpdate.forEach(function (character) {
       var info = {
         id: character.id,
         location: character.location
@@ -64,7 +64,7 @@ var Location = function (io, room, map) {
       data.push(info);
     });
     io.to(room).emit(Event.output.CHAR_LOCATIONS, data);
-    charactersToUpdate = [];
+    this.charactersToUpdate = [];
   };
 };
 
