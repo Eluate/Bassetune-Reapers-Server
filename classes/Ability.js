@@ -165,7 +165,7 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
         for (i = 0; i < hitTarget.length; i++) {
           var hitCharacter;
           characters.forEach(function(character) {
-            if (character.id == hitTarget[i].id) {
+            if (character.id == hitTarget[i].id && character.type == "knight") {
               hitCharacter = character;
             }
           });
