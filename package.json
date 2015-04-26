@@ -2,9 +2,13 @@
   "name": "backendGame",
   "version": "0.0.0",
   "private": true,
-  "dependencies": {
+  "dependencies": 
+  {
     "express": "~4.9.0",
     "socket.io":"~1.0.0",
-    "then-redis":"*"
+    "then-redis":"*",
+    "mysql" : "*",
+    "node-uuid":"~1.4.2",
+    "three": "*"
   }
 }

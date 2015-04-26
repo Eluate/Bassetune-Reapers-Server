@@ -1,8 +1,7 @@
 /*
-    Class that handles disconnection
-*/
+ Class that handles disconnection
+ */
 
-exports.disconnect = function (socketID)
-{
-    // TODO: Disconnect User
-}
+exports.disconnect = function (socketID) {
+  // TODO: Disconnect User
+};
