@@ -46,7 +46,7 @@ var Location = function (io, room, map) {
       // Check whether location needs updating
       if (prevLocation != characterLocation.location) {
         this.charactersToUpdate.push(characterLocation);
-        this.charactersToUpdateIndex.push(characterLocation.id)
+        this.charactersToUpdateIndex.push(characterLocation.id);
         characterLocation.prevLocation = prevLocation;
         this.characters.splice(this.characterIndex.indexOf(characterLocation.id), 1);
         this.characters.push(characterLocation);

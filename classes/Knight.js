@@ -11,7 +11,7 @@ var Knight = function (location, owner) {
   this.inventory = new Inventory();
   this.abilities = [];
 
-  this.type == "knight";
+  this.character.type == "knight";
 
   this.ChangeEquipped = function (itemID, target) {
     for (var i = 0, slots = this.inventory.slots, slotLength = slots.length; i < slotLength; i++) {

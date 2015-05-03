@@ -3,7 +3,8 @@
  * @author Tony Parisi / http://www.tonyparisi.com/
  */
 
-THREE.ColladaLoader = function () {
+var THREE = require("three");
+exports.ColladaLoader = function () {
 
   var COLLADA = null;
   var scene = null;

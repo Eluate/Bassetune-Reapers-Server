@@ -158,7 +158,14 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
           }
         }
         // Only use one hitTarget if its not piercing
-        if (!ability.piercing) {
+        if (!ability.piercing && hitTarget.length > 0) {
+          // Make sure target isnt a friendly
+          for (var i = 0; i < hitTarget.length; i++) {
+            if (hitTarget[i].character.type == "knight") {
+              hitTarget.splice(i, 1);
+            }
+          }
+          var piercedTarget = hitTargets[0];
           hitTarget.splice(1, 100);
         }
         // Apply offensive loop for hit targets
@@ -169,9 +176,9 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
               hitCharacter = character;
             }
           });
-          // Return if no characters are found
+          // Continue if no characters are found
           if (!hitCharacter) {
-            return;
+            continue;
           }
           // Damage
           if (ability.hasOwnProperty("damage")) {
