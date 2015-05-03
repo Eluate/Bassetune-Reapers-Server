@@ -2,6 +2,7 @@
  Model class for location (characters, traps...)
  */
 var THREE = require('three');
+var Event = require('./EventEnum');
 
 var Location = function (io, room, map) {
   this.characters = [];
@@ -11,23 +12,20 @@ var Location = function (io, room, map) {
 
   this.UpdateCharacterLocation = function (character, vector, speed) {
     vector = new THREE.Vector2(vector.x, vector.y);
-    var prevLocation = this.characters[this.characterIndex.indexOf(characterLocation.id)].location;
+    var prevLocation = this.characters[this.characterIndex.indexOf(character.id)].location;
     // Handle Collisions and Speed Limits
     if (prevLocation != vector && prevLocation.toString() != 'undefined') {
       if (prevLocation.distanceTo(vector) > speed) {
         // If character is moving to fast, move it at maximum speed to destination
         vector = prevLocation.add(vector.sub(prevLocation)).normalize().multiplyScalar(speed);
       }
-      for (var i = 0; i < map.model.children.length; i++) {
-        if (map.model.children[i].geometry) {
-          var p = map.model.children[i].geometry.vertices;
-          for (var j = 0; j < map.model.children[i].geometry.vertices.length; j++) {
-            if ((prevLocation.x <= p[j].x && p[j].x <= vector.x || vector.x <= p[j].x && p[j].x <= prevLocation.x) &&
-              (prevLocation.y <= p[j].y && p[j].y <= vector.y || vector.y <= p[j].y && p[j].y <= prevLocation.y)) {
-              // Collision occurred, revert to prev position (generous, the bounds of model aren't tested)
-              vector = prevLocation;
-            }
-          }
+      for (var i = 0; i < map.geom.length; i++) {
+        var p = map.geom[i];
+        if ((prevLocation.x <= p[i].x && p[i].x <= vector.x || vector.x <= p[i].x && p[i].x <= prevLocation.x) &&
+          (prevLocation.y <= p[i].y && p[i].y <= vector.y || vector.y <= p[i].y && p[i].y <= prevLocation.y)) {
+          // Collision occurred, revert to prev position (generous, the bounds of model aren't tested)
+          vector = prevLocation;
+          console.log("Character: " + character.id + " collided with a wall at " + vector.x + "," + vector.y);
         }
       }
     }
@@ -55,6 +53,7 @@ var Location = function (io, room, map) {
   };
 
   this.SendCharacterLocations = function () {
+  // TODO: Make it so that it only sends locations in a certain area for knights
     var data = [];
     this.charactersToUpdate.forEach(function (character) {
       var info = {

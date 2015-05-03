@@ -21,14 +21,14 @@ var server = app.listen(app.get('port'), function()
   {
     console.log("connection");
     var clientIp = socket.request.connection.remoteAddress;
-    console.log(cluster.worker.id + ' : ' + clientIp + " just connected.");
-    socket.emit('ok');
+    console.log("game" + ' : ' + clientIp + " just connected.");
+    socket.emit('connected');
     //this should be received after player connects, client supposed to send this msg with room name being the game_uuid
     socket.on('joinRoom', function (data)
     {
       console.log(data);
       socket.join("placeholder");
-      socket.emit('ok');
+      socket.emit('joined room');
       //starting now, rest of communication is with Room
     });
 

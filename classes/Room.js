@@ -85,7 +85,6 @@ var Room = function (io, socket, game_uuid, config) {
       // TODO: Use an ability
     });
   }
-
   StartListening();
 
   /*
@@ -93,10 +92,12 @@ var Room = function (io, socket, game_uuid, config) {
    */
   function SendUpdates() {
     location.SendCharacterLocations();
+    setTimeout(SendUpdates(), 41);
+    console.log("Sent out updates.");
   }
-
-  // Quick Game Loop, 24 Updates per second
+  // Start Game Loop, 24 Updates per second
   setTimeout(SendUpdates(), 41);
+
 };
 
 Room.prototype.stop = function () {
