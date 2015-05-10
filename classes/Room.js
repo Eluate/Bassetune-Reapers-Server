@@ -31,7 +31,7 @@ var Room = function (io, socket, game_uuid, config) {
   /*
    Listeners: Input from the player
    */
-  function StartListening() {
+  var StartListening = function () {
     socket.in(game_uuid).on('disconnect', function () {
       require('./Disconnect').disconnect(socket);
     });
@@ -43,15 +43,19 @@ var Room = function (io, socket, game_uuid, config) {
       });
     });
     socket.in(game_uuid).on(Event.input.MOVE, function (data) {
-      characters.forEach(function (character) {
+/*      characters.forEach(function (character) {
         players.forEach(function (player) {
           if (character.id == data.characterID && player.socketID == socket.id && player.username == character.owner) {
-            if (!character.stunned) {
-              location.UpdateCharacterLocation(data.characterID, data.vector, characters[data.characterID].speed);
-            }
+            if (!character.stunned) {*/
+              for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                  location.UpdateCharacterLocation(key, data[key], 5/*characters[data.ID].speed*/);
+                }
+              }
+/*          }
           }
         });
-      });
+      });*/
     });
     socket.in(game_uuid).on(Event.input.LEAVE, function () {
       io.sockets.connected[socket.id].disconnect();
@@ -84,7 +88,7 @@ var Room = function (io, socket, game_uuid, config) {
     socket.in(game_uuid).on(Event.input.boss.USE_ABILITY, function (data) {
       // TODO: Use an ability
     });
-  }
+  };
   StartListening();
 
   /*
@@ -93,11 +97,10 @@ var Room = function (io, socket, game_uuid, config) {
   function SendUpdates() {
     location.SendCharacterLocations();
     setTimeout(SendUpdates, 41);
-    console.log("Sent out updates.");
+
   }
   // Start Game Loop, 24 Updates per second
   setTimeout(SendUpdates, 41);
-
 };
 
 Room.prototype.stop = function () {
