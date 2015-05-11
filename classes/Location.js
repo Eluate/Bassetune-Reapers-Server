@@ -11,8 +11,8 @@ var Location = function (io, room, map) {
   this.charactersToUpdateIndex = [];
 
   this.UpdateCharacterLocation = function (character, vector, speed) {
-    vector[0] = vector[0].toFixed(1);
-    vector[1] = vector[1].toFixed(1);
+    vector[0] = parseFloat(vector[0].toFixed(1));
+    vector[1] = parseFloat(vector[1].toFixed(1));
     if (this.characterIndex.indexOf(character.id) != -1) {
       vector = new THREE.Vector2(vector[0], vector[1]);
       var prevLocation = this.characters[this.characterIndex.indexOf(character.id)].location;
