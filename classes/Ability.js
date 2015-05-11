@@ -116,16 +116,12 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
         var collisionPoints = [];
         var prevLocation = location.characters[knight.character.id].location;
         if (ability.numProjectiles > 1) {
-          for (var i = 0; i < location.map.model.children.length; i++) {
-            if (location.map.model.children[i].geometry) {
-              var p = location.map.model.children[i].geometry.vertices;
-              for (var il = 0; il < location.map.model.children[i].geometry.vertices.length; il++) {
-                if ((prevLocation.x <= projectile.x && projectile.x <= p[il].x || p[il].x <= projectile.x && projectile.x <= prevLocation.x) &&
-                  (prevLocation.y <= projectile.y && projectile.y <= p[il].y || p[il].y <= projectile.y && projectile.y <= prevLocation.y)) {
-                  // Collision occurred
-                  collisionPoints.push(p[il]);
-                }
-              }
+          for (var i = 0; i < location.map.geom.length; i++) {
+            var p = location.map.geom[i];
+            if ((prevLocation.x <= projectile.x && projectile.x <= p.x || p.x <= projectile.x && projectile.x <= prevLocation.x) &&
+              (prevLocation.y <= projectile.y && projectile.y <= p.y || p.y <= projectile.y && projectile.y <= prevLocation.y)) {
+              // Collision occurred
+              collisionPoints.push(p);
             }
           }
         }
@@ -165,7 +161,6 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
               hitTarget.splice(i, 1);
             }
           }
-          var piercedTarget = hitTargets[0];
           hitTarget.splice(1, 100);
         }
         // Apply offensive loop for hit targets
