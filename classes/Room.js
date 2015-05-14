@@ -82,9 +82,6 @@ var Room = function (io, socket, game_uuid, config) {
     socket.in(game_uuid).on(Event.input.boss.PUT_TRAP, function (data) {
       // TODO: Put a trap
     });
-    socket.in(game_uuid).on(Event.input.boss.SPAWN_CREATURE, function (data) {
-      // TODO: Spawn a creature
-    });
     socket.in(game_uuid).on(Event.input.boss.USE_ABILITY, function (data) {
       // TODO: Use an ability
     });

@@ -15,7 +15,6 @@ exports.input = {
 
   boss: {
     PUT_TRAP: 'p',
-    SPAWN_CREATURE: 's',
     USE_ABILITY: 'u'
   }
 };
