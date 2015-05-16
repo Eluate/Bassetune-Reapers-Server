@@ -163,6 +163,12 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
           }
           hitTarget.splice(1, 100);
         }
+        // Skewer
+        if (ability.hasOwnProperty("skewer") && target.hasOwnProperty("x") && target.hasOwnProperty("y")) {
+          location.UpdateCharacterLocation(knight.character,
+            target.sub(prevLocation).normalize().multiplyScalar(ability.range),
+            ability.range);
+        }
         // Apply offensive loop for hit targets
         for (i = 0; i < hitTarget.length; i++) {
           var hitCharacter;
@@ -198,6 +204,12 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
               }, 1000);
               curDuration -= 1;
             }
+          }
+          // Skewer
+          if (ability.hasOwnProperty("skewer") && target.hasOwnProperty("x") && target.hasOwnProperty("y")) {
+            location.UpdateCharacterLocation(hitTarget.character,
+              target.sub(prevLocation).normalize().multiplyScalar(ability.range),
+              ability.range);
           }
           // Stun
           if (ability.hasOwnProperty("stun") && ability.stun > 0) {

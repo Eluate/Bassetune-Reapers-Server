@@ -24,5 +24,6 @@ exports.output = {
   CHAR_LOCATIONS: 'm',
   CHAR_HP: 'h',
   PLAYER_LEAVES: 'l',
-  TRAP_TRIGGERED: 't'
+  TRAP_TRIGGERED: 't',
+  CHAR_CREATED: 'nc'
 };
