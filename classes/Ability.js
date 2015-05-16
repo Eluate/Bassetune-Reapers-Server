@@ -226,9 +226,9 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
           }
           // Decrease Range
           if (ability.hasOwnProperty("decreaseRange")) {
-            hitCharacter.rangeModifier += ability.decreaseRange;
+            hitCharacter.rangeModifier -= ability.decreaseRange;
             setTimeout(function() {
-              hitCharacter.rangeModifier -= ability.decreaseRange;
+              hitCharacter.rangeModifier += ability.decreaseRange;
             }, ability.duration * 1000);
           }
         }
@@ -252,6 +252,13 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
         // Update new location
         location.characters[location.characterIndex.indexOf(knight.character.id)].location = newLocation;
         location.charactersToUpdate[location.charactersToUpdateIndex.indexOf(knight.character.id)].location = newLocation;
+      }
+      // Increase Range
+      if (ability.hasOwnProperty("increaseRange")) {
+        target.rangeModifier -= ability.increaseRange;
+        setTimeout(function() {
+          target.rangeModifier += ability.increaseRange;
+        }, ability.duration * 1000);
       }
     }
     // Set the new cooldown
