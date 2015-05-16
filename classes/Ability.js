@@ -15,13 +15,6 @@ var Ability = function (entityID) {
   this.curCoolDown = 0;
 };
 
-Abilty.prototype.AbilityState = {
-  IDLE: "idle",
-  PREPARE: "prepare",
-  CAST: "cast",
-  COOLDOWN: "cooldown"
-};
-
 Ability.prototype.StoreAbilityInfo = function (ability, abilityInfo) {
   ability.reqType = abilityInfo.required_type;
   ability.aoeSize = abilityInfo.aoe_size;
