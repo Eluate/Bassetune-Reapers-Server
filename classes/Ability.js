@@ -259,5 +259,14 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
   }, ability.castTime * 1000);
 };
 
+Ability.AttackSpeeds = {
+  ExtremelyFast: 100,
+  VeryFast: 300,
+  Fast: 600,
+  Medium: 1000,
+  Slow: 2000,
+  VerySlow: 3000,
+  ExtremelySlow: 5000
+};
 
 module.exports = Ability;
