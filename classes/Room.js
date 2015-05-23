@@ -93,11 +93,9 @@ var Room = function (io, socket, game_uuid, config) {
    */
   function SendUpdates() {
     location.SendCharacterLocations();
-    setTimeout(SendUpdates, 41);
-
   }
   // Start Game Loop, 24 Updates per second
-  setTimeout(SendUpdates, 41);
+  setInterval(SendUpdates, 41);
 };
 
 Room.prototype.stop = function () {

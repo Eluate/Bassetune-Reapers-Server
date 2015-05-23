@@ -77,14 +77,14 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
   // Wait until the cast time is up
   setTimeout(function() {
     // Return if stunned
-    if (knight.character.stunned) {
+    if (boss.character.stunned) {
       return;
     }
     // Allow the weapon to be used again
     weapon.busy = false;
     // Handle different ability types
     // For offence, target is another character (can't target knights) and/or position
-    if (ability.type == Ability.AbilityType.OFFENSIVE && target.type != "knight") {
+    if (ability.type == Ability.AbilityType.OFFENSIVE) {
       // Check if ability has collided with a wall
       var projectiles = [];
       // Multiple projectiles
@@ -166,7 +166,7 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
         for (i = 0; i < hitTarget.length; i++) {
           var hitCharacter;
           characters.forEach(function(character) {
-            if (character.id == hitTarget[i].id && character.type == "knight") {
+            if (character.id == hitTarget[i].id && character.type != "knight") {
               hitCharacter = character;
             }
           });

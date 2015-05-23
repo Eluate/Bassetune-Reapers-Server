@@ -6,8 +6,8 @@ var THREE = require("three");
 var Map = function () {
   // TODO: Implement random generating map
   this.geom = [];
-  for (var i = 0; i < 10; i++) {
-    this.geom.push(new THREE.Vector2(0, i));
+  for (var i = 0; i < 10000; i += 0.2) {
+    this.geom.push({x: i, y: i});
   }
 };
 

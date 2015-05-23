@@ -12,8 +12,14 @@ var Character = function (location, owner, type, entity, speed) {
   this.speed = speed; // the speed at which character move at
   this.hp = 100; // 100 by default
   this.blockArmor = 0; // any extra armor given by a block
-  this.stunned = false; // is it stunned
   this.stunCount = 0; // number of stuns on character
+  this.stunned = function () {
+    if (this.stunCount > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  };
   this.rangeModifier = 0; // number to increase or decrease range by
 
 };
