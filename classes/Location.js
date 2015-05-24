@@ -1,8 +1,8 @@
 /*
  Model class for location (characters, traps...)
  */
-var THREE = require('three');
 var Event = require('./EventEnum');
+var Vec2 = require("./Vector2");
 
 var Location = function (io, room, map) {
   this.characters = [];
@@ -13,19 +13,17 @@ var Location = function (io, room, map) {
   this.UpdateCharacterLocation = function (character, vector, speed) {
     vector[0] = parseFloat(vector[0].toFixed(1));
     vector[1] = parseFloat(vector[1].toFixed(1));
-    vector = new THREE.Vector2(vector[0], vector[1]);
+    vector = {y: vector[0], x: vector[1], c: character};
     if (this.characterIndex.indexOf(character) != -1) {
       var prevLocation = this.characters[this.characterIndex.indexOf(character)];
       // Handle Collisions and Speed Limits
-      if (prevLocation.x.toString() + prevLocation.y.toString() != vector.x.toString() + vector.y.toString()) {
-        //if (prevLocation.distanceTo(vector) > speed) {
-        //  // If character is moving to fast, move it at maximum speed to destination
-        //  vector = prevLocation.clone().add(vector.clone().sub(prevLocation)).normalize().multiplyScalar(speed);
-        //  vector.x = parseFloat(vector.x.toFixed(1));
-        //  vector.y = parseFloat(vector.y.toFixed(1));
-        //  //console.log("Character: " + character + " going to fast. Reverting to location: " +
-        //  //            vector.x.toString() + " " + vector.y.toString());
-        //}
+      if (!Object.is(prevLocation, vector)) {
+        if (Vec2.distanceTo(vector, prevLocation) > speed) {
+          // If character is moving to fast, move it at maximum speed to destination
+          vector = Vec2.add(prevLocation, Vec2.multiplyScalar(Vec2.normalise(Vec2.sub(vector, prevLocation)), speed));
+          console.log("Character: " + character + " going to fast. Reverting to location: " +
+                      vector.x.toString() + " " + vector.y.toString());
+        }
         for (var i = 0; i < map.geom.length; i++) {
           var p = map.geom[i];
           if ((prevLocation.x >= p.x && p.x >= vector.x || vector.x >= p.x && p.x >= prevLocation.x) &&
@@ -37,7 +35,7 @@ var Location = function (io, room, map) {
         }
       }
       // Check whether location needs updating
-      if (prevLocation.x.toString() + prevLocation.y.toString() != vector.x.toString() + vector.y.toString()) {
+      if (!Object.is(prevLocation, vector)) {
         this.charactersToUpdate.push(vector);
         this.charactersToUpdateIndex.push(character);
         this.characters.splice(this.characterIndex.indexOf(character), 1);
@@ -55,8 +53,8 @@ var Location = function (io, room, map) {
     var data = [];
     this.charactersToUpdate.forEach(function (character) {
       var info = {
-        i: character,
-        l: character.location
+        i: character.c,
+        l: character
       };
       data.push(info);
     });
@@ -64,6 +62,12 @@ var Location = function (io, room, map) {
       io.to(room).emit(Event.output.CHAR_LOCATIONS, {"d":data});
     }
     this.charactersToUpdate = [];
+  };
+
+  this.GetCharacterLocation = function(characterID) {
+    if (this.characterIndex.indexOf(characterID) != -1) {
+      return this.characters[characterID];
+    }
   };
 };
 

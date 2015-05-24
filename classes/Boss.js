@@ -3,10 +3,9 @@
  */
 var Character = require('./Character');
 var Ability = require('./Ability');
-var THREE = require('three');
 
-var Boss = function (location, owner) {
-  this.character = new Character(location, owner, "boss", 0, 0);
+var Boss = function (owner) {
+  this.character = new Character(owner, "boss", 0, 0);
   this.abilities = [];
 
   this.character.type == "boss";

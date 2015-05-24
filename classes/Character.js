@@ -3,9 +3,8 @@
  */
 
 // constructor
-var Character = function (location, owner, type, entity, speed) {
+var Character = function (owner, type, entity, speed) {
   this.id = ++this.prototype.Count;
-  this.location = location;
   this.owner = owner; // player
   this.type = type; // creature, miniboss, boss, trap or knight
   this.entity = entity; // the characters entity (eg first trap is entity 1 if type trap is picked)

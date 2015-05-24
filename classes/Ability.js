@@ -1,7 +1,8 @@
 /*
  Class for the abilities and weapon usage
  */
-var THREE = require('three');
+
+var Vec2 = require("./Vector2");
 
 var Ability = function (entityID) {
   var abilities = require('./resources/abilities');
@@ -91,18 +92,18 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
       if (ability.numProjectiles > 1) {
         for (var i = 0; i < ability.numProjectiles; i++) {
           if (i > ability.numProjectiles / 2) {
-            projectiles.push(new THREE.Vector2(target.x + i, target.y + i).setLength(ability.range + knight.character.rangeModifier));
+            projectiles.push(Vec2.setLength({x: target.x + i, y: target.y + i}, ability.range + knight.character.rangeModifier));
           }
           else if (i < ability.numProjectiles / 2) {
-            projectiles.push(new THREE.Vector2(target.x - i, target.y - i).setLength(ability.range + knight.character.rangeModifier));
+            projectiles.push(Vec2.setLength({x: target.x - i, y: target.y - i}, ability.range + knight.character.rangeModifier));
           }
           else {
-            projectiles.push(new THREE.Vector2(target.x, target.y).setLength(ability.range + knight.character.rangeModifier));
+            projectiles.push(Vec2.setLength({x: target.x, y: target.y}, ability.range + knight.character.rangeModifier));
           }
         }
       }
       else {
-        projectiles.push(new THREE.Vector2(target.x, target.y).setLength(ability.range + knight.character.rangeModifier));
+        projectiles.push(Vec2.setLength({x: target.x, y: target.y}, ability.range + knight.character.rangeModifier));
       }
       projectiles.forEach(function (projectile) {
         // Check if the ability hits a wall (if its ranged)
@@ -241,7 +242,7 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
       // Dodge
       if (ability.hasOwnProperty("moveDistance") && target.hasOwnProperty("x") && target.hasOwnProperty("y")) {
         var characterLocation = location.characters[knight.character.id].location;
-        var newLocation = characterLocation.add(new THREE.Vector2(target.x, target.y).setLength(ability.moveDistance));
+        var newLocation = characterLocation.add(Vec2.setLength({x: target.x, y: target.y}, ability.moveDistance));
         // Update new location
         location.characters[location.characterIndex.indexOf(knight.character.id)].location = newLocation;
         location.charactersToUpdate[location.charactersToUpdateIndex.indexOf(knight.character.id)].location = newLocation;
