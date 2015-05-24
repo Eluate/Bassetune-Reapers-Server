@@ -62,6 +62,7 @@ var Location = function (io, room, map) {
       io.to(room).emit(Event.output.CHAR_LOCATIONS, {"d":data});
     }
     this.charactersToUpdate = [];
+    this.charactersToUpdateIndex = [];
   };
 
   this.GetCharacterLocation = function(characterID) {
