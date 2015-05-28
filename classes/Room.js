@@ -49,7 +49,7 @@ var Room = function (io, socket, game_uuid, config) {
             if (!character.stunned) {*/
               for (var key in data) {
                 if (data.hasOwnProperty(key)) {
-                  location.UpdateCharacterLocation(key, data[key], 5/*characters[data.ID].speed*/);
+                  location.UpdateDestination(key, data[key]);
                 }
               }
 /*          }
@@ -92,7 +92,11 @@ var Room = function (io, socket, game_uuid, config) {
    Send Updates
    */
   function SendUpdates() {
+    characters.forEach(function(character) {
+      location.UpdateCharacterLocation(character.id, character.speed);
+    });
     location.SendCharacterLocations();
+    location.UpdateTime();
   }
   // Start Game Loop, 24 Updates per second
   setInterval(SendUpdates, 41);
