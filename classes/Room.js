@@ -1,7 +1,6 @@
 var Room = function (io, socket, game_uuid, config) {
   var Event = require('./EventEnum');
   var Chat = require('./Chat');
-  var Player = require('./Player');
   var Location = require('./Location');
   var Map = require('./Map');
 
@@ -14,12 +13,20 @@ var Room = function (io, socket, game_uuid, config) {
   var knights = [];
 
   /*
+    Get player Data
+   */
+  this.StorePlayerData = function (data) {
+    // TODO: Store player data
+    players = data;
+  };
+
+  /*
    Handle Reconnection
    */
   socket.in(game_uuid).on('register', function (data) {
     players.forEach(function (player) {
       // TODO: Read redis for username uuid, replace with data.uuid on next line
-      if (data.uuid == player.username) {
+      if (data.uuid == player.uuid) {
         players[player.socketID].socketID = socket;
       }
       else {

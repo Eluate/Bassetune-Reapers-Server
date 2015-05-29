@@ -34,7 +34,6 @@ var Location = function (io, room, map) {
   this.UpdateCharacterLocation = function (character, speed) {
     var time = new Date().getTime() / 1000;
     var vector = this.characterDestinations[this.characterDestinationsIndex.indexOf(character)];
-    var prevLocation = this.characters[this.characterIndex.indexOf(character)];
     if (this.characterIndex.indexOf(character) != -1) {
       var prevLocation = this.characters[this.characterIndex.indexOf(character)];
       // Handle Collisions and Speed Limits
@@ -43,6 +42,7 @@ var Location = function (io, room, map) {
         vector = Vec2.add(prevLocation,
                           Vec2.setLength(Vec2.sub(vector, prevLocation),
                                          speed * (this.lastTime - time)));
+        vector.c = character;
         console.log("Character: " + character + " going to fast. Reverting to location: " +
                     vector.x.toString() + " " + vector.y.toString());
       }

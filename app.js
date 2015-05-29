@@ -85,7 +85,7 @@ else//worker
             console.log("connection");
             var socketId = socket.id;
             var clientIp = socket.request.connection.remoteAddress;
-            console.log(cluster.worker.id + ' : ' + clientIp + " just connected.")
+            console.log(cluster.worker.id + ' : ' + clientIp + " just connected.");
             socket.emit('ok');
             //this should be received after player connects, client supposed to send this msg with room name being the game_uuid
             socket.on('joinRoom', function (data) 
