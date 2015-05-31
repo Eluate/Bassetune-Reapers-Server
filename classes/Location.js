@@ -34,25 +34,29 @@ var Location = function (io, room, map) {
   this.UpdateCharacterLocation = function (character, speed) {
     var time = new Date().getTime() / 1000;
     var vector = this.characterDestinations[this.characterDestinationsIndex.indexOf(character)];
+    speed = speed * (this.lastTime - time);
     if (this.characterIndex.indexOf(character) != -1) {
       var prevLocation = this.characters[this.characterIndex.indexOf(character)];
       // Handle Collisions and Speed Limits
-      if (Vec2.distanceTo(vector, prevLocation) > speed * (this.lastTime - time)) {
+      if (Vec2.distanceTo(vector, prevLocation) > speed) {
         // If character is moving to fast, move it at maximum speed to destination
         vector = Vec2.add(prevLocation,
                           Vec2.setLength(Vec2.sub(vector, prevLocation),
-                                         speed * (this.lastTime - time)));
+                                         speed));
         vector.c = character;
         console.log("Character: " + character + " going to fast. Reverting to location: " +
                     vector.x.toString() + " " + vector.y.toString());
       }
       for (var i = 0; i < map.geom.length; i++) {
         var p = map.geom[i];
-        if ((prevLocation.x >= p.x && p.x >= vector.x || vector.x >= p.x && p.x >= prevLocation.x) &&
-          (prevLocation.y >= p.y && p.y >= vector.y || vector.y >= p.y && p.y >= prevLocation.y)) {
+        // Broad Phase
+        if (vector.distanceTo(vector, p) > speed) {
+          continue;
+        }
+        // Narrow Phase
+        if (Vec2.wallCollision(vector, prevLocation, p)) {
           // Collision occurred, revert to prev position (generous, the bounds of model aren't tested)
-          // TODO: Make it so that it goes close to the wall
-          vector = prevLocation;
+          vector = Vec2.sub(vector, Vec2.setLength(Vec2.sub(vector, prevLocation), 0.2));
           console.log("Character: " + character + " collided with a wall at " + p.x + "," + p.y);
         }
       }

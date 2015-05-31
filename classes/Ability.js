@@ -78,7 +78,7 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
   // Wait until the cast time is up
   setTimeout(function() {
     // Return if stunned
-    if (boss.character.stunned) {
+    if (knight.character.stunned) {
       return;
     }
     // Allow the weapon to be used again
@@ -112,8 +112,7 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
         if (ability.numProjectiles > 1) {
           for (var i = 0; i < location.map.geom.length; i++) {
             var p = location.map.geom[i];
-            if ((prevLocation.x <= projectile.x && projectile.x <= p.x || p.x <= projectile.x && projectile.x <= prevLocation.x) &&
-              (prevLocation.y <= projectile.y && projectile.y <= p.y || p.y <= projectile.y && projectile.y <= prevLocation.y)) {
+            if (Vec2.wallCollision(prevLocation, projectile, p)) {
               // Collision occurred
               collisionPoints.push(p);
             }
@@ -123,8 +122,7 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
         var hitTargets = [];
         for (var j = 0; j < location.character.length; j++) {
           var charLocation = location.character[j].location;
-          if ((prevLocation.x <= projectile.x && projectile.x <= charLocation.x || charLocation.x <= projectile.x && projectile.x <= prevLocation.x) &&
-            (prevLocation.y <= projectile.y && projectile.y <= charLocation.y || charLocation.y <= projectile.y && projectile.y <= prevLocation.y)) {
+          if (Vec2.pointCollision(prevLocation, charLocation, projectile)) {
             // Collision occurred
             hitTargets.push(location.character[j]);
           }
@@ -147,14 +145,17 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
             hitTarget.push(hitTargets[i]);
           }
         }
-        // Only use one hitTarget if its not piercing
-        if (!ability.piercing && hitTarget.length > 0) {
+        if (hitTarget.length > 0) {
           // Make sure target isnt a friendly
           for (var i = 0; i < hitTarget.length; i++) {
             if (hitTarget[i].character.type == "knight") {
               hitTarget.splice(i, 1);
             }
           }
+        }
+        // Only use one hitTarget if its not piercing
+        if (!ability.piercing && hitTarget.length > 0) {
+          // Only one target
           hitTarget.splice(1, 100);
         }
         // Skewer
