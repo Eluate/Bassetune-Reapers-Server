@@ -3,6 +3,7 @@ var Room = function (io, socket, game_uuid, config) {
   var Chat = require('./Chat');
   var Location = require('./Location');
   var Map = require('./Map');
+  var Event = require('./EventEnum');
 
   var map = new Map();
   var chat = new Chat(io, game_uuid);
@@ -101,11 +102,19 @@ var Room = function (io, socket, game_uuid, config) {
    Send Updates
    */
   function SendUpdates() {
+    // Locations
     characters.forEach(function(character) {
       location.UpdateCharacterLocation(character.id, character.speed);
     });
     location.SendCharacterLocations();
     location.UpdateTime();
+    // HP
+    characters.forEach(function(character) {
+      if (character.hp != character.prevhp) {
+        socket.emit(Event.output.CHAR_HP, {i: character.id, h: character.hp});
+        character.prevhp = character.hp;
+      }
+    });
   }
   // Start Game Loop, 24 Updates per second
   setInterval(SendUpdates, 41);
