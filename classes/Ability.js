@@ -1,7 +1,6 @@
 /*
  Class for the abilities and weapon usage
  */
-
 var Vec2 = require("./Vector2");
 
 var Ability = function (entityID) {
@@ -201,7 +200,7 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
             }
           }
           // Skewer
-          if (ability.hasOwnProperty("skewer") && target.hasOwnProperty("x") && target.hasOwnProperty("y")) {
+          if (ability.hasOwnProperty("skewer")) {
             location.UpdateCharacterLocation(hitTarget.character,
               target.sub(prevLocation).normalize().multiplyScalar(ability.range),
               ability.range);
@@ -269,6 +268,14 @@ Ability.AttackSpeeds = {
   Slow: 2000,
   VerySlow: 3000,
   ExtremelySlow: 5000
+};
+
+Ability.EmitUse = function(characterID, abilityID) {
+
+};
+
+Ability.EmitFinish = function(characterID, abilityID) {
+
 };
 
 module.exports = Ability;
