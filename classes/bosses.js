@@ -14,9 +14,17 @@ var Bosses = function() {
     this.busy = false;
     this.base_range = 2;
     this.curCoolDowns = [0, 0, 0 , 0, 0];
+    this.blocking = false;
 
     // Left-Click Attack
-    this.ability1 = function (target, characters) {
+    this.ability1 = function (data) {
+      if (data.hasOwnProperty("target") && data.hasOwnProperty("characters")) {
+        var target = data.target;
+        var characters = data.characters;
+      }
+      else {
+        return;
+      }
       if (this.busy) {
         return;
       }
@@ -93,13 +101,20 @@ var Bosses = function() {
       }, ABILITY.AttackSpeeds.Slow);
     };
     // Right-Click Block
-    this.ability2 = function (toggle) {
-      if (!toggle) {
+    this.ability2 = function (data) {
+      if (!data.toggle) {
+        return;
+      }
+      if (data.toggle != "true" && this.blocking != false) {
         this.character.blockArmor -= 10000;
+        this.blocking = false;
       } else {
         this.character.blockArmor += 10000;
+        this.blocking = true;
       }
     };
+    // Store all abilities
+    this.abilities = [this.ability1, this.ability2];
   };
   var BeholderOfTheUniversalSun = function(level) {
 

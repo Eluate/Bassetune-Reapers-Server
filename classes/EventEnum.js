@@ -15,7 +15,8 @@ exports.input = {
 
   boss: {
     PUT_TRAP: 'p',
-    USE_ABILITY: 'u'
+    ABILITY_START: 'u',
+    ABILITY_END: 'y'
   }
 };
 

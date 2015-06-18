@@ -76,7 +76,7 @@ var Location = function (io, room, map) {
     this.lastTime = new Date().getTime() / 1000;
   };
 
-  this.SendCharacterLocations = function () {
+  this.SendCharacterLocations = function (players, knights) {
   // TODO: Make it so that it only sends locations in a certain area for knights
     var data = [];
     this.charactersToUpdate.forEach(function (character) {

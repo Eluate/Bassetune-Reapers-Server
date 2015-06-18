@@ -59,7 +59,7 @@ Ability.GetWeaponInfo = function (entityID) {
   return store;
 };
 
-Ability.UseKnightAbility = function (ability, weapon, knight, target, location, characters) {
+Ability.UseKnightAbility = function (ability, weapon, knight, target, location, characters, roomID) {
   // Check if weapon matches the required weapon
   if (ability.reqType != weapon.type && ability.reqType != null) {
     return;
@@ -270,11 +270,11 @@ Ability.AttackSpeeds = {
   ExtremelySlow: 5000
 };
 
-Ability.EmitUse = function(characterID, abilityID) {
+Ability.EmitUse = function(characterID, abilityID, roomID) {
 
 };
 
-Ability.EmitFinish = function(characterID, abilityID) {
+Ability.EmitFinish = function(characterID, abilityID, roomID) {
 
 };
 
