@@ -2,6 +2,7 @@
  Class for the abilities and weapon usage
  */
 var Vec2 = require("./Vector2");
+var Event = require('./EventEnum');
 
 var Ability = function (entityID) {
   var abilities = require('./resources/abilities');
@@ -16,6 +17,7 @@ var Ability = function (entityID) {
 };
 
 Ability.prototype.StoreAbilityInfo = function (ability, abilityInfo) {
+  ability.id = abilityInfo.id;
   ability.reqType = abilityInfo.required_type;
   ability.aoeSize = abilityInfo.aoe_size;
   ability.range = abilityInfo.range;
@@ -54,12 +56,12 @@ Ability.GetWeaponInfo = function (entityID) {
   var store = {};
   store.weaponType = weapon.weapon_type;
   store.damage = weapon.damage;
-  store.description = weapon.description;
   store.busy = false;
   return store;
 };
 
-Ability.UseKnightAbility = function (ability, weapon, knight, target, location, characters, roomID) {
+Ability.prototype.UseKnightAbility = function (weapon, character, target, location, characters, roomID, io) {
+  var ability = this;
   // Check if weapon matches the required weapon
   if (ability.reqType != weapon.type && ability.reqType != null) {
     return;
@@ -74,10 +76,12 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
   }
   // Make it so that the weapon can't be used while casting
   weapon.busy = true;
+  // Emit the use of the ability
+  Ability.EmitUse(character.id, ability.id, roomID, io);
   // Wait until the cast time is up
   setTimeout(function() {
     // Return if stunned
-    if (knight.character.stunned) {
+    if (character.stunned) {
       return;
     }
     // Allow the weapon to be used again
@@ -91,23 +95,23 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
       if (ability.numProjectiles > 1) {
         for (var i = 0; i < ability.numProjectiles; i++) {
           if (i > ability.numProjectiles / 2) {
-            projectiles.push(Vec2.setLength({x: target.x + i, y: target.y + i}, ability.range + knight.character.rangeModifier));
+            projectiles.push(Vec2.setLength({x: target.x + i, y: target.y + i}, ability.range + character.rangeModifier));
           }
           else if (i < ability.numProjectiles / 2) {
-            projectiles.push(Vec2.setLength({x: target.x - i, y: target.y - i}, ability.range + knight.character.rangeModifier));
+            projectiles.push(Vec2.setLength({x: target.x - i, y: target.y - i}, ability.range + character.rangeModifier));
           }
           else {
-            projectiles.push(Vec2.setLength({x: target.x, y: target.y}, ability.range + knight.character.rangeModifier));
+            projectiles.push(Vec2.setLength({x: target.x, y: target.y}, ability.range + character.rangeModifier));
           }
         }
       }
       else {
-        projectiles.push(Vec2.setLength({x: target.x, y: target.y}, ability.range + knight.character.rangeModifier));
+        projectiles.push(Vec2.setLength({x: target.x, y: target.y}, ability.range + character.rangeModifier));
       }
       projectiles.forEach(function (projectile) {
         // Check if the ability hits a wall (if its ranged)
         var collisionPoints = [];
-        var prevLocation = location.characters[knight.character.id].location;
+        var prevLocation = location.characters[character.id].location;
         if (ability.numProjectiles > 1) {
           for (var i = 0; i < location.map.geom.length; i++) {
             var p = location.map.geom[i];
@@ -157,12 +161,6 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
           // Only one target
           hitTarget.splice(1, 100);
         }
-        // Skewer
-        if (ability.hasOwnProperty("skewer") && target.hasOwnProperty("x") && target.hasOwnProperty("y")) {
-          location.UpdateCharacterLocation(knight.character,
-            target.sub(prevLocation).normalize().multiplyScalar(ability.range),
-            ability.range);
-        }
         // Apply offensive loop for hit targets
         for (i = 0; i < hitTarget.length; i++) {
           var hitCharacter;
@@ -178,7 +176,7 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
           // Damage
           if (ability.hasOwnProperty("damage")) {
             // Calculate range for range damage modifier
-            var totalRange = location.characters[location.characterIndex.indexOf(knight.character.id)].location.distanceTo(
+            var totalRange = location.characters[location.characterIndex.indexOf(character.id)].location.distanceTo(
               hitTarget[i].location);
             // Check if ability should ignore armor
             var totalDamage = ability.damage * weapon.damage * ability.damageModifier + (this.rangeDamageModifier * totalRange);
@@ -198,12 +196,6 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
               }, 1000);
               curDuration -= 1;
             }
-          }
-          // Skewer
-          if (ability.hasOwnProperty("skewer")) {
-            location.UpdateCharacterLocation(hitTarget.character,
-              target.sub(prevLocation).normalize().multiplyScalar(ability.range),
-              ability.range);
           }
           // Stun
           if (ability.hasOwnProperty("stun") && ability.stun > 0) {
@@ -241,11 +233,11 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
       }
       // Dodge
       if (ability.hasOwnProperty("moveDistance") && target.hasOwnProperty("x") && target.hasOwnProperty("y")) {
-        var characterLocation = location.characters[knight.character.id].location;
+        var characterLocation = location.characters[character.id].location;
         var newLocation = characterLocation.add(Vec2.setLength({x: target.x, y: target.y}, ability.moveDistance));
         // Update new location
-        location.characters[location.characterIndex.indexOf(knight.character.id)].location = newLocation;
-        location.charactersToUpdate[location.charactersToUpdateIndex.indexOf(knight.character.id)].location = newLocation;
+        location.characters[location.characterIndex.indexOf(character.id)].location = newLocation;
+        location.charactersToUpdate[location.charactersToUpdateIndex.indexOf(character.id)].location = newLocation;
       }
       // Increase Range
       if (ability.hasOwnProperty("increaseRange")) {
@@ -258,6 +250,7 @@ Ability.UseKnightAbility = function (ability, weapon, knight, target, location, 
     // Set the new cooldown
     ability.curCoolDown = new Date().getTime();
   }, ability.castTime * 1000);
+  Ability.EmitFinish(character.id, ability.id, roomID, io);
 };
 
 Ability.AttackSpeeds = {
@@ -270,12 +263,12 @@ Ability.AttackSpeeds = {
   ExtremelySlow: 5000
 };
 
-Ability.EmitUse = function(characterID, abilityID, roomID) {
-
+Ability.EmitUse = function(characterID, abilityID, roomID, io) {
+  io.to(roomID).emit(Event.input.knight.ABILITY_START, {"i":characterID, "a":abilityID});
 };
 
-Ability.EmitFinish = function(characterID, abilityID, roomID) {
-
+Ability.EmitFinish = function(characterID, abilityID, roomID, io) {
+  io.to(roomID).emit(Event.input.knight.ABILITY_END, {"i":characterID, "a":abilityID});
 };
 
 module.exports = Ability;
