@@ -7,7 +7,7 @@ var Inventory = function (weapons, abilities, items) {
 
   this.getFreeSpace = function () {
     var count = 0;
-    slots.forEach(function (slot) {
+    this.slots.forEach(function (slot) {
       if (slot.number > -1) {
         count++;
       }

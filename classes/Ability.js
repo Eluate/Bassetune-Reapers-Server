@@ -62,6 +62,7 @@ Ability.GetWeaponInfo = function (entityID) {
 
 Ability.prototype.UseKnightAbility = function (weapon, character, target, location, characters, roomID, io) {
   var ability = this;
+  weapon = Ability.GetWeaponInfo(weapon);
   // Check if weapon matches the required weapon
   if (ability.reqType != weapon.type && ability.reqType != null) {
     return;

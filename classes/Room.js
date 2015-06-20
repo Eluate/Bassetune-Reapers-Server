@@ -13,15 +13,6 @@ var Room = function (io, socket, game_uuid, config) {
   var players = [];
   // All characters
   var characters = [];
-  // All knight type
-  var knights = [];
-  // All boss type
-  var bosses = [];
-  // All miniboss type
-  var minibosses = [];
-  // All creature type
-  var creatures = [];
-
 
   /*
     Get player Data
@@ -84,20 +75,25 @@ var Room = function (io, socket, game_uuid, config) {
     });
     // Knight changing equipped
     socket.in(game_uuid).on(Event.input.knight.CHANGE_EQUIPPED, function (data) {
-      if (players[socket.id].username == knights[data.knightID].character.owner) {
-        knights[data.knightID].ChangeEquipped(data.itemID, data.target);
+      var characterID = parseInt(data.characterID, 10);
+      if (!isNaN(characterID) && characterID < characters.length &&
+        players[socket.id].username == characters[characterID].owner && characters[characterID].knight != null) {
+        characters[characterID].knight.ChangeEquipped(data.itemID, data.target);
       }
     });
     // Knight using ability
     socket.in(game_uuid).on(Event.input.knight.USE_ABILITY, function (data) {
-      if (data.characterID == null || data.abilityID == null || data.weapon == null) {
+      var abilityID = parseInt(data.abilityID, 10);
+      var characterID = parseInt(data.characterID, 10);
+      var weaponID = parseInt(data.weapon, 10);
+      if (isNaN(abilityID) || isNaN(characterID) || isNaN(weaponID) || data.target == null) {
         return;
       }
-      knights.forEach(function (knight) {
+      characters.forEach(function (character) {
         players.forEach(function (player) {
-          if (knight.character.id == data.characterID && player.socketID == socket.id && player.username == knight.character.owner) {
-            if (!knight.character.stunned) {
-              knight.UseAbility(data.weapon, data.abilityID, data.target, location, characters, game_uuid);
+          if (character.id == data.characterID && player.socketID == socket.id && player.username == character.owner) {
+            if (!character.stunned && character.knight != null) {
+              character.knight.UseAbility(weaponID, abilityID, data.target, location, characters, game_uuid);
             }
             return;
           }
@@ -114,18 +110,20 @@ var Room = function (io, socket, game_uuid, config) {
     });
     // Boss using an ability
     socket.in(game_uuid).on(Event.input.boss.USE_ABILITY, function (data) {
-      // TODO: Use an ability
-      if (data.characterID == null || data.abilityID == null) {
+      var abilityID = parseInt(data.abilityID, 10);
+      var characterID = parseInt(data.characterID, 10);
+      if (isNaN(abilityID) || isNaN(characterID)) {
         return;
       }
       players.forEach(function (player) {
-        bosses.forEach(function (boss) {
-          if (boss.character.type == "boss" && boss.character.id == data.characterID &&
-            player.socketID == socket.id && player.username == boss.character.owner) {
-            if (!boss.character.stunned && !isNaN(parseInt(data.abilityID)) && parseInt(data.abilityID) < boss.abilities.length) {
+        characters.forEach(function (character) {
+          if (character.type == "boss" && character.id == characterID &&
+            player.socketID == socket.id && player.username == character.owner) {
+            if (!character.stunned && !isNaN(abilityID) && abilityID < character.boss.abilities.length) {
               data.characters = characters;
               data.room = game_uuid;
-              boss.abilities[data.abilityID](data);
+              data.io = io;
+              character.boss.abilities[abilityID](data);
             }
             return;
           }

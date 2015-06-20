@@ -21,7 +21,6 @@ var Character = function (owner, type, entity, speed) {
     }
   };
   this.rangeModifier = 0; // number to increase or decrease range by
-
 };
 
 Character.prototype = {

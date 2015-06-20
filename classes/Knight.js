@@ -6,11 +6,8 @@ var Inventory = require('./Inventory');
 var Ability = require('./Ability');
 
 var Knight = function (owner) {
-  this.character = new Character(owner, "knight", 0, 0);
   this.inventory = new Inventory();
   this.abilities = [];
-
-  this.character.type == "knight";
 
   this.ChangeEquipped = function (itemID, target) {
     for (var i = 0, slots = this.inventory.slots, slotLength = slots.length; i < slotLength; i++) {
@@ -29,18 +26,14 @@ var Knight = function (owner) {
     }
   };
 
-  this.UseAbility = function (weapon, abilityID, target, location, characters) {
-    if (weapon == 1) {
-      for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
-        if (abilityID == this.abilities[i].id) {
-          Ability.UseKnightAbility(this.abilities[i], this.inventory.mainWeapon, this, target, location, characters);
+  this.UseAbility = function (weapon, abilityID, target, location, characters, roomID, io) {
+    for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
+      if (abilityID == this.abilities[i].id) {
+        if (weapon == 1) {
+          this.abilities[i].UseKnightAbility(this.inventory.mainWeapon, this, target, location, characters, roomID, io);
         }
-      }
-    }
-    else if (weapon == 2) {
-      for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
-        if (abilityID == this.abilities[i].id) {
-          Ability.UseKnightAbility(this.abilities[i], this.inventory.offWeapon, this, target, location, characters);
+        else {
+          this.abilities[i].UseKnightAbility(this.inventory.offWeapon, this, target, location, characters, roomID, io);
         }
       }
     }
