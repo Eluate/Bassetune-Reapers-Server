@@ -82,16 +82,18 @@ var Room = function (io, socket, game_uuid, config) {
       }
     });
     // Knight using ability
-    socket.in(game_uuid).on(Event.input.knight.USE_ABILITY, function (data) {
+    socket.in(game_uuid).on(Event.input.knight.ABILITY_START, function (data) {
       var abilityID = parseInt(data.abilityID, 10);
       var characterID = parseInt(data.characterID, 10);
       var weaponID = parseInt(data.weapon, 10);
-      if (isNaN(abilityID) || isNaN(characterID) || isNaN(weaponID) || data.target == null) {
+      var target = data.target;
+      if (isNaN(abilityID) || isNaN(characterID) || isNaN(weaponID) ||
+        !target.hasOwnProperty("x") || !target.hasOwnProperty("y")) {
         return;
       }
       characters.forEach(function (character) {
         players.forEach(function (player) {
-          if (character.id == data.characterID && player.socketID == socket.id && player.username == character.owner) {
+          if (character.id == characterID && player.socketID == socket.id && player.username == character.owner) {
             if (!character.stunned && character.knight != null) {
               character.knight.UseAbility(weaponID, abilityID, data.target, location, characters, game_uuid);
             }
@@ -109,10 +111,12 @@ var Room = function (io, socket, game_uuid, config) {
       // TODO: Put a trap
     });
     // Boss using an ability
-    socket.in(game_uuid).on(Event.input.boss.USE_ABILITY, function (data) {
+    socket.in(game_uuid).on(Event.input.boss.ABILITY_START, function (data) {
       var abilityID = parseInt(data.abilityID, 10);
       var characterID = parseInt(data.characterID, 10);
-      if (isNaN(abilityID) || isNaN(characterID)) {
+      var target = data.target;
+      if (isNaN(abilityID) || isNaN(characterID) || ((!target.hasOwnProperty("x") || !target.hasOwnProperty("y")) ||
+      !target.hasOwnProperty("toggle"))) {
         return;
       }
       players.forEach(function (player) {
@@ -123,6 +127,8 @@ var Room = function (io, socket, game_uuid, config) {
               data.characters = characters;
               data.room = game_uuid;
               data.io = io;
+              data.character = character;
+              data.abilityID = abilityID;
               character.boss.abilities[abilityID](data);
             }
             return;

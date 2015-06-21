@@ -18,6 +18,7 @@ var Bosses = function() {
 
     // Left-Click Attack
     this.ability1 = function (data) {
+      var character = data.character;
       if (data.hasOwnProperty("target") && data.hasOwnProperty("characters")) {
         var target = data.target;
         var characters = data.characters;
@@ -28,20 +29,24 @@ var Bosses = function() {
       if (this.busy) {
         return;
       }
+      if (!target.hasOwnProperty("x") || !target.hasOwnProperty("y")) {
+        return;
+      }
       this.busy = true;
+      ABILITY.EmitUse(character.id, data.abilityID, data.room, data.io);
       setTimeout(function() {
         // Return if stunned
-        if (this.character.stunned) {
+        if (character.stunned) {
           return;
         }
         // Allow the weapon to be used again
         this.busy = false;
         var projectiles = [];
-        projectiles.push(Vec2.setLength({x: target.x, y: target.y}, this.base_range + this.character.rangeModifier));
+        projectiles.push(Vec2.setLength({x: target.x, y: target.y}, this.base_range + character.rangeModifier));
         projectiles.forEach(function (projectile) {
           // Check if the ability hits a wall (if its ranged)
           var collisionPoints = [];
-          var prevLocation = location.characters[this.character.id].location;
+          var prevLocation = location.characters[location.characterIndex.indexOf(character.id)].location;
           for (var i = 0; i < location.map.geom.length; i++) {
             var p = location.map.geom[i];
             if (Vec2.wallCollision(prevLocation, projectile, p)) {
@@ -99,6 +104,7 @@ var Bosses = function() {
           }
         });
       }, ABILITY.AttackSpeeds.Slow);
+      ABILITY.EmitFinish(character.id, data.abilityID, data.room, data.io);
     };
     // Right-Click Block
     this.ability2 = function (data) {

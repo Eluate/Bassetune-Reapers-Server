@@ -8,15 +8,16 @@ exports.input = {
   MOVE: 'm',
 
   knight: {
-    USE_ABILITY: 'a',
+    ABILITY_START: 'as',
+    ABILITY_END: 'ae',
     USE_ITEM: 'i',
     CHANGE_EQUIPPED: 'ce'
   },
 
   boss: {
     PUT_TRAP: 'p',
-    ABILITY_START: 'u',
-    ABILITY_END: 'y'
+    ABILITY_START: 'bs',
+    ABILITY_END: 'be'
   }
 };
 

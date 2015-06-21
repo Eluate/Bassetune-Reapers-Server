@@ -75,6 +75,9 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
   if (new Date().getTime() - ability.curCoolDown < ability.coolDown * 1000) {
     return;
   }
+  if (!target.hasOwnProperty("x") || !target.hasOwnProperty("y")) {
+    return;
+  }
   // Make it so that the weapon can't be used while casting
   weapon.busy = true;
   // Emit the use of the ability
@@ -112,7 +115,7 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
       projectiles.forEach(function (projectile) {
         // Check if the ability hits a wall (if its ranged)
         var collisionPoints = [];
-        var prevLocation = location.characters[character.id].location;
+        var prevLocation = location.characters[location.characterIndex.indexOf(character.id)].location;
         if (ability.numProjectiles > 1) {
           for (var i = 0; i < location.map.geom.length; i++) {
             var p = location.map.geom[i];
