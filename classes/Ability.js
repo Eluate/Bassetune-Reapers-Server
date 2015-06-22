@@ -81,7 +81,7 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
   // Make it so that the weapon can't be used while casting
   weapon.busy = true;
   // Emit the use of the ability
-  Ability.EmitUse(character.id, ability.id, roomID, io);
+  Ability.EmitKnightUse(character.id, ability.id, roomID, io);
   // Wait until the cast time is up
   setTimeout(function() {
     // Return if stunned
@@ -254,7 +254,7 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
     // Set the new cooldown
     ability.curCoolDown = new Date().getTime();
   }, ability.castTime * 1000);
-  Ability.EmitFinish(character.id, ability.id, roomID, io);
+  Ability.EmitKnightFinish(character.id, ability.id, roomID, io);
 };
 
 Ability.AttackSpeeds = {
@@ -267,12 +267,20 @@ Ability.AttackSpeeds = {
   ExtremelySlow: 5000
 };
 
-Ability.EmitUse = function(characterID, abilityID, roomID, io) {
+Ability.EmitKnightUse = function(characterID, abilityID, roomID, io) {
   io.to(roomID).emit(Event.input.knight.ABILITY_START, {"i":characterID, "a":abilityID});
 };
 
-Ability.EmitFinish = function(characterID, abilityID, roomID, io) {
+Ability.EmitKnightFinish = function(characterID, abilityID, roomID, io) {
   io.to(roomID).emit(Event.input.knight.ABILITY_END, {"i":characterID, "a":abilityID});
+};
+
+Ability.EmitBossUse = function(characterID, abilityID, roomID, io) {
+  io.to(roomID).emit(Event.input.boss.ABILITY_START, {"i":characterID, "a":abilityID});
+};
+
+Ability.EmitBossFinish = function(characterID, abilityID, roomID, io) {
+  io.to(roomID).emit(Event.input.boss.ABILITY_END, {"i":characterID, "a":abilityID});
 };
 
 module.exports = Ability;
