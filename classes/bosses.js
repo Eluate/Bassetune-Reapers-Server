@@ -33,7 +33,7 @@ var Bosses = function() {
         return;
       }
       this.busy = true;
-      ABILITY.EmitUse(character.id, data.abilityID, data.room, data.io);
+      ABILITY.EmitBossUse(character.id, data.abilityID, data.room, data.io);
       setTimeout(function() {
         // Return if stunned
         if (character.stunned) {
@@ -104,7 +104,7 @@ var Bosses = function() {
           }
         });
       }, ABILITY.AttackSpeeds.Slow);
-      ABILITY.EmitFinish(character.id, data.abilityID, data.room, data.io);
+      ABILITY.EmitBossFinish(character.id, data.abilityID, data.room, data.io);
     };
     // Right-Click Block
     this.ability2 = function (data) {
