@@ -24,23 +24,29 @@ Ability.prototype.StoreAbilityInfo = function (ability, abilityInfo) {
   ability.coolDown = abilityInfo.cool_down;
   ability.castTime = abilityInfo.cast_time;
   ability.type = abilityInfo.type;
-  ability.duration = abilityInfo.duration || 0;
-  ability.numProjectiles = abilityInfo.projectiles || 0;
+  ability.duration = abilityInfo.duration;
+  ability.numProjectiles = abilityInfo.projectiles;
   ability.skewer = abilityInfo.skewer;
   ability.damage = abilityInfo.damage;
   ability.armor = abilityInfo.armor;
-  ability.damageModifier = abilityInfo.damage_modifier || 1;
-  ability.projSpeed = abilityInfo.projectile_speed || 2;
-  ability.piercing = abilityInfo.piercing || false;
-  ability.rangeDamageModifier = abilityInfo.range_damage_modifier || 0;
+  ability.damageModifier = abilityInfo.damage_modifier;
+  ability.projSpeed = abilityInfo.projectile_speed;
+  ability.piercing = abilityInfo.piercing;
+  ability.rangeDamageModifier = abilityInfo.range_damage_modifier;
   ability.moveDistance = abilityInfo.move_distance;
-  ability.moveAxis = abilityInfo.move_axis;
   ability.numAttacks = abilityInfo.multiple_attacks;
   ability.ignoreArmor = abilityInfo.ignore_armor;
-  ability.bleed = abilityInfo.bleed || 0;
+  ability.bleed = abilityInfo.bleed;
   ability.stun = abilityInfo.stun;
-  ability.increaseRange = abilityInfo.increase_range;
-  ability.decreaseRange = abilityInfo.decrease_range;
+  ability.rangeModifier = abilityInfo.range_modifier;
+
+  for (var abilityProperty in ability) {
+    if (ability.hasOwnProperty("abilityProperty")) {
+      if (ability[abilityProperty].toString().toLowerCase() == "null") {
+        ability[abilityProperty] = undefined;
+      }
+    }
+  }
 };
 
 Ability.prototype.AbilityType = {
@@ -154,7 +160,7 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
         }
         if (hitTarget.length > 0) {
           // Make sure target isnt a friendly
-          for (var i = 0; i < hitTarget.length; i++) {
+          for (i = 0; i < hitTarget.length; i++) {
             if (hitTarget[i].character.type == "knight") {
               hitTarget.splice(i, 1);
             }
@@ -182,8 +188,8 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
             // Calculate range for range damage modifier
             var totalRange = location.characters[location.characterIndex.indexOf(character.id)].location.distanceTo(
               hitTarget[i].location);
+            var totalDamage = ability.damage + weapon.damage * ability.damageModifier + (this.rangeDamageModifier * totalRange);
             // Check if ability should ignore armor
-            var totalDamage = ability.damage * weapon.damage * ability.damageModifier + (this.rangeDamageModifier * totalRange);
             if (!ability.ignoreArmor) {
               totalDamage -= hitCharacter.blockArmor;
             }
@@ -216,9 +222,9 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
           }
           // Decrease Range
           if (ability.hasOwnProperty("decreaseRange")) {
-            hitCharacter.rangeModifier -= ability.decreaseRange;
+            hitCharacter.rangeModifier -= ability.rangeModifier;
             setTimeout(function() {
-              hitCharacter.rangeModifier += ability.decreaseRange;
+              hitCharacter.rangeModifier += ability.rangeModifier;
             }, ability.duration * 1000);
           }
         }
@@ -240,14 +246,18 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
         var characterLocation = location.characters[character.id].location;
         var newLocation = characterLocation.add(Vec2.setLength({x: target.x, y: target.y}, ability.moveDistance));
         // Update new location
-        location.characters[location.characterIndex.indexOf(character.id)].location = newLocation;
-        location.charactersToUpdate[location.charactersToUpdateIndex.indexOf(character.id)].location = newLocation;
+        if (location.characterIndex.indexOf(character.id) > 0) {
+          location.characters[location.characterIndex.indexOf(character.id)].location = newLocation;
+        }
+        if (location.charactersToUpdateIndex.indexOf(character.id)> 0) {
+          location.charactersToUpdate[location.charactersToUpdateIndex.indexOf(character.id)].location = newLocation;
+        }
       }
       // Increase Range
       if (ability.hasOwnProperty("increaseRange")) {
-        target.rangeModifier -= ability.increaseRange;
+        target.rangeModifier -= ability.rangeModifier;
         setTimeout(function() {
-          target.rangeModifier += ability.increaseRange;
+          target.rangeModifier += ability.rangeModifier;
         }, ability.duration * 1000);
       }
     }
