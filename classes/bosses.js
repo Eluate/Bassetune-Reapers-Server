@@ -6,15 +6,16 @@ var Vec2 = require('./Vector2');
 var Character = require('./Character');
 
 var Bosses = function() {
+  this.bosses = [TheSavageTillBeast];
   var TheSavageTillBeast = function (level) {
-    this.character = new Character();
-    this.character.hp = 620 * level;
+    this.hp = 620 * level;
     this.base_damage = 18 * level;
-    this.character.armor = 5 * level;
+    this.armor = 5 * level;
     this.busy = false;
     this.base_range = 2;
     this.curCoolDowns = [0, 0, 0 , 0, 0];
     this.blocking = false;
+    this.speed = 3;
 
     // Left-Click Attack
     this.ability1 = function (data) {
@@ -108,15 +109,18 @@ var Bosses = function() {
     };
     // Right-Click Block
     this.ability2 = function (data) {
-      if (!data.toggle) {
+      var character = data.character;
+      if (data.toggle == null) {
         return;
       }
-      if (data.toggle != "true" && this.blocking != false) {
+      if (data.toggle.toString() != "true" && this.blocking != false) {
         this.character.blockArmor -= 10000;
         this.blocking = false;
+        ABILITY.EmitBossFinish(character.id, data.abilityID, data.room, data.io);
       } else {
         this.character.blockArmor += 10000;
         this.blocking = true;
+        ABILITY.EmitBossUse(character.id, data.abilityID, data.room, data.io);
       }
     };
     // Store all abilities

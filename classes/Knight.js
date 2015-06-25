@@ -5,7 +5,7 @@ var Character = require('./Character');
 var Inventory = require('./Inventory');
 var Ability = require('./Ability');
 
-var Knight = function (owner) {
+var Knight = function () {
   this.inventory = new Inventory();
   this.abilities = [];
 
