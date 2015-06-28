@@ -26,20 +26,27 @@ var Knight = function () {
     }
   };
 
-  this.UseAbility = function (weapon, abilityID, target, location, characters, roomID, io) {
+  this.UseAbility = function (data) {
     for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
-      if (abilityID == this.abilities[i].id) {
-        if (weapon == 1) {
-          this.abilities[i].UseKnightAbility(this.inventory.mainWeapon, this, target, location, characters, roomID, io);
+      if (data.abilityID == this.abilities[i].id) {
+        if (data.weaponID == 1) {
+          data.weapon = this.inventory.mainWeapon;
         }
         else {
-          this.abilities[i].UseKnightAbility(this.inventory.offWeapon, this, target, location, characters, roomID, io);
+          data.weapon = this.inventory.offWeapon;
         }
+        this.abilities[i].UseKnightAbility(data);
       }
     }
   };
 
-  this.UseItem = function (item, target) {
-    // TODO
+  this.UseItem = function (data) {
+    for (var i = 0, inventoryLength = this.inventory.items.length; i < inventoryLength; i++) {
+      if (data.itemID == this.inventory.items[i].id) {
+        this.abilities[i].UseItem(data);
+        // Only use the first one
+        i = inventoryLength;
+      }
+    }
   };
 };

@@ -11,15 +11,16 @@ var Character = function (id, owner, type, entity) {
   this.speed = 2; // the speed at which character move at
   this.hp = 100; // 100 by default
   this.prevhp = this.hp; // previous hp before update
+  this.maxhp = this.hp; // maximum hp
   this.blockArmor = 0; // any extra armor given by a block
   this.stunCount = 0; // number of stuns on character
   this.stunned = function () {
-    if (this.stunCount > 0) {
-      return true;
-    } else {
-      return false;
-    }
+    return this.stunCount > 0;
   };
+  this.dead = function() {
+    return this.hp <= 0;
+  };
+  this.channelling = false;
   this.rangeModifier = 0; // number to increase or decrease range by
 };
 

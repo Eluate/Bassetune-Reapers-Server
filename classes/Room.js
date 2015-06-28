@@ -57,17 +57,35 @@ var Room = function (io, socket, game_uuid, config) {
     });
     // Movement
     socket.in(game_uuid).on(Event.input.MOVE, function (data) {
-      characters.forEach(function (character) {
-        players.forEach(function (player) {
-          if (character.id == data.characterID && player.socketID == socket.id && player.username == character.owner) {
-            for (var key in data) {
-              if (data.hasOwnProperty(key)) {
-                location.UpdateDestination(key, data[key]);
+      for (var key in data) {
+        if (data[key].length != 2) {
+          return;
+        }
+        if (isNaN(parseFloat(data[key][0])) || isNaN(parseFloat(data[key][1]))) {
+          return;
+        }
+        characters.forEach(function (character) {
+          if (character.id != key) {
+            return;
+          }
+          // Check if channelling
+          if (character.channelling) {
+            if (character.channelling != false) {
+              if (character.channelling == true) {
+                character.channelling = "m";
+              } else {
+                character.channelling += "m";
               }
+              character.channellingAbility.CheckInterruption();
             }
           }
+          players.forEach(function (player) {
+            if (player.socketID == socket.id && player.username == character.owner) {
+              location.UpdateDestination(key, data[key]);
+            }
+          });
         });
-      });
+      }
     });
     // Leave
     socket.in(game_uuid).on(Event.input.LEAVE, function () {
@@ -86,25 +104,55 @@ var Room = function (io, socket, game_uuid, config) {
       var abilityID = parseInt(data.abilityID, 10);
       var characterID = parseInt(data.characterID, 10);
       var weaponID = parseInt(data.weapon, 10);
-      var target = data.target;
-      if (isNaN(abilityID) || isNaN(characterID) || isNaN(weaponID) ||
-        !target.hasOwnProperty("x") || !target.hasOwnProperty("y")) {
+      if (isNaN(abilityID) || isNaN(characterID) || isNaN(weaponID) || data.target == null ||
+        !data.target.hasOwnProperty("x") || !data.target.hasOwnProperty("y")) {
         return;
       }
       characters.forEach(function (character) {
+        if (character.id != characterID) {
+          return;
+        }
         players.forEach(function (player) {
-          if (character.id == characterID && player.socketID == socket.id && player.username == character.owner) {
+          if (player.socketID == socket.id && player.username == character.owner) {
             if (!character.stunned && character.knight != null) {
-              character.knight.UseAbility(weaponID, abilityID, data.target, location, characters, game_uuid);
+              data.abilityID = abilityID;
+              data.weaponID = weaponID;
+              data.location = location;
+              data.character = character;
+              data.characters = characterID;
+              data.game_uuid = game_uuid;
+              data.io = io;
+              character.knight.UseAbility(data);
             }
-            return;
           }
         });
       });
     });
     // Knight using item
-    socket.in(game_uuid).on(Event.input.knight.USE_ITEM, function (data) {
-      // TODO: Use Knight Item
+    socket.in(game_uuid).on(Event.input.knight.USE_ITEM_START, function (data) {
+      var characterID = parseInt(data.characterID, 10);
+      var itemID = parseInt(data.itemID, 10);
+      if (isNaN(characterID) || isNaN(itemID)) {
+        return;
+      }
+      characters.forEach(function (character) {
+        if (character.id != characterID) {
+          return;
+        }
+        players.forEach(function (player) {
+          if (player.socketID == socket.id && player.username == character.owner) {
+            if (!character.stunned && character.knight != null) {
+              data.itemID = itemID;
+              data.location = location;
+              data.character = character;
+              data.characters = characterID;
+              data.game_uuid = game_uuid;
+              data.io = io;
+              character.knight.UseItem(data);
+            }
+          }
+        });
+      });
     });
     // Boss putting a trap down
     socket.in(game_uuid).on(Event.input.boss.PUT_TRAP, function (data) {
@@ -125,7 +173,7 @@ var Room = function (io, socket, game_uuid, config) {
             player.socketID == socket.id && player.username == character.owner) {
             if (!character.stunned && !isNaN(abilityID) && abilityID < character.boss.abilities.length) {
               data.characters = characters;
-              data.room = game_uuid;
+              data.game_uuid = game_uuid;
               data.io = io;
               data.character = character;
               data.abilityID = abilityID;

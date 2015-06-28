@@ -66,8 +66,15 @@ Ability.GetWeaponInfo = function (entityID) {
   return store;
 };
 
-Ability.prototype.UseKnightAbility = function (weapon, character, target, location, characters, roomID, io) {
+Ability.prototype.UseKnightAbility = function (data) {
   var ability = this;
+  var weapon = data.weapon;
+  var character = data.character;
+  var target = data.target;
+  var location = data.location;
+  var characters = data.characters;
+  var roomID = data.game_uuid;
+  var io = data.io;
   weapon = Ability.GetWeaponInfo(weapon);
   // Check if weapon matches the required weapon
   if (ability.reqType != weapon.type && ability.reqType != null) {
@@ -84,6 +91,15 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
   if (!target.hasOwnProperty("x") || !target.hasOwnProperty("y")) {
     return;
   }
+  if (character.channelling != false) {
+    if (character.channelling == true) {
+      character.channelling = "a";
+    }
+    else {
+      character.channelling += "a";
+    }
+    character.channellingAbility.CheckInterruption();
+  }
   // Make it so that the weapon can't be used while casting
   weapon.busy = true;
   // Emit the use of the ability
@@ -99,29 +115,30 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
     // Handle different ability types
     // For offence, target is another character (can't target knights) and/or position
     if (ability.type == Ability.AbilityType.OFFENSIVE) {
-      // Check if ability has collided with a wall
+      // Projectile array
       var projectiles = [];
+      // The location of the character who cast
+      var prevLocation = location.characters[location.characterIndex.indexOf(character.id)].location;
       // Multiple projectiles
       if (ability.numProjectiles > 1) {
         for (var i = 0; i < ability.numProjectiles; i++) {
           if (i > ability.numProjectiles / 2) {
-            projectiles.push(Vec2.setLength({x: target.x + i, y: target.y + i}, ability.range + character.rangeModifier));
+            projectiles.push(Vec2.add(Vec2.setLength({x: target.x + i, y: target.y + i}, ability.range + character.rangeModifier)), prevLocation);
           }
           else if (i < ability.numProjectiles / 2) {
-            projectiles.push(Vec2.setLength({x: target.x - i, y: target.y - i}, ability.range + character.rangeModifier));
+            projectiles.push(Vec2.add(Vec2.setLength({x: target.x - i, y: target.y - i}, ability.range + character.rangeModifier)), prevLocation);
           }
           else {
-            projectiles.push(Vec2.setLength({x: target.x, y: target.y}, ability.range + character.rangeModifier));
+            projectiles.push(Vec2.add(Vec2.setLength({x: target.x, y: target.y}, ability.range + character.rangeModifier)), prevLocation);
           }
         }
       }
       else {
-        projectiles.push(Vec2.setLength({x: target.x, y: target.y}, ability.range + character.rangeModifier));
+        projectiles.push(Vec2.add(Vec2.setLength({x: target.x, y: target.y}, ability.range + character.rangeModifier)), prevLocation);
       }
       projectiles.forEach(function (projectile) {
         // Check if the ability hits a wall (if its ranged)
         var collisionPoints = [];
-        var prevLocation = location.characters[location.characterIndex.indexOf(character.id)].location;
         if (ability.numProjectiles > 1) {
           for (var i = 0; i < location.map.geom.length; i++) {
             var p = location.map.geom[i];
@@ -195,6 +212,17 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
             }
             // Damage taken by must be at least 1 and most 18000
             hitCharacter.hp -= Math.max(1, Math.min(totalDamage, 18000));
+            if (hitCharacter.channelling) {
+              if (hitCharacter.channelling != false) {
+                if (hitCharacter.channelling == true) {
+                  hitCharacter.channelling = "d";
+                }
+                else {
+                  hitCharacter.channelling += "d";
+                }
+                hitCharacter.channellingAbility.CheckInterruption();
+              }
+            }
           }
           // Bleed
           if (ability.hasOwnProperty("bleed") && ability.bleed > 1) {
@@ -209,15 +237,19 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
           }
           // Stun
           if (ability.hasOwnProperty("stun") && ability.stun > 0) {
-            hitCharacter.stunned = true;
+            hitCharacter.stunCount = hitCharacter.stunCount + 1;
+            if (hitCharacter.channelling) {
+              if (hitCharacter.channelling != false) {
+                if (hitCharacter.channelling == true) {
+                  hitCharacter.channelling = "s";
+                } else {
+                  hitCharacter.channelling += "s";
+                }
+                hitCharacter.channellingAbility.CheckInterruption();
+              }
+            }
             setTimeout (function() {
-              // Check if stunned again
-              if (hitCharacter.stunCount > 1) {
-                hitCharacter.stunCount -= 1;
-              }
-              else {
-                hitCharacter.stunned = false;
-              }
+              hitCharacter.stunCount -= 1;
             }, ability.stun * 1000);
           }
           // Decrease Range
@@ -260,6 +292,10 @@ Ability.prototype.UseKnightAbility = function (weapon, character, target, locati
           target.rangeModifier += ability.rangeModifier;
         }, ability.duration * 1000);
       }
+    }
+    // Check if channeling has been interrupted
+    if (character.channelItem != null) {
+      character.channelItem.CheckInterruption(data);
     }
     // Set the new cooldown
     ability.curCoolDown = new Date().getTime();
