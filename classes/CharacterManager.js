@@ -27,6 +27,7 @@ CharacterManager.prototype = {
     // Set boss attributes
     char.boss = boss;
     char.hp = boss.hp;
+    char.maxhp = boss.hp;
     char.blockArmor = boss.armor;
     char.speed = boss.speed;
     return char;

@@ -10,7 +10,7 @@ exports.input = {
   knight: {
     ABILITY_START: 'as',
     ABILITY_END: 'ae',
-    USE_ITEM: 'i',
+    USE_ITEM_START: 'i',
     CHANGE_EQUIPPED: 'ce'
   },
 
@@ -27,5 +27,7 @@ exports.output = {
   CHAR_HP: 'h',
   PLAYER_LEAVES: 'l',
   TRAP_TRIGGERED: 't',
-  CHAR_CREATED: 'nc'
+  CHAR_CREATED: 'nc',
+  USE_ITEM_END: 'ie',
+  USE_ITEM_INTERRUPTED: "ii"
 };
