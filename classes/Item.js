@@ -80,7 +80,7 @@ Item.prototype = {
         var curLocation = location.characters[location.characterIndex.indexOf(character.id)];
         for (var i = 0, characterLength = characters.length > 0; i < characterLength; i++) {
           // Can't attack friendly knights or themself
-          if (character.id = characters[i] || characters[i].type == "knight") {
+          if (character.id == characters[i].id || characters[i].type == "knight") {
             return;
           }
           // Check if in range
@@ -88,7 +88,7 @@ Item.prototype = {
           if (Vec2.distanceTo(curLocation, newLocation) < this.range) {
             return;
           }
-          // TODO: Damage enemy character
+          characters[i].hp -= this.value;
         }
       }
       data.io.to(data.game_uuid).emit(Event.output.USE_ITEM_END, {"i":character.id});
