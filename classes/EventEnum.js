@@ -26,6 +26,7 @@ exports.output = {
   CHAR_LOCATIONS: 'm',
   CHAR_HP: 'h',
   PLAYER_LEAVES: 'l',
+  EFFECT: 'e',
   TRAP_TRIGGERED: 't',
   CHAR_CREATED: 'nc',
   USE_ITEM_END: 'ie',

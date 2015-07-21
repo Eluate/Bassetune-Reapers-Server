@@ -5,76 +5,53 @@ var Vec2 = require("./Vector2");
 var Event = require('./EventEnum');
 
 var Ability = function (entityID) {
-  var abilities = require('./resources/abilities');
-  var store = abilities[entityID];
-  this.id = entityID;
-
-  // Store all variables
-  this.StoreAbilityInfo(this, store);
-
+  var abilityInfo = require('./resources/abilities')[entityID];
+  // Set ability info
+  this.id = abilityInfo.id;
+  this.reqType = abilityInfo.required_type;
+  this.aoeSize = abilityInfo.aoe_size;
+  this.range = abilityInfo.range;
+  this.coolDown = abilityInfo.cool_down;
+  this.castTime = abilityInfo.cast_time;
+  this.type = abilityInfo.type;
+  this.duration = abilityInfo.duration;
+  this.numProjectiles = abilityInfo.projectiles;
+  this.skewer = abilityInfo.skewer;
+  this.damage = abilityInfo.damage;
+  this.armor = abilityInfo.armor;
+  this.damageModifier = abilityInfo.damage_modifier;
+  this.projSpeed = abilityInfo.projectile_speed;
+  this.piercing = abilityInfo.piercing;
+  this.rangeDamageModifier = abilityInfo.range_damage_modifier;
+  this.moveDistance = abilityInfo.move_distance;
+  this.numAttacks = abilityInfo.multiple_attacks;
+  this.ignoreArmor = abilityInfo.ignore_armor;
+  this.bleed = abilityInfo.bleed;
+  this.stun = abilityInfo.stun;
+  this.rangeModifier = abilityInfo.range_modifier;
+  // Check if any are undefined
+  for (var abilityProperty in this) {
+    if (this.hasOwnProperty(abilityProperty)) {
+      if (this[abilityProperty].toString().toLowerCase() == "null") {
+        this[abilityProperty] = undefined;
+      }
+    }
+  }
   // The current cooldown
   this.curCoolDown = 0;
 };
 
-Ability.prototype.StoreAbilityInfo = function (ability, abilityInfo) {
-  ability.id = abilityInfo.id;
-  ability.reqType = abilityInfo.required_type;
-  ability.aoeSize = abilityInfo.aoe_size;
-  ability.range = abilityInfo.range;
-  ability.coolDown = abilityInfo.cool_down;
-  ability.castTime = abilityInfo.cast_time;
-  ability.type = abilityInfo.type;
-  ability.duration = abilityInfo.duration;
-  ability.numProjectiles = abilityInfo.projectiles;
-  ability.skewer = abilityInfo.skewer;
-  ability.damage = abilityInfo.damage;
-  ability.armor = abilityInfo.armor;
-  ability.damageModifier = abilityInfo.damage_modifier;
-  ability.projSpeed = abilityInfo.projectile_speed;
-  ability.piercing = abilityInfo.piercing;
-  ability.rangeDamageModifier = abilityInfo.range_damage_modifier;
-  ability.moveDistance = abilityInfo.move_distance;
-  ability.numAttacks = abilityInfo.multiple_attacks;
-  ability.ignoreArmor = abilityInfo.ignore_armor;
-  ability.bleed = abilityInfo.bleed;
-  ability.stun = abilityInfo.stun;
-  ability.rangeModifier = abilityInfo.range_modifier;
-
-  for (var abilityProperty in ability) {
-    if (ability.hasOwnProperty("abilityProperty")) {
-      if (ability[abilityProperty].toString().toLowerCase() == "null") {
-        ability[abilityProperty] = undefined;
-      }
-    }
-  }
-};
-
-Ability.prototype.AbilityType = {
-  OFFENSIVE: "offensive",
-  DEFENSIVE: "defensive",
-  SPECIAL: "special"
-};
-
-Ability.GetWeaponInfo = function (entityID) {
-  var weapons = require('./resources/weapons');
-  var weapon = weapons[entityID];
-
-  var store = {};
-  store.weaponType = weapon.weapon_type;
-  store.damage = weapon.damage;
-  store.busy = false;
-  return store;
-};
-
 Ability.prototype.UseKnightAbility = function (data) {
-  var ability = this;
-  var weapon = data.weapon;
-  var character = data.character;
-  var target = data.target;
-  var location = data.location;
-  var characters = data.characters;
-  var roomID = data.game_uuid;
-  var io = data.io;
+  // Assign variables from data
+  var ability = this,
+      weapon = data.weapon,
+      character = data.character,
+      target = data.target,
+      location = data.location,
+      characters = data.characters,
+      roomID = data.game_uuid,
+      io = data.io;
+  // Retrieve weapon data
   weapon = Ability.GetWeaponInfo(weapon);
   // Check if weapon matches the required weapon
   if (ability.reqType != weapon.type && ability.reqType != null) {
@@ -190,14 +167,14 @@ Ability.prototype.UseKnightAbility = function (data) {
         }
         // Apply offensive loop for hit targets
         for (i = 0; i < hitTarget.length; i++) {
-          var hitCharacter;
+          var hitCharacter = 0;
           characters.forEach(function(character) {
             if (character.id == hitTarget[i].id && character.type != "knight") {
               hitCharacter = character;
             }
           });
           // Continue if no characters are found
-          if (!hitCharacter) {
+          if (hitCharacter == 0) {
             continue;
           }
           // Damage
@@ -301,6 +278,33 @@ Ability.prototype.UseKnightAbility = function (data) {
     ability.curCoolDown = new Date().getTime();
   }, ability.castTime * 1000);
   Ability.EmitKnightFinish(character.id, ability.id, roomID, io);
+};
+
+Ability.AbilityType = {
+  OFFENSIVE: "offensive",
+  DEFENSIVE: "defensive"
+};
+
+Ability.GetWeaponInfo = function (entityID) {
+  var weapons = require('./resources/weapons');
+  var weapon = weapons[entityID];
+  return {
+    weaponType: weapon.weapon_type,
+    damage: weapon.damage,
+    busy: false
+  };
+};
+
+Ability.Effect = function (abilityID, characterID, positive, type, roomID, io) {
+  io.to(roomID).emit(Event.output.EFFECT, {"a":abilityID, "c":characterID, "t":type});
+};
+
+Ability.EffectTypes = {
+  IncreasedRange: "I_Range",
+  DecreasedRange: "D_Range",
+  Regeneration: "Regen",
+  Bleed: "Bleed",
+  Stun: "Stun"
 };
 
 Ability.AttackSpeeds = {
