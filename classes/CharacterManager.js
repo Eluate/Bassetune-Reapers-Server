@@ -20,7 +20,7 @@ CharacterManager.prototype = {
     // char.knight.inventory = inventory;
     return char;
   },
-  SpawnBosNs: function (owner, level, entity) {
+  SpawnBoss: function (owner, level, entity) {
     var char = new character(this.count, owner, "boss", entity);
     this.count++;
     var boss = (new bosses()).bosses[entity];
