@@ -96,6 +96,8 @@ Ability.prototype.UseKnightAbility = function (data) {
       var projectiles = [];
       // The location of the character who cast
       var prevLocation = location.characters[location.characterIndex.indexOf(character.id)].location;
+      // Set target as direction
+      target = Vec2.sub(target, prevLocation);
       // Multiple projectiles
       if (ability.numProjectiles > 1) {
         for (var i = 0; i < ability.numProjectiles; i++) {
@@ -106,7 +108,7 @@ Ability.prototype.UseKnightAbility = function (data) {
             projectiles.push(Vec2.add(Vec2.setLength({x: target.x - i, y: target.y - i}, ability.range + character.rangeModifier)), prevLocation);
           }
           else {
-            projectiles.push(Vec2.add(Vec2.setLength({x: target.x, y: target.y}, ability.range + character.rangeModifier)), prevLocation);
+            projectiles.push(Vec2.add(Vec2.setLength(target, ability.range + character.rangeModifier)), prevLocation);
           }
         }
       }

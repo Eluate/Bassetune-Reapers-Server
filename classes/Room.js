@@ -109,7 +109,7 @@ var Room = function (io, socket, game_uuid, config) {
         return;
       }
       characters.forEach(function (character) {
-        if (character.id != characterID) {
+        if (character.id != characterID && character.type == "knight") {
           return;
         }
         players.forEach(function (player) {
@@ -144,8 +144,8 @@ var Room = function (io, socket, game_uuid, config) {
             if (!character.stunned && character.knight != null) {
               data.itemID = itemID;
               data.location = location;
-              data.character = character;
-              data.characters = characterID;
+              data.character = characters[characterID];
+              data.characters = characters;
               data.game_uuid = game_uuid;
               data.io = io;
               character.knight.UseItem(data);

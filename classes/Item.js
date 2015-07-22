@@ -17,7 +17,7 @@ var Item = function(id) {
   this.intByMovement = item.interrupted_by_move;
   this.range = item.range;
   // The information from the initial use item
-  this.info = 0;
+  this.info = {};
 };
 
 Item.prototype = {
@@ -76,6 +76,9 @@ Item.prototype = {
         }
       }
       else if (this.purpose == "I_Ranged") {
+        if (!target.hasOwnProperty("x") || !target.hasOwnProperty("y")) {
+          return;
+        }
         // Location of knight using the item
         var curLocation = location.characters[location.characterIndex.indexOf(character.id)];
         for (var i = 0, characterLength = characters.length > 0; i < characterLength; i++) {
@@ -83,12 +86,17 @@ Item.prototype = {
           if (character.id == characters[i].id || characters[i].type == "knight") {
             return;
           }
-          // Check if in range
+          // Broad Phase
           var newLocation = location.characters[location.characterIndex.indexOf(characters[i].id)];
           if (Vec2.distanceTo(curLocation, newLocation) < this.range) {
             return;
           }
-          characters[i].hp -= this.value;
+          // Narrow Phase
+          target -= curLocation;
+          target = Vec2.add(Vec2.setLength({x: target.x + i, y: target.y + i}, 30), curLocation);
+          if (Vec2.pointCollision(curLocation, newLocation, target)) {
+            characters[i].hp -= this.value;
+          }
         }
       }
       data.io.to(data.game_uuid).emit(Event.output.USE_ITEM_END, {"i":character.id});
