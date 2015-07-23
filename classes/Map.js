@@ -10,4 +10,10 @@ var Map = function () {
   }
 };
 
+Map.prototype = {
+  EmitMap: function(io, socketID) {
+    io.sockets.socket(socket.id).emit(JSON.stringify(this.geom));
+  }
+};
+
 module.exports = Map;
