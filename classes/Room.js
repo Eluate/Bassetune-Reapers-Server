@@ -198,13 +198,14 @@ var Room = function (io, socket, game_uuid, config) {
     location.SendCharacterLocations();
     location.UpdateTime();
     // HP
-    // TODO: Optimize for more hp to be sent at once
+    var hp = [];
     characters.forEach(function(character) {
       if (character.hp != character.prevhp) {
-        socket.emit(Event.output.CHAR_HP, {i: character.id, h: character.hp});
+        hp.push({i:character.id, h:character.hp});
         character.prevhp = character.hp;
       }
     });
+    socket.emit(Event.output.CHAR_HP, hp);
   }
   // Start Game Loop, 24 Updates per second
   setInterval(SendUpdates, 41);
