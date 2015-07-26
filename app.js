@@ -1,124 +1,107 @@
 var cluster = require('cluster');
 
-if(cluster.isMaster) 
-{
-    //master should communicate with face instances using http on startPort
-    var startPort = process.env.PORT || 3000;//startPort is reserved for http server to communicate with backendFace
-    var redisClient = require('./modules/redisHandler').redisClient;
-    var uuid = require('node-uuid');
-    
-    
-    
-    // Count the machine's CPUs
-    var cpuCount = require('os').cpus().length;
+if(cluster.isMaster) {
+  //master should communicate with face instances using http on startPort
+  var startPort = process.env.PORT || 3000;//startPort is reserved for http server to communicate with backendFace
+  var redisClient = require('./modules/redisHandler').redisClient;
+  var uuid = require('node-uuid');
 
-    var workers = {};
-    
-    var init = function()
-    {
-        //create worker for cpu and add it to the list of workers with its port
-        for(var i = 1; i< cpuCount+1; i += 1)
-        {
-            var nport = startPort + i;
-            var idGS = uuid.v1();
-            var w = cluster.fork({newPort: nport,idGS : idGS});
-            var workerHandler = {worker : w , port : nport , idGS : idGS};
-            workers[w.id] = workerHandler;
-        }
-        
-       
-        
-    };
+  // Count the machine's CPUs
+  var cpuCount = require('os').cpus().length;
+  var workers = {};
 
-    init();
-    
+  // Create worker children
+  for (var i = 1; i < cpuCount + 1; i += 1) {
+    var workerPort = startPort + i;
+    var workerID = uuid.v1();
+    var w = cluster.fork({port: workerPort, workerID: workerID});
+    var workerHandler = {worker: w, port: workerPort, workerID: workerID};
+    workers[w.id] = workerHandler;
+  }
 
-    // Listen for dying workers
-    cluster.on('exit', function (worker) 
-    {
-        // Replace the dead worker, we're not sentimental
-        console.log('Worker ' + worker.id + ' died :(');
-        redisClient.multi();
-        redisClient.lrem("gameServerInstances",workers[worker.id].idGS);
-        redisClient.del(workers[worker.id].idGS);
-        redisClient.exec();
+  // Listen for dying workers
+  cluster.on('exit', function (worker) {
+    // Replace the dead worker, we're not sentimental
+    console.log('Worker ' + worker.id + ' died :(');
+    redisClient.multi();
+    redisClient.lrem("gameServerInstances", workers[worker.id].workerID);
+    redisClient.del(workers[worker.id].workerID);
+    redisClient.exec();
 
-        var idGS = uuid.v1();//assign a new id, all games on previous worker dead not supposed to count (or to happen btw, just in case)
-        cluster.fork({newPort: workers[worker.id].port , idGS : idGS});    
-        //some code to respawn the new worker with the same port and update redis
-        workers[worker.id] = undefined;
-        //make new worker        
-    });
-}
-else//worker
-{
-    var redisClient = require('./modules/redisHandler').redisClient;
-    var Room = require('./classes/Room');
-    var app = require('express')();
-    app.set('port', process.env.newPort );
-    var http = require("http").Server(app);
-    console.log("newPort : " + process.env.newPort );
-    var server = app.listen(app.get('port'), function() 
-    {
-        console.log('Worker Game Express server listening on address : ' + server.address().address + ' on port ' + server.address().port);
+    // Create new worker
+    var workerID = uuid.v1(); // Assign a new id
+    cluster.fork({port: workers[worker.id].port, workerID: workerID});
+    //some code to respawn the new worker with the same port and update redis
+    workers[worker.id] = undefined;
+    //make new worker
+  });
 
-
-        redisClient.multi();
-        redisClient.lpush("gameServerInstances",process.env.idGS);
-        redisClient.hmset(process.env.idGS,
-            {
-                ip : server.address().address,
-                port : process.env.newPort,
-                numberGames : 0 //initialized to 0, incremented everytime face creates a new game instance through matchmaking
-            });
-        redisClient.exec();
-
-        var io = require('socket.io')({transports: ['websocket']});
-        io.listen(server);
-
-        var rooms = {};
-
-        if(io) console.log("socket io running and accepting connections.");
-
-        io.on('connection', function (socket) 
-        {
-            console.log("connection");
-            var socketId = socket.id;
-            var clientIp = socket.request.connection.remoteAddress;
-            console.log(cluster.worker.id + ' : ' + clientIp + " just connected.");
-            socket.emit('ok');
-            //this should be received after player connects, client supposed to send this msg with room name being the game_uuid
-            socket.on('joinRoom', function (data) 
-            {
-                console.log(data);
-                socket.join(data.game_uuid);
-                socket.emit('ok');
-                //starting now, rest of communication is with Room
-            });
-            //communication btween this worker and faces , !! NOTE !! THIS STUFF NEEDS TO BE TRANSFORMED INTO REST CALLS 
-            socket.on('createRoom',function (data) 
-            {
-                //get game config data from redis, using game_uuid, then put in config var
-                //var config = ...
-                var room = new Room(io,socket,data.game_uuid,config);
-                rooms[data.game_uuid] = room;
-                socket.emit('ok');
-                redisClient.hincrby(process.env.idGS, "numberGames" , 1);
-            })
-            //etc
-        });
-  
-    });
-    
-    
-    
-
+  console.log("Master finished processing initial statements.");
 }
 
+if (cluster.isMaster) {
+  return;
+}
 
+var ip = require('external-ip')()(function(err, ip) {
+  var redisClient = require('./modules/redisHandler').redisClient;
+  var app = require('express')();
+  var http = require("http").Server(app);
+  var Room = require("./classes/Room");
+  var rooms = {};
 
+  app.set('port', process.env.port);
+  // Listen for create room calls
+  app.use('/createRoom', function (req, res) {
+    // Check authentication
+    if (data.auth != "45X%Dg@}R`d-E])x9d" || !data.matchID || !data.players) {
+      return;
+    }
+    // Parse data
+    var players = JSON.parse(req.match);
+    var matchID = parseInt(req.matchID, 10);
+    var config = {"knightCount":players[0].matchPlayers[0], "bossCount:":players[0].matchPlayers[2]};
+    // Create room using data
+    var room = new Room(io, matchID, config);
+    rooms[matchID] = room;
+    // Update redis
+    redisClient.hincrby(process.env.workerID, "numberGames", 1);
+    // Reply
+    res.send('created');
+  });
 
+  app.listen(app.get("port"));
+  console.log('Worker Game Express server listening at ' + ip + ' on port: ' + app.get("port"));
 
+  // Update redis
+  redisClient.multi();
+  redisClient.lpush("gameServerInstances", process.env.workerID);
+  redisClient.hmset(process.env.workerID,
+    {
+      ip: ip,
+      port: process.env.port,
+      numberGames: 0 // Incremented every time a new game instance is created
+    });
+  redisClient.exec();
 
+  // Start SocketIO
+  var io = require('socket.io')({transports: ['websocket']});
+  io.listen(http);
+  if (io) {
+    console.log("socket io running and accepting connections.");
+  }
 
-module.exports = app;
+  io.on('connection', function (socket) {
+    var socketID = socket.id;
+    var clientIP = socket.request.connection.remoteAddress;
+    console.log(cluster.worker.id + ': ' + clientIP + " just connected.");
+    socket.emit('ok');
+
+    socket.on('joinRoom', function (data) {
+      console.log(data);
+      socket.join(data.game_uuid);
+      socket.emit('ok');
+      //starting now, rest of communication is with Room
+    });
+  });
+});

@@ -1,4 +1,4 @@
-var Room = function (io, socket, game_uuid, config) {
+var Room = function (io, game_uuid, config) {
   var Event = require('./EventEnum');
   var Chat = require('./Chat');
   var Location = require('./Location');
