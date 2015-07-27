@@ -8,10 +8,10 @@ if(cluster.isMaster) {
 
   // Count the machine's CPUs
   var cpuCount = require('os').cpus().length;
-  var workers = {};
+  var workers = [];
 
   // Create worker children
-  for (var i = 1; i < cpuCount + 1; i += 1) {
+  for (var i = 1; i < cpuCount + 1; i++) {
     var workerPort = startPort + i;
     var workerID = uuid.v1();
     var w = cluster.fork({port: workerPort, workerID: workerID});
@@ -22,28 +22,29 @@ if(cluster.isMaster) {
   // Listen for dying workers
   cluster.on('exit', function (worker) {
     // Replace the dead worker, we're not sentimental
-    console.log('Worker ' + worker.id + ' died :(');
-    redisClient.multi();
+    console.log('Worker ' + worker.id + ' died.');
     redisClient.lrem("gameServerInstances", workers[worker.id].workerID);
     redisClient.del(workers[worker.id].workerID);
-    redisClient.exec();
-
     // Create new worker
     var workerID = uuid.v1(); // Assign a new id
-    cluster.fork({port: workers[worker.id].port, workerID: workerID});
-    //some code to respawn the new worker with the same port and update redis
-    workers[worker.id] = undefined;
-    //make new worker
+    var w = cluster.fork({port: workers[worker.id].port, workerID: workerID});
+    workers[w.id] = {worker: w, port: workerPort, workerID: workerID};
   });
 
   console.log("Master finished processing initial statements.");
 }
 
-if (cluster.isMaster) {
+if (!cluster.isWorker) {
   return;
 }
 
 var ip = require('external-ip')()(function(err, ip) {
+  // Check if failed
+  if (err || !ip) {
+    console.log("Worker ID: " + process.env.workerID + " - couldn't retrieve IP.");
+    process.exit();
+  }
+  // Otherwise continue
   var redisClient = require('./modules/redisHandler').redisClient;
   var app = require('express')();
   var http = require("http").Server(app);
@@ -71,24 +72,41 @@ var ip = require('external-ip')()(function(err, ip) {
   });
 
   app.listen(app.get("port"));
-  console.log('Worker Game Express server listening at ' + ip + ' on port: ' + app.get("port"));
+  console.log('Worker ID ' + process.env.workerID + ' listening at ' + ip + ' on port: ' + app.get("port"));
 
-  // Update redis
-  redisClient.multi();
-  redisClient.lpush("gameServerInstances", process.env.workerID);
-  redisClient.hmset(process.env.workerID,
-    {
-      ip: ip,
-      port: process.env.port,
-      numberGames: 0 // Incremented every time a new game instance is created
-    });
-  redisClient.exec();
+  // Get region
+  var request = require('request');
+  request('http://169.254.169.254/latest/meta-data/placement/availability-zone', function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      // Update redis
+      var regions = ["us-east-1", "us-west-1", "us-west-2", "sa-east-1", "eu-west-1", "eu-central-1", "ap-southeast-2",
+                    "ap-southeast-1", "ap-northeast-1"];
+      var region = regions[0];
+      regions.forEach(function(regionName) {
+        if (body.toLowerCase().indexOf(regionName) != -1) {
+          region = regionName;
+        }
+      });
+      redisClient.lpush("gameServerInstances", process.env.workerID);
+      redisClient.hmset(process.env.workerID,
+        {
+          ip: ip,
+          port: process.env.port,
+          numberGames: 0, // Incremented every time a new game instance is created
+          region: region
+        });
+      console.log("Worker ID: " + process.env.workerID + " - Updated Redis.");
+    } else {
+      console.log("Worker ID: " + process.env.workerID + " - couldn't get region.");
+      process.exit(0);
+    }
+  });
 
   // Start SocketIO
   var io = require('socket.io')({transports: ['websocket']});
   io.listen(http);
   if (io) {
-    console.log("socket io running and accepting connections.");
+    console.log("Worker ID: " + process.env.workerID + " - Socket.IO running and accepting connections.");
   }
 
   io.on('connection', function (socket) {
