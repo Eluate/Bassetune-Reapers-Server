@@ -59,20 +59,26 @@ var ip = require('external-ip')()(function(err, ip) {
       return;
     }
     // Parse data
-    var players = JSON.parse(req.match);
+    var match = JSON.parse(req.match);
     var matchID = parseInt(req.matchID, 10);
-    var config = {"knightCount":players[0].matchPlayers[0], "bossCount:":players[0].matchPlayers[2]};
+    var config = {
+      matchType: match.matchType,
+      matchPlayers: match.matchPlayers,
+      bosses: match.bosses,
+      knights: match.knight,
+      players: match.bosses.concat(match.knights)
+    };
     // Create room using data
     var room = new Room(io, matchID, config);
     rooms[matchID] = room;
     // Update redis
     redisClient.hincrby(process.env.workerID, "numberGames", 1);
     // Reply
-    res.send('created');
+    res.send("ok");
   });
 
   app.listen(app.get("port"));
-  console.log('Worker ID ' + process.env.workerID + ' listening at ' + ip + ' on port: ' + app.get("port"));
+  console.log('Worker ID: ' + process.env.workerID + ' listening at ' + ip + ' on port ' + app.get("port"));
 
   // Get region
   var request = require('request');
@@ -92,7 +98,7 @@ var ip = require('external-ip')()(function(err, ip) {
         {
           ip: ip,
           port: process.env.port,
-          numberGames: 0, // Incremented every time a new game instance is created
+          numberGames: 0,
           region: region
         });
       console.log("Worker ID: " + process.env.workerID + " - Updated Redis.");
@@ -112,7 +118,7 @@ var ip = require('external-ip')()(function(err, ip) {
   io.on('connection', function (socket) {
     var socketID = socket.id;
     var clientIP = socket.request.connection.remoteAddress;
-    console.log(cluster.worker.id + ': ' + clientIP + " just connected.");
+    console.log("WorkerID: " + process.env.workerID + ': ' + clientIP + " just connected.");
     socket.emit('ok');
 
     socket.on('joinRoom', function (data) {

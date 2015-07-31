@@ -1,10 +1,12 @@
-var Room = function (io, game_uuid, config) {
-  var Event = require('./EventEnum');
-  var Chat = require('./Chat');
-  var Location = require('./Location');
-  var Map = require('./Map');
-  var Event = require('./EventEnum');
+var Event = require('./EventEnum');
+var Chat = require('./Chat');
+var Location = require('./Location');
+var Map = require('./Map');
+var Event = require('./EventEnum');
+var MySQLHandler = require('./mysqlHandler');
 
+var Room = function (io, game_uuid, config) {
+  // Start instances of modules
   var map = new Map();
   var chat = new Chat(io, game_uuid);
   var location = new Location(io, game_uuid, map);
@@ -17,10 +19,22 @@ var Room = function (io, game_uuid, config) {
   /*
     Get player Data
    */
-  this.StorePlayerData = function (data) {
+  var StorePlayerData = function (data) {
+    // Sort boss data
+    config.bosses.forEach(function(accountID) {
+      MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?", [accountID], function(err, results) {
+        // TODO: Get inventory
+      });
+    });
+    config.knights.forEach(function(accountID) {
+      MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?", [accountID], function(err, results) {
+        // TODO: Get inventory
+      });
+    });
     // TODO: Store player data
     players = data;
   };
+  StorePlayerData(config);
 
   /*
    Handle Reconnection
