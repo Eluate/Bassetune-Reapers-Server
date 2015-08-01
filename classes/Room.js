@@ -20,15 +20,45 @@ var Room = function (io, game_uuid, config) {
     Get player Data
    */
   var StorePlayerData = function (data) {
+    // Get player data
+    config.players.forEach(function (accountID) {
+      mysqlHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?" , [accountID] , function(err,results) {
+        if (err) {
+          return;
+        }
+        players.push(results[0]);
+      });
+    });
     // Sort boss data
     config.bosses.forEach(function(accountID) {
-      MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?", [accountID], function(err, results) {
-        // TODO: Get inventory
+      MySQLHandler.connection.query("SELECT * FROM br_inventory WHERE account_id = ? AND false = isNull(item_id)", [accountID], function(err, results) {
+        if (err) {
+          return;
+        }
+        var allItems = [];
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].item_id.toString() != "null") {
+            items.push(results[i]);
+          }
+        }
+        // TODO: Filter bosses, minibosses, creatures, traps
       });
     });
     config.knights.forEach(function(accountID) {
-      MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?", [accountID], function(err, results) {
-        // TODO: Get inventory
+      MySQLHandler.connection.query("SELECT * FROM br_inventory WHERE account_id = ?", [accountID], function(err, results) {
+        var items = [];
+        var weapons = [];
+        var abilities = [];
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].weapon_id.toString() != "null") {
+            weapons.push(results[i]);
+          } else if (results[i].item_id.toString() != "null") {
+            items.push(results[i]);
+          } else if (results[i].ability_id.toString() != "null") {
+            items.push(results[i]);
+          }
+        }
+        // TODO: Set inventory
       });
     });
     // TODO: Store player data
@@ -40,17 +70,16 @@ var Room = function (io, game_uuid, config) {
    Handle Reconnection
    */
   socket.in(game_uuid).on('register', function (data) {
-    var hasRegistered = false;
-    players.forEach(function (player) {
-      // TODO: Read redis for username uuid, replace with data.uuid on next line
-      if (data.uuid == player.uuid) {
-        players[player.socketID].socketID = socket;
-        hasRegistered = true;
-      }
-    });
-    if (!hasRegistered) {
+    if (!players.some(function (player) {
+      if (data.uuid == player.last_uuid) {
+        player.socketID = socket.id;
+        return true;
+      }return false;
+    })) {
       socket.disconnect();
     }
+    // emit registered
+    // TODO: Emit data (Characters, Locations, Players)
   });
 
   /*
@@ -72,9 +101,6 @@ var Room = function (io, game_uuid, config) {
     // Movement
     socket.in(game_uuid).on(Event.input.MOVE, function (data) {
       for (var key in data) {
-        if (data[key].length != 2) {
-          return;
-        }
         if (isNaN(parseFloat(data[key][0])) || isNaN(parseFloat(data[key][1]))) {
           return;
         }
