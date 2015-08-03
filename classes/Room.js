@@ -3,6 +3,7 @@ var Chat = require('./Chat');
 var Location = require('./Location');
 var Map = require('./Map');
 var Event = require('./EventEnum');
+var Finder = require('./Finder');
 var MySQLHandler = require('./mysqlHandler');
 
 var Room = function (io, game_uuid, config) {
@@ -10,6 +11,7 @@ var Room = function (io, game_uuid, config) {
   var map = new Map();
   var chat = new Chat(io, game_uuid);
   var location = new Location(io, game_uuid, map);
+  var characterManager = require('./CharacterManager');
 
   // All players that exist in the current game
   var players = [];
@@ -22,7 +24,7 @@ var Room = function (io, game_uuid, config) {
   var StorePlayerData = function (data) {
     // Get player data
     config.players.forEach(function (accountID) {
-      mysqlHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?" , [accountID] , function(err,results) {
+      MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?" , [accountID] , function(err,results) {
         if (err) {
           return;
         }
@@ -38,14 +40,15 @@ var Room = function (io, game_uuid, config) {
         var allItems = [];
         for (var i = 0; i < results.length; i++) {
           if (results[i].item_id.toString() != "null") {
-            items.push(results[i]);
+            allItems.push(results[i]);
           }
         }
         // TODO: Filter bosses, minibosses, creatures, traps
       });
     });
     config.knights.forEach(function(accountID) {
-      MySQLHandler.connection.query("SELECT * FROM br_inventory WHERE account_id = ?", [accountID], function(err, results) {
+      // Get all equipped items & abilities
+      MySQLHandler.connection.query("SELECT * FROM br_inventory WHERE account_id = ? AND (false = isnull(inventory_slot) OR false = isnull(ability_slot))", [accountID], function(err, results) {
         var items = [];
         var weapons = [];
         var abilities = [];
@@ -55,13 +58,16 @@ var Room = function (io, game_uuid, config) {
           } else if (results[i].item_id.toString() != "null") {
             items.push(results[i]);
           } else if (results[i].ability_id.toString() != "null") {
-            items.push(results[i]);
+            abilities.push(results[i]);
           }
         }
-        // TODO: Set inventory
+        var character = characterManager.SpawnKnight(Finder.GetUsernameFromAccountID(players, accountID));
+        character.knight.inventory.items = items;
+        character.knight.abilities = abilities;
+        character.knight.inventory.weapons = weapons;
+        character.knight.inventory.sortInventory();
       });
     });
-    // TODO: Store player data
     players = data;
   };
   StorePlayerData(config);
@@ -88,7 +94,8 @@ var Room = function (io, game_uuid, config) {
   var StartListening = function () {
     // Disconnection
     socket.in(game_uuid).on('disconnect', function () {
-      require('./Disconnect').disconnect(socket);
+      var username = Finder.GetUsernameFromSocketID(players, socket.id);
+      require('./Disconnect')(socket, username, game_uuid, io);
     });
     // Text Chat
     socket.in(game_uuid).on(Event.input.TALK, function (data) {
@@ -100,13 +107,15 @@ var Room = function (io, game_uuid, config) {
     });
     // Movement
     socket.in(game_uuid).on(Event.input.MOVE, function (data) {
+      // Received data in form of {characterID:[locationX, locationY}, ...}
       for (var key in data) {
+        // Check if data is valid or not
         if (isNaN(parseFloat(data[key][0])) || isNaN(parseFloat(data[key][1]))) {
           return;
         }
-        characters.forEach(function (character) {
+        characters.some(function (character) {
           if (character.id != key) {
-            return;
+            return false;
           }
           // Check if channelling
           if (character.channelling) {
@@ -122,6 +131,7 @@ var Room = function (io, game_uuid, config) {
           players.forEach(function (player) {
             if (player.socketID == socket.id && player.username == character.owner) {
               location.UpdateDestination(key, data[key]);
+              return true;
             }
           });
         });
@@ -129,13 +139,14 @@ var Room = function (io, game_uuid, config) {
     });
     // Leave
     socket.in(game_uuid).on(Event.input.LEAVE, function () {
-      io.sockets.connected[socket.id].disconnect();
+      var username = Finder.GetUsernameFromSocketID(players, socket.id);
+      require('./Disconnect')(socket, username, game_uuid, io);
     });
-    // Knight changing equipped
+    // Knight changing equipped armor
     socket.in(game_uuid).on(Event.input.knight.CHANGE_EQUIPPED, function (data) {
       var characterID = parseInt(data.characterID, 10);
       if (!isNaN(characterID) && characterID < characters.length &&
-        players[socket.id].username == characters[characterID].owner && characters[characterID].knight != null) {
+        Finder.GetUsernameFromSocketID(players, socket.id) == characters[characterID].owner && characters[characterID].knight != null) {
         characters[characterID].knight.ChangeEquipped(data.itemID, data.target);
       }
     });

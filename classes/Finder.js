@@ -2,10 +2,19 @@
  * Class for getting certain data
  */
 var finder =  {
-  GetUsername: function(players, socketID) {
+  GetUsernameFromSocketID: function(players, socketID) {
     var username = "";
     players.forEach(function(player) {
-      if (players.socketID == socketID) {
+      if (player.socketID == socketID) {
+        username = username;
+      }
+    });
+    return username;
+  },
+  GetUsernameFromAccountID: function(players, accountID) {
+    var username = "";
+    players.forEach(function(player) {
+      if (player.account_id == accountID) {
         username = username;
       }
     });

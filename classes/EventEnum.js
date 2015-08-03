@@ -30,5 +30,6 @@ exports.output = {
   TRAP_TRIGGERED: 't',
   CHAR_CREATED: 'nc',
   USE_ITEM_END: 'ie',
-  USE_ITEM_INTERRUPTED: "ii"
+  USE_ITEM_INTERRUPTED: "ii",
+  SERVER: "s"
 };

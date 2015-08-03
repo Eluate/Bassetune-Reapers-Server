@@ -31,6 +31,11 @@ Item.prototype = {
       return;
     }
     this.info = data;
+    // Check if the character has items remaining
+    if (this.itemQuantity < 1) {
+      return;
+    }
+    this.itemQuantity -= 1;
     character.channelling = true;
     character.channellingAbility = this;
     data.io.to(data.game_uuid).emit(Event.output.USE_ITEM_START, {"i":character.id, "t":this.id});
@@ -64,7 +69,7 @@ Item.prototype = {
         var curLocation = location.characters[data.location.characterIndex.indexOf(character.id)];
         for (var i = 0, charactersLength = characters.length; i < charactersLength; i++) {
           // Can't revive self or non-knights
-          if (character.id = characters[i] || characters[i].type != "knight") {
+          if (character.id = characters[i] || characters[i].type != "knight" || !characters[i].isDead()) {
             return;
           }
           // Location of knight to be revived
