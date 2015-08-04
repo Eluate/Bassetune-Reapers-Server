@@ -6,7 +6,7 @@ var finder =  {
     var username = "";
     players.forEach(function(player) {
       if (player.socketID == socketID) {
-        username = username;
+        username = player.username;
       }
     });
     return username;
@@ -15,10 +15,28 @@ var finder =  {
     var username = "";
     players.forEach(function(player) {
       if (player.account_id == accountID) {
-        username = username;
+        username = player.username;
       }
     });
     return username;
+  },
+  GetAccountIDFromSocketID: function(players, socketID) {
+    var accountID = "";
+    players.forEach(function (player) {
+      if (player.socketID == socketID) {
+        accountID = player.account_id;
+      }
+    });
+    return accountID;
+  },
+  GetPlayerFromAccountID: function(players, accountID) {
+    var playerObject = "";
+    players.forEach(function(player) {
+      if (player.account_id == accountID) {
+        playerObject = player;
+      }
+    });
+    return playerObject;
   }
 };
 

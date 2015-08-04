@@ -43,6 +43,16 @@ var Room = function (io, game_uuid, config) {
             allItems.push(results[i]);
           }
         }
+        allItems.forEach(function(item) {
+          // Only create the boss for now
+          if (item.purpose == "boss") {
+            var boss = characterManager.SpawnBoss(accountID, Finder.GetPlayerFromAccountID(players, accountID).boss_level, item.value);
+            io.to(game_uuid).emit(Event.output.CHAR_CREATED, {ID: character.id, Owner: character.owner, Entity: character.entity, Type: character.type, HP: character.maxhp});
+            characters.push(boss);
+            // TODO: Calculate proper starting positions
+            location.UpdateDestination(character.id, [1 + (i / 2), 1 + (i / 2)]);
+          }
+        });
         // TODO: Filter bosses, minibosses, creatures, traps
       });
     });
@@ -61,11 +71,16 @@ var Room = function (io, game_uuid, config) {
             abilities.push(results[i]);
           }
         }
-        var character = characterManager.SpawnKnight(Finder.GetUsernameFromAccountID(players, accountID));
+        var character = characterManager.SpawnKnight(accountID);
         character.knight.inventory.items = items;
         character.knight.abilities = abilities;
         character.knight.inventory.weapons = weapons;
         character.knight.inventory.sortInventory();
+        characters.push(character);
+        io.to(game_uuid).emit(Event.output.CHAR_CREATED, {ID: character.id, Owner: character.owner, Entity: character.entity, Type: character.type, HP: character.maxhp});
+        // Set character location
+        // TODO: Calculate proper starting positions
+        location.UpdateDestination(character.id, [1 + (i / 2), 1 + (i / 2)]);
       });
     });
     players = data;
@@ -129,7 +144,7 @@ var Room = function (io, game_uuid, config) {
             }
           }
           players.forEach(function (player) {
-            if (player.socketID == socket.id && player.username == character.owner) {
+            if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
               location.UpdateDestination(key, data[key]);
               return true;
             }
@@ -146,7 +161,7 @@ var Room = function (io, game_uuid, config) {
     socket.in(game_uuid).on(Event.input.knight.CHANGE_EQUIPPED, function (data) {
       var characterID = parseInt(data.characterID, 10);
       if (!isNaN(characterID) && characterID < characters.length &&
-        Finder.GetUsernameFromSocketID(players, socket.id) == characters[characterID].owner && characters[characterID].knight != null) {
+        Finder.GetAccountIDFromSocketID(players, socketID) == characters[characterID].owner && characters[characterID].knight != null) {
         characters[characterID].knight.ChangeEquipped(data.itemID, data.target);
       }
     });
@@ -164,7 +179,7 @@ var Room = function (io, game_uuid, config) {
           return;
         }
         players.forEach(function (player) {
-          if (player.socketID == socket.id && player.username == character.owner) {
+          if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
             if (!character.stunned && character.knight != null) {
               data.abilityID = abilityID;
               data.weaponID = weaponID;
@@ -191,7 +206,7 @@ var Room = function (io, game_uuid, config) {
           return;
         }
         players.forEach(function (player) {
-          if (player.socketID == socket.id && player.username == character.owner) {
+          if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
             if (!character.stunned && character.knight != null) {
               data.itemID = itemID;
               data.location = location;
@@ -221,7 +236,7 @@ var Room = function (io, game_uuid, config) {
       players.forEach(function (player) {
         characters.forEach(function (character) {
           if (character.type == "boss" && character.id == characterID &&
-            player.socketID == socket.id && player.username == character.owner) {
+            player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
             if (!character.stunned && !isNaN(abilityID) && abilityID < character.boss.abilities.length) {
               data.characters = characters;
               data.game_uuid = game_uuid;

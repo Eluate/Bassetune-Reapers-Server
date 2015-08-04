@@ -14,10 +14,6 @@ CharacterManager.prototype = {
     var char = new character(this.count, owner, "knight", 0);
     this.count++;
     char.knight = new knight();
-    // TODO: Retrieve equipped abilities and store them
-    // char.knight.abilities = abilities;
-    // TODO: Retrieve inventory and add it
-    // char.knight.inventory = inventory;
     return char;
   },
   SpawnBoss: function (owner, level, entity) {
