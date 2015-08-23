@@ -34,98 +34,99 @@ if(cluster.isMaster) {
   console.log("Master finished processing initial statements.");
 }
 
-if (!cluster.isWorker) {
-  return;
-}
+if (cluster.isWorker)
+{
+ 
 
-var ip = require('external-ip')()(function(err, ip) {
-  // Check if failed
-  if (err || !ip) {
-    console.log("Worker ID: " + process.env.workerID + " - couldn't retrieve IP.");
-    process.exit();
-  }
-  // Otherwise continue
-  var redisClient = require('./modules/redisHandler').redisClient;
-  var app = require('express')();
-  var http = require("http").Server(app);
-  var Room = require("./classes/Room");
-  var rooms = {};
-
-  app.set('port', process.env.port);
-  // Listen for create room calls
-  app.use('/createRoom', function (req, res) {
-    // Check authentication
-    if (data.auth != "45X%Dg@}R`d-E])x9d" || !data.matchID || !data.players) {
-      return;
+  var ip = require('external-ip')()(function(err, ip) {
+    // Check if failed
+    if (err || !ip) {
+      console.log("Worker ID: " + process.env.workerID + " - couldn't retrieve IP.");
+      process.exit();
     }
-    // Parse data
-    var match = JSON.parse(req.match);
-    var matchID = parseInt(req.matchID, 10);
-    var config = {
-      matchType: match.matchType,
-      matchPlayers: match.matchPlayers,
-      bosses: match.bosses,
-      knights: match.knight,
-      players: match.bosses.concat(match.knights)
-    };
-    // Create room using data
-    var room = new Room(io, matchID, config);
-    rooms[matchID] = room;
-    // Update redis
-    redisClient.hincrby(process.env.workerID, "numberGames", 1);
-    // Reply
-    res.send("ok");
-  });
+    // Otherwise continue
+    var redisClient = require('./modules/redisHandler').redisClient;
+    var app = require('express')();
+    var http = require("http").Server(app);
+    var Room = require("./classes/Room");
+    var rooms = {};
 
-  app.listen(app.get("port"));
-  console.log('Worker ID: ' + process.env.workerID + ' listening at ' + ip + ' on port ' + app.get("port"));
-
-  // Get region
-  var request = require('request');
-  request('http://169.254.169.254/latest/meta-data/placement/availability-zone', function (error, response, body) {
-    if (!error && response.statusCode == 200) {
+    app.set('port', process.env.port);
+    // Listen for create room calls
+    app.use('/createRoom', function (req, res) {
+      // Check authentication
+      if (data.auth != "45X%Dg@}R`d-E])x9d" || !data.matchID || !data.players) {
+        return;
+      }
+      // Parse data
+      var match = JSON.parse(req.match);
+      var matchID = parseInt(req.matchID, 10);
+      var config = {
+        matchType: match.matchType,
+        matchPlayers: match.matchPlayers,
+        bosses: match.bosses,
+        knights: match.knight,
+        players: match.bosses.concat(match.knights)
+      };
+      // Create room using data
+      var room = new Room(io, matchID, config);
+      rooms[matchID] = room;
       // Update redis
-      var regions = ["us-east-1", "us-west-1", "us-west-2", "sa-east-1", "eu-west-1", "eu-central-1", "ap-southeast-2",
-                    "ap-southeast-1", "ap-northeast-1"];
-      var region = regions[0];
-      regions.forEach(function(regionName) {
-        if (body.toLowerCase().indexOf(regionName) != -1) {
-          region = regionName;
-        }
-      });
-      redisClient.lpush("gameServerInstances", process.env.workerID);
-      redisClient.hmset(process.env.workerID,
-        {
-          ip: ip,
-          port: process.env.port,
-          numberGames: 0,
-          region: region
+      redisClient.hincrby(process.env.workerID, "numberGames", 1);
+      // Reply
+      res.send("ok");
+    });
+
+    app.listen(app.get("port"));
+    console.log('Worker ID: ' + process.env.workerID + ' listening at ' + ip + ' on port ' + app.get("port"));
+
+    // Get region
+    var request = require('request');
+    request('http://169.254.169.254/latest/meta-data/placement/availability-zone', function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+        // Update redis
+        var regions = ["us-east-1", "us-west-1", "us-west-2", "sa-east-1", "eu-west-1", "eu-central-1", "ap-southeast-2",
+                      "ap-southeast-1", "ap-northeast-1"];
+        var region = regions[0];
+        regions.forEach(function(regionName) {
+          if (body.toLowerCase().indexOf(regionName) != -1) {
+            region = regionName;
+          }
         });
-      console.log("Worker ID: " + process.env.workerID + " - Updated Redis.");
-    } else {
-      console.log("Worker ID: " + process.env.workerID + " - couldn't get region.");
-      process.exit(0);
+        redisClient.lpush("gameServerInstances", process.env.workerID);
+        redisClient.hmset(process.env.workerID,
+          {
+            ip: ip,
+            port: process.env.port,
+            numberGames: 0,
+            region: region
+          });
+        console.log("Worker ID: " + process.env.workerID + " - Updated Redis.");
+      } else {
+        console.log("Worker ID: " + process.env.workerID + " - couldn't get region.");
+        process.exit(0);
+      }
+    });
+
+    // Start SocketIO
+    var io = require('socket.io')({transports: ['websocket']});
+    io.listen(http);
+    if (io) {
+      console.log("Worker ID: " + process.env.workerID + " - Socket.IO running and accepting connections.");
     }
-  });
 
-  // Start SocketIO
-  var io = require('socket.io')({transports: ['websocket']});
-  io.listen(http);
-  if (io) {
-    console.log("Worker ID: " + process.env.workerID + " - Socket.IO running and accepting connections.");
-  }
-
-  io.on('connection', function (socket) {
-    var socketID = socket.id;
-    var clientIP = socket.request.connection.remoteAddress;
-    console.log("WorkerID: " + process.env.workerID + ': ' + clientIP + " just connected.");
-    socket.emit('ok');
-
-    socket.on('joinRoom', function (data) {
-      console.log(data);
-      socket.join(data.game_uuid);
+    io.on('connection', function (socket) {
+      var socketID = socket.id;
+      var clientIP = socket.request.connection.remoteAddress;
+      console.log("WorkerID: " + process.env.workerID + ': ' + clientIP + " just connected.");
       socket.emit('ok');
-      //starting now, rest of communication is with Room
+
+      socket.on('joinRoom', function (data) {
+        console.log(data);
+        socket.join(data.game_uuid);
+        socket.emit('ok');
+        //starting now, rest of communication is with Room
+      });
     });
   });
-});
+}
