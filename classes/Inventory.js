@@ -1,8 +1,9 @@
 /*
  Model class for inventories.
  */
+var Item = require('./Item');
 
-var Inventory = function (weapons, items) {
+var Inventory = function () {
   this.slots = {};
 
   this.getFreeSpace = function () {
@@ -31,6 +32,15 @@ Inventory.prototype.getMaxStackSize = function (isThrowing) {
   } else {
     return 1;
   }
+};
+
+Inventory.prototype.sortInventory = function () {
+  var sortedItems = [];
+  for (var i = 0; i < this.items.length; i++) {
+    sortedItems.push(new Item(this.items[i].item_id));
+    sortedItems[i].itemQuantity = this.items.item_quantity;
+  }
+  this.items = sortedItems;
 };
 
 module.exports = Inventory;

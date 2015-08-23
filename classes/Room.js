@@ -1,13 +1,17 @@
-var Room = function (io, game_uuid, config) {
-  var Event = require('./EventEnum');
-  var Chat = require('./Chat');
-  var Location = require('./Location');
-  var Map = require('./Map');
-  var Event = require('./EventEnum');
+var Event = require('./EventEnum');
+var Chat = require('./Chat');
+var Location = require('./Location');
+var Map = require('./Map');
+var Event = require('./EventEnum');
+var Finder = require('./Finder');
+var MySQLHandler = require('./mysqlHandler');
 
+var Room = function (io, game_uuid, config) {
+  // Start instances of modules
   var map = new Map();
   var chat = new Chat(io, game_uuid);
   var location = new Location(io, game_uuid, map);
+  var characterManager = require('./CharacterManager');
 
   // All players that exist in the current game
   var players = [];
@@ -17,26 +21,86 @@ var Room = function (io, game_uuid, config) {
   /*
     Get player Data
    */
-  this.StorePlayerData = function (data) {
-    // TODO: Store player data
+  var StorePlayerData = function (data) {
+    // Get player data
+    config.players.forEach(function (accountID) {
+      MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?" , [accountID] , function(err,results) {
+        if (err) {
+          return;
+        }
+        players.push(results[0]);
+      });
+    });
+    // Sort boss data
+    config.bosses.forEach(function(accountID) {
+      MySQLHandler.connection.query("SELECT * FROM br_inventory WHERE account_id = ? AND false = isNull(item_id)", [accountID], function(err, results) {
+        if (err) {
+          return;
+        }
+        var allItems = [];
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].item_id.toString() != "null") {
+            allItems.push(results[i]);
+          }
+        }
+        allItems.forEach(function(item) {
+          // Only create the boss for now
+          if (item.purpose == "boss") {
+            var boss = characterManager.SpawnBoss(accountID, Finder.GetPlayerFromAccountID(players, accountID).boss_level, item.value);
+            io.to(game_uuid).emit(Event.output.CHAR_CREATED, {ID: character.id, Owner: character.owner, Entity: character.entity, Type: character.type, HP: character.maxhp});
+            characters.push(boss);
+            // TODO: Calculate proper starting positions
+            location.UpdateDestination(character.id, [1 + (i / 2), 1 + (i / 2)]);
+          }
+        });
+        // TODO: Filter bosses, minibosses, creatures, traps
+      });
+    });
+    config.knights.forEach(function(accountID) {
+      // Get all equipped items & abilities
+      MySQLHandler.connection.query("SELECT * FROM br_inventory WHERE account_id = ? AND (false = isnull(inventory_slot) OR false = isnull(ability_slot))", [accountID], function(err, results) {
+        var items = [];
+        var weapons = [];
+        var abilities = [];
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].weapon_id.toString() != "null") {
+            weapons.push(results[i]);
+          } else if (results[i].item_id.toString() != "null") {
+            items.push(results[i]);
+          } else if (results[i].ability_id.toString() != "null") {
+            abilities.push(results[i]);
+          }
+        }
+        var character = characterManager.SpawnKnight(accountID);
+        character.knight.inventory.items = items;
+        character.knight.abilities = abilities;
+        character.knight.inventory.weapons = weapons;
+        character.knight.inventory.sortInventory();
+        characters.push(character);
+        io.to(game_uuid).emit(Event.output.CHAR_CREATED, {ID: character.id, Owner: character.owner, Entity: character.entity, Type: character.type, HP: character.maxhp});
+        // Set character location
+        // TODO: Calculate proper starting positions
+        location.UpdateDestination(character.id, [1 + (i / 2), 1 + (i / 2)]);
+      });
+    });
     players = data;
   };
+  StorePlayerData(config);
 
   /*
    Handle Reconnection
    */
   socket.in(game_uuid).on('register', function (data) {
-    var hasRegistered = false;
-    players.forEach(function (player) {
-      // TODO: Read redis for username uuid, replace with data.uuid on next line
-      if (data.uuid == player.uuid) {
-        players[player.socketID].socketID = socket;
-        hasRegistered = true;
-      }
-    });
-    if (!hasRegistered) {
+    if (!players.some(function (player) {
+      if (data.uuid == player.last_uuid) {
+        player.socketID = socket.id;
+        return true;
+      }return false;
+    })) {
       socket.disconnect();
     }
+    // emit registered
+    // TODO: Emit data (Characters, Locations, Players)
   });
 
   /*
@@ -45,7 +109,8 @@ var Room = function (io, game_uuid, config) {
   var StartListening = function () {
     // Disconnection
     socket.in(game_uuid).on('disconnect', function () {
-      require('./Disconnect').disconnect(socket);
+      var username = Finder.GetUsernameFromSocketID(players, socket.id);
+      require('./Disconnect')(socket, username, game_uuid, io);
     });
     // Text Chat
     socket.in(game_uuid).on(Event.input.TALK, function (data) {
@@ -57,16 +122,15 @@ var Room = function (io, game_uuid, config) {
     });
     // Movement
     socket.in(game_uuid).on(Event.input.MOVE, function (data) {
+      // Received data in form of {characterID:[locationX, locationY}, ...}
       for (var key in data) {
-        if (data[key].length != 2) {
-          return;
-        }
+        // Check if data is valid or not
         if (isNaN(parseFloat(data[key][0])) || isNaN(parseFloat(data[key][1]))) {
           return;
         }
-        characters.forEach(function (character) {
+        characters.some(function (character) {
           if (character.id != key) {
-            return;
+            return false;
           }
           // Check if channelling
           if (character.channelling) {
@@ -80,8 +144,9 @@ var Room = function (io, game_uuid, config) {
             }
           }
           players.forEach(function (player) {
-            if (player.socketID == socket.id && player.username == character.owner) {
+            if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
               location.UpdateDestination(key, data[key]);
+              return true;
             }
           });
         });
@@ -89,13 +154,14 @@ var Room = function (io, game_uuid, config) {
     });
     // Leave
     socket.in(game_uuid).on(Event.input.LEAVE, function () {
-      io.sockets.connected[socket.id].disconnect();
+      var username = Finder.GetUsernameFromSocketID(players, socket.id);
+      require('./Disconnect')(socket, username, game_uuid, io);
     });
-    // Knight changing equipped
+    // Knight changing equipped armor
     socket.in(game_uuid).on(Event.input.knight.CHANGE_EQUIPPED, function (data) {
       var characterID = parseInt(data.characterID, 10);
       if (!isNaN(characterID) && characterID < characters.length &&
-        players[socket.id].username == characters[characterID].owner && characters[characterID].knight != null) {
+        Finder.GetAccountIDFromSocketID(players, socketID) == characters[characterID].owner && characters[characterID].knight != null) {
         characters[characterID].knight.ChangeEquipped(data.itemID, data.target);
       }
     });
@@ -113,7 +179,7 @@ var Room = function (io, game_uuid, config) {
           return;
         }
         players.forEach(function (player) {
-          if (player.socketID == socket.id && player.username == character.owner) {
+          if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
             if (!character.stunned && character.knight != null) {
               data.abilityID = abilityID;
               data.weaponID = weaponID;
@@ -140,7 +206,7 @@ var Room = function (io, game_uuid, config) {
           return;
         }
         players.forEach(function (player) {
-          if (player.socketID == socket.id && player.username == character.owner) {
+          if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
             if (!character.stunned && character.knight != null) {
               data.itemID = itemID;
               data.location = location;
@@ -170,7 +236,7 @@ var Room = function (io, game_uuid, config) {
       players.forEach(function (player) {
         characters.forEach(function (character) {
           if (character.type == "boss" && character.id == characterID &&
-            player.socketID == socket.id && player.username == character.owner) {
+            player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
             if (!character.stunned && !isNaN(abilityID) && abilityID < character.boss.abilities.length) {
               data.characters = characters;
               data.game_uuid = game_uuid;
