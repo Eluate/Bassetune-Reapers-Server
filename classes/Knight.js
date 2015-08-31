@@ -5,11 +5,13 @@ var Character = require('./Character');
 var Inventory = require('./Inventory');
 var Ability = require('./Ability');
 
-var Knight = function () {
+var Knight = function () 
+{
   this.inventory = new Inventory();
   this.abilities = [];
+};
 
-  this.ChangeEquipped = function (itemID, target) {
+Knight.prototype.ChangeEquipped = function (itemID, target) {
     for (var i = 0, slots = this.inventory.slots, slotLength = slots.length; i < slotLength; i++) {
      if (slots[i].hasOwnProperty("itemID") && slots[i].itemID == itemID) {
        if (target == "main") {
@@ -26,21 +28,22 @@ var Knight = function () {
     }
   };
 
-  this.UseAbility = function (data) {
-    for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
-      if (data.abilityID == this.abilities[i].id) {
-        this.abilities[i].UseKnightAbility(data);
-      }
+Knight.prototype.UseAbility = function (data) {
+  for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
+    if (data.abilityID == this.abilities[i].id) {
+      this.abilities[i].UseKnightAbility(data);
     }
-  };
-
-  this.UseItem = function (data) {
-    for (var i = 0, inventoryLength = this.inventory.items.length; i < inventoryLength; i++) {
-      if (data.itemID == this.inventory.items[i].id) {
-        this.inventory.items[i].UseItem(data);
-        // Only use the first one
-        i = inventoryLength;
-      }
-    }
-  };
+  }
 };
+
+Knight.prototype.UseItem = function (data) {
+  for (var i = 0, inventoryLength = this.inventory.items.length; i < inventoryLength; i++) {
+    if (data.itemID == this.inventory.items[i].id) {
+      this.inventory.items[i].UseItem(data);
+      // Only use the first one
+      i = inventoryLength;
+    }
+  }
+};
+
+module.exports = Knight;

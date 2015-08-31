@@ -5,8 +5,8 @@ var ABILITY = require('./Ability');
 var Vec2 = require('./Vector2');
 var Character = require('./Character');
 
-var Bosses = function() {
-  this.bosses = [TheSavageTillBeast];
+var Bosses = {}
+  
   var TheSavageTillBeast = function (level) {
     this.hp = 620 * level;
     this.base_damage = 18 * level;
@@ -153,6 +153,7 @@ var Bosses = function() {
   var GohIncarnate = function() {
 
   };
-};
 
-exports.output = Bosses;
+Bosses.TheSavageTillBeast= TheSavageTillBeast;
+
+module.exports.Bosses = Bosses;

@@ -1,5 +1,5 @@
 var cluster = require('cluster');
-
+var exitHandler = require('./modules/appExitHandler').cleanup();
 if(cluster.isMaster) {
   //master should communicate with face instances using http on startPort
   var startPort = process.env.PORT || 3000;//startPort is reserved for http server to communicate with backendFace
@@ -45,36 +45,49 @@ if (cluster.isWorker)
       process.exit();
     }
     // Otherwise continue
+    var Event = require('./classes/EventEnum');
     var redisClient = require('./modules/redisHandler').redisClient;
     var app = require('express')();
+    var bodyparser = require('body-parser');
+    
+    app.use(bodyparser.json()); // for parsing application/json
+    app.use(bodyparser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
     var http = require("http").Server(app);
     var Room = require("./classes/Room");
     var rooms = {};
 
-    app.set('port', process.env.port);
+    app.set('port', process.env.port || 3000);
     // Listen for create room calls
-    app.use('/createRoom', function (req, res) {
+    app.post('/createRoom', function (req, res) 
+    {
+      console.log("post request");
       // Check authentication
-      if (data.auth != "45X%Dg@}R`d-E])x9d" || !data.matchID || !data.players) {
+      if (req.body.auth != "45X%Dg@}R`d-E])x9d") 
+      {
         return;
       }
       // Parse data
-      var match = JSON.parse(req.match);
-      var matchID = parseInt(req.matchID, 10);
+      console.log(req.body.id);
+
+      var match = req.body.match;
+      console.log(match);
+      var matchID = req.body.id;//parseInt(req.body.matchID, 10);
       var config = {
         matchType: match.matchType,
         matchPlayers: match.matchPlayers,
         bosses: match.bosses,
-        knights: match.knight,
-        players: match.bosses.concat(match.knights)
+        knights: match.knights,
+        players: match.bosses.concat(match.knights)//what do we need this for?
       };
       // Create room using data
       var room = new Room(io, matchID, config);
       rooms[matchID] = room;
       // Update redis
       redisClient.hincrby(process.env.workerID, "numberGames", 1);
-      // Reply
-      res.send("ok");
+      //Reply
+      console.log("sending ok.");
+      console.log(matchID);
+      res.send(matchID);
     });
 
     app.listen(app.get("port"));
@@ -104,18 +117,28 @@ if (cluster.isWorker)
         console.log("Worker ID: " + process.env.workerID + " - Updated Redis.");
       } else {
         console.log("Worker ID: " + process.env.workerID + " - couldn't get region.");
-        process.exit(0);
+        //process.exit(0);
+        //THIS STUFF IS TO BE DELETED
+        redisClient.lpush("gameServerInstances", process.env.workerID);
+        redisClient.hmset(process.env.workerID,
+          {
+            ip: ip,
+            port: process.env.port,
+            numberGames: 0,
+            region: "us-east-1"
+          });
       }
     });
 
     // Start SocketIO
     var io = require('socket.io')({transports: ['websocket']});
-    io.listen(http);
+
     if (io) {
       console.log("Worker ID: " + process.env.workerID + " - Socket.IO running and accepting connections.");
     }
 
-    io.on('connection', function (socket) {
+    io.on('connection', function (socket) 
+    {
       var socketID = socket.id;
       var clientIP = socket.request.connection.remoteAddress;
       console.log("WorkerID: " + process.env.workerID + ': ' + clientIP + " just connected.");
@@ -125,8 +148,61 @@ if (cluster.isWorker)
         console.log(data);
         socket.join(data.game_uuid);
         socket.emit('ok');
+        console.log(socket.rooms);
         //starting now, rest of communication is with Room
       });
+
+      socket.on('register', function  (data) 
+      {
+        // body...
+      });
+
+      socket.on('disconnect', function () 
+      {
+        //
+      });
+
+      socket.on(Event.input.TALK, function () 
+      {
+        //
+      });
+
+      socket.on(Event.input.MOVE, function () 
+      {
+        //
+      });
+
+      socket.on(Event.input.LEAVE, function () 
+      {
+        //
+      });
+      
+      socket.on(Event.input.knight.CHANGE_EQUIPPED, function () 
+      {
+        //
+      });
+
+      socket.on(Event.input.knight.ABILITY_START, function () 
+      {
+        //
+      });
+
+      socket.on(Event.input.knight.USE_ITEM_START, function () 
+      {
+        //
+      });
+
+      socket.on(Event.input.boss.PUT_TRAP, function () 
+      {
+        //
+      });
+
+      socket.on(Event.input.boss.ABILITY_START, function () 
+      {
+        //
+      });
+
+
     });
   });
 }
