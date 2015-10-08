@@ -50,14 +50,14 @@ var Location = function (io, room, map) {
       for (var i = 0; i < map.geom.length; i++) {
         var p = map.geom[i];
         // Broad Phase
-        if (vector.distanceTo(vector, p) > speed) {
+        if (Vec2.distanceTo(vector, {x: p.x1 , y : p.y1}) > speed) {
           continue;
         }
         // Narrow Phase
-        if (Vec2.wallCollision(vector, prevLocation, p)) {
+        if (Vec2.wallCollision(vector, prevLocation, {x: p.x1 , y : p.y1})) {
           // Collision occurred, revert to prev position (generous, the bounds of model aren't tested)
           vector = Vec2.sub(vector, Vec2.setLength(Vec2.sub(vector, prevLocation), 0.2));
-          console.log("Character: " + character + " collided with a wall at " + p.x + "," + p.y);
+          console.log("Character: " + character + " collided with a wall at " + p.x1 + "," + p.y1);
         }
       }
       // Update location

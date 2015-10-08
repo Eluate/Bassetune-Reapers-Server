@@ -17,6 +17,9 @@ var Inventory = function () {
   };
 
   // TODO : create appropriate classes for stuff
+  //set to [] for debugging 1
+  var weapons = [];
+  var items = [];
   this.weapons = weapons;
   this.items = items;
   this.armor = null;
