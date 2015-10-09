@@ -53,7 +53,7 @@ var Room = function (io, game_uuid, config) {
             characters.push(boss);
             // TODO: Calculate proper starting positions
             //for now they all start in the same spot
-            location.UpdateDestination(character.id, [20, 20]);
+            location.addCharacter(character.id, {x: 20, y : 20});
           }
         });
         // TODO: Filter bosses, minibosses, creatures, traps
@@ -86,7 +86,7 @@ var Room = function (io, game_uuid, config) {
         io.to(game_uuid).emit(Event.output.CHAR_CREATED, {ID: character.id, Owner: character.owner, Entity: character.entity, Type: character.type, HP: character.maxhp});
         // Set character location
         // TODO: Calculate proper starting positions
-        location.UpdateDestination(character.id, [1 + (i / 2), 1 + (i / 2)]);
+        location.addCharacter(character.id, {x: 30, y : 30});
       });
     });
     players = data;

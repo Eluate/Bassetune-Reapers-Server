@@ -14,6 +14,12 @@ var Location = function (io, room, map) {
   this.lastTime = new Date().getTime() / 1000;
 
 
+  this.addCharacter = function  (character, vector) 
+  {
+    this.characters.push(vector);
+    this.characterIndex.push(character);
+  }
+
   this.UpdateDestination = function (character, vector) {
     vector[0] = parseFloat(vector[0].toFixed(1));
     vector[1] = parseFloat(vector[1].toFixed(1));
@@ -34,6 +40,7 @@ var Location = function (io, room, map) {
   this.UpdateCharacterLocation = function (character, speed) {
     var time = new Date().getTime() / 1000;
     var vector = this.characterDestinations[this.characterDestinationsIndex.indexOf(character)];
+    if(vector === undefined) return;
     speed = speed * (this.lastTime - time);
     if (this.characterIndex.indexOf(character) != -1) {
       var prevLocation = this.characters[this.characterIndex.indexOf(character)];

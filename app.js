@@ -90,7 +90,7 @@ if (cluster.isWorker)
       res.send(matchID);
     });
 
-    app.listen(app.get("port"));
+    
     console.log('Worker ID: ' + process.env.workerID + ' listening at ' + ip + ' on port ' + app.get("port"));
 
     // Get region
@@ -145,64 +145,79 @@ if (cluster.isWorker)
       socket.emit('ok');
 
       socket.on('joinRoom', function (data) {
+        console.log("in join room");
         console.log(data);
         socket.join(data.game_uuid);
-        socket.emit('ok');
+        socket.emit('joinedRoom');
+        console.log("socket rooms")
         console.log(socket.rooms);
         //starting now, rest of communication is with Room
       });
 
+      socket.on('getRoom', function () 
+      {
+        socket.emit("room", socket.rooms);
+      })
+
+
+      //Note:
+      //to get the room (gameID) of the socket : socket.rooms[1]
+
+
+
       socket.on('register', function  (data) 
       {
-        // body...
+        rooms[socket.rooms[1]].onRegister(socket,data);
       });
 
       socket.on('disconnect', function () 
       {
-        //
+        rooms[socket.rooms[1]].onDisconnect(socket);
       });
 
-      socket.on(Event.input.TALK, function () 
+      socket.on(Event.input.TALK, function (data) 
       {
-        //
+        rooms[socket.rooms[1]].onTalk(socket,data);
       });
 
-      socket.on(Event.input.MOVE, function () 
+      socket.on(Event.input.MOVE, function (data) 
       {
-        //
+        rooms[socket.rooms[1]].onMove(socket,data);
       });
 
       socket.on(Event.input.LEAVE, function () 
       {
-        //
+        rooms[socket.rooms[1]].onLeave(socket);
       });
       
-      socket.on(Event.input.knight.CHANGE_EQUIPPED, function () 
+      socket.on(Event.input.knight.CHANGE_EQUIPPED, function (data) 
       {
-        //
+        rooms[socket.rooms[1]].onKnightChangeEquipped(socket,data);
       });
 
-      socket.on(Event.input.knight.ABILITY_START, function () 
+      socket.on(Event.input.knight.ABILITY_START, function (data) 
       {
-        //
+        rooms[socket.rooms[1]].onKnightAbilityStart(socket,data);
       });
 
-      socket.on(Event.input.knight.USE_ITEM_START, function () 
+      socket.on(Event.input.knight.USE_ITEM_START, function (data) 
       {
-        //
+        rooms[socket.rooms[1]].onKnightUseItemStart(socket,data);
       });
 
-      socket.on(Event.input.boss.PUT_TRAP, function () 
+      socket.on(Event.input.boss.PUT_TRAP, function (data) 
       {
-        //
+        rooms[socket.rooms[1]].onBossPutTrap(socket,data);
       });
 
-      socket.on(Event.input.boss.ABILITY_START, function () 
+      socket.on(Event.input.boss.ABILITY_START, function (data) 
       {
-        //
+        rooms[socket.rooms[1]].onBossAbilityStart(socket,data);
       });
-
-
+    });//end io.on Connection
+    var server = app.listen(app.get("port"),function () 
+    {
+        io.listen(server);
     });
   });
 }
