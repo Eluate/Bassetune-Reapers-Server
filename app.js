@@ -23,7 +23,7 @@ if(cluster.isMaster) {
   cluster.on('exit', function (worker) {
     // Replace the dead worker, we're not sentimental
     console.log('Worker ' + worker.id + ' died.');
-    redisClient.lrem("gameServerInstances", workers[worker.id].workerID);
+    redisClient.lrem("gameServerInstances", -1, workers[worker.id].workerID);
     redisClient.del(workers[worker.id].workerID);
     // Create new worker
     var workerID = uuid.v1(); // Assign a new id
@@ -36,8 +36,6 @@ if(cluster.isMaster) {
 
 if (cluster.isWorker)
 {
- 
-
   var ip = require('external-ip')()(function(err, ip) {
     // Check if failed
     if (err || !ip) {
@@ -48,36 +46,36 @@ if (cluster.isWorker)
     var Event = require('./classes/EventEnum');
     var redisClient = require('./modules/redisHandler').redisClient;
     var app = require('express')();
-    var bodyparser = require('body-parser');
+    var bodyParser = require('body-parser');
     
-    app.use(bodyparser.json()); // for parsing application/json
-    app.use(bodyparser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+    app.use(bodyParser.json()); // for parsing application/json
+    app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
     var http = require("http").Server(app);
     var Room = require("./classes/Room");
     var rooms = {};
 
-    app.set('port', process.env.port || 3000);
+    // Set up server
+    app.set('port', process.env.port);
+    var server = app.listen(app.get("port"));
+
     // Listen for create room calls
-    app.post('/createRoom', function (req, res) 
+    app.post('/createRoom', function (req, res)
     {
-      console.log("post request");
+      console.log("Create Room request: " + JSON.stringify(req.body, null, 2));
       // Check authentication
       if (req.body.auth != "45X%Dg@}R`d-E])x9d") 
       {
         return;
       }
-      // Parse data
       console.log(req.body.id);
-
       var match = req.body.match;
-      console.log(match);
-      var matchID = req.body.id;//parseInt(req.body.matchID, 10);
+      console.log(JSON.stringify(match, null, 2));
+      var matchID = req.body.id;
       var config = {
         matchType: match.matchType,
         matchPlayers: match.matchPlayers,
         bosses: match.bosses,
-        knights: match.knights,
-        players: match.bosses.concat(match.knights)//what do we need this for?
+        knights: match.knights
       };
       // Create room using data
       var room = new Room(io, matchID, config);
@@ -132,6 +130,7 @@ if (cluster.isWorker)
 
     // Start SocketIO
     var io = require('socket.io')({transports: ['websocket']});
+    io.listen(server);
 
     if (io) {
       console.log("Worker ID: " + process.env.workerID + " - Socket.IO running and accepting connections.");
@@ -149,7 +148,7 @@ if (cluster.isWorker)
         console.log(data);
         socket.join(data.game_uuid);
         socket.emit('joinedRoom');
-        console.log("socket rooms")
+        console.log("socket rooms");
         console.log(socket.rooms);
         //starting now, rest of communication is with Room
       });
@@ -157,13 +156,9 @@ if (cluster.isWorker)
       socket.on('getRoom', function () 
       {
         socket.emit("room", socket.rooms);
-      })
+      });
 
-
-      //Note:
-      //to get the room (gameID) of the socket : socket.rooms[1]
-
-
+      // The GameUUID that the socket belongs to is in socket.rooms[1]
 
       socket.on('register', function  (data) 
       {
@@ -214,10 +209,6 @@ if (cluster.isWorker)
       {
         rooms[socket.rooms[1]].onBossAbilityStart(socket,data);
       });
-    });//end io.on Connection
-    var server = app.listen(app.get("port"),function () 
-    {
-        io.listen(server);
     });
   });
 }

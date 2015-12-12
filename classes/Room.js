@@ -22,18 +22,20 @@ var Room = function (io, game_uuid, config) {
   /*
     Get player Data
    */
-  var StorePlayerData = function (data) {
+  var StorePlayerData = function (config) {
     // Get player data
-    var P = players;
-    config.players.forEach(function (accountID) {
+    var players = [];
+    config.bosses.concat(config.knights).forEach(function (accountID) {
       MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?" , [accountID] , function(err,results) {
         if (err) {
           return;
         }
-        P.push(results[0]);
+        players.push(results[0]);
       });
     });
     // Sort boss data
+    // TODO: Fix boss item sorting
+    /*
     config.bosses.forEach(function(accountID) {
       MySQLHandler.connection.query("SELECT * FROM br_inventory WHERE account_id = ? AND false = isNull(item_id)", [accountID], function(err, results) {
         if (err) {
@@ -59,6 +61,9 @@ var Room = function (io, game_uuid, config) {
         // TODO: Filter bosses, minibosses, creatures, traps
       });
     });
+    */
+    // TODO: Fix knight item sorting
+    /*
     config.knights.forEach(function(accountID) {
       // Get all equipped items & abilities
       MySQLHandler.connection.query("SELECT * FROM br_inventory WHERE account_id = ? AND (false = isnull(inventory_slot) OR false = isnull(ability_slot))", [accountID], function(err, results) {
@@ -89,7 +94,7 @@ var Room = function (io, game_uuid, config) {
         location.addCharacter(character.id, {x: 30, y : 30});
       });
     });
-    players = data;
+    */
   };
   StorePlayerData(config);
 
@@ -113,194 +118,194 @@ var Room = function (io, game_uuid, config) {
       }
     });
     io.to(game_uuid).emit(Event.output.CHAR_HP, hp);
-  }
+  };
   // Start Game Loop, 24 Updates per second
   setInterval(SendUpdates, 41);
 };
 
 /*
-   Handle Reconnection
-   */
-  //io.sockets.in(game_uuid).on('register', function (data) 
-  Room.prototype.onRegister = function (socket, data)
-  {
-    if (!players.some(function (player) {
-      if (data.uuid == player.last_uuid) {
-        player.socketID = socket.id;
-        return true;
-      }return false;
-    })) {
-      socket.disconnect();
-    }
-    // emit registered
-    // TODO: Emit data (Characters, Locations, Players)
-  };
+ Handle Reconnection
+ */
+//io.sockets.in(game_uuid).on('register', function (data)
+Room.prototype.onRegister = function (socket, data)
+{
+  if (!players.some(function (player) {
+    if (data.uuid == player.last_uuid) {
+      player.socketID = socket.id;
+      return true;
+    }return false;
+  })) {
+    socket.disconnect();
+  }
+  // emit registered
+  // TODO: Emit data (Characters, Locations, Players)
+};
 
-  /*
-   Listeners: Input from the player
-   */
-  
-    // Disconnection
-    //io.sockets.in(game_uuid).on('disconnect', 
-    Room.prototype.onDisconnect = function (socket) 
-    {
-      var username = Finder.GetUsernameFromSocketID(players, socket.id);
-      require('./Disconnect')(socket, username, game_uuid, io);
-    };
-    // Text Chat
-    //io.sockets.in(game_uuid).on(Event.input.TALK, 
-    Room.prototype.onTalk = function (socket , data) 
-    {
-      players.forEach(function (player) {
-        if (player.socketID == socket.id) {
-          chat.addMsg(player.username, data.message);
-        }
-      });
-    };
-    // Movement
-    //io.sockets.in(game_uuid).on(Event.input.MOVE, 
-    Room.prototype.onMove = function (socket , data) 
-    {
-      // Received data in form of {characterID:[locationX, locationY}, ...}
-      for (var key in data) {
-        // Check if data is valid or not
-        if (isNaN(parseFloat(data[key][0])) || isNaN(parseFloat(data[key][1]))) {
-          return;
-        }
-        characters.some(function (character) {
-          if (character.id != key) {
-            return false;
-          }
-          // Check if channelling
-          if (character.channelling) {
-            if (character.channelling != false) {
-              if (character.channelling == true) {
-                character.channelling = "m";
-              } else {
-                character.channelling += "m";
-              }
-              character.channellingAbility.CheckInterruption();
-            }
-          }
-          players.forEach(function (player) {
-            if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
-              location.UpdateDestination(key, data[key]);
-              return true;
-            }
-          });
-        });
+/*
+ Listeners: Input from the player
+ */
+
+// Disconnection
+//io.sockets.in(game_uuid).on('disconnect',
+Room.prototype.onDisconnect = function (socket)
+{
+  var username = Finder.GetUsernameFromSocketID(players, socket.id);
+  require('./Disconnect')(socket, username, game_uuid, io);
+};
+// Text Chat
+//io.sockets.in(game_uuid).on(Event.input.TALK,
+Room.prototype.onTalk = function (socket , data)
+{
+  players.forEach(function (player) {
+    if (player.socketID == socket.id) {
+      chat.addMsg(player.username, data.message);
+    }
+  });
+};
+// Movement
+//io.sockets.in(game_uuid).on(Event.input.MOVE,
+Room.prototype.onMove = function (socket , data)
+{
+  // Received data in form of {characterID:[locationX, locationY}, ...}
+  for (var key in data) {
+    // Check if data is valid or not
+    if (isNaN(parseFloat(data[key][0])) || isNaN(parseFloat(data[key][1]))) {
+      return;
+    }
+    characters.some(function (character) {
+      if (character.id != key) {
+        return false;
       }
-    };
-    // Leave
-    //io.sockets.in(game_uuid).on(Event.input.LEAVE, 
-    Room.prototype.onLeave = function (socket) 
-    {
-      var username = Finder.GetUsernameFromSocketID(players, socket.id);
-      require('./Disconnect')(socket, username, game_uuid, io);
-    };
-    // Knight changing equipped armor
-    //io.sockets.in(game_uuid).on(Event.input.knight.CHANGE_EQUIPPED, 
-    Room.prototype.onKnightChangeEquipped = function (socket,data) 
-    {
-      var characterID = parseInt(data.characterID, 10);
-      if (!isNaN(characterID) && characterID < characters.length &&
-        Finder.GetAccountIDFromSocketID(players, socket.id) == characters[characterID].owner && characters[characterID].knight != null) {
-        characters[characterID].knight.ChangeEquipped(data.itemID, data.target);
-      }
-    };
-    // Knight using ability
-    //io.sockets.in(game_uuid).on(Event.input.knight.ABILITY_START, 
-    Room.prototype.onKightAbilityStart = function (socket,data) 
-    {
-      var abilityID = parseInt(data.abilityID, 10);
-      var characterID = parseInt(data.characterID, 10);
-      var weaponID = parseInt(data.weapon, 10);
-      if (isNaN(abilityID) || isNaN(characterID) || isNaN(weaponID) || data.target == null ||
-        !data.target.hasOwnProperty("x") || !data.target.hasOwnProperty("y")) {
-        return;
-      }
-      characters.forEach(function (character) {
-        if (character.id != characterID && character.type == "knight") {
-          return;
-        }
-        players.forEach(function (player) {
-          if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socket.id) == character.owner) {
-            if (!character.stunned && character.knight != null) {
-              data.abilityID = abilityID;
-              data.weaponID = weaponID;
-              data.location = location;
-              data.character = character;
-              data.characters = characterID;
-              data.game_uuid = game_uuid;
-              data.io = io;
-              character.knight.UseAbility(data);
-            }
+      // Check if channelling
+      if (character.channelling) {
+        if (character.channelling != false) {
+          if (character.channelling == true) {
+            character.channelling = "m";
+          } else {
+            character.channelling += "m";
           }
-        });
-      });
-    };
-    // Knight using item
-    //io.sockets.in(game_uuid).on(Event.input.knight.USE_ITEM_START, 
-    Room.prototype.onKnightUseItemStart = function (socket,data) 
-    {
-      var characterID = parseInt(data.characterID, 10);
-      var itemID = parseInt(data.itemID, 10);
-      if (isNaN(characterID) || isNaN(itemID)) {
-        return;
-      }
-      characters.forEach(function (character) {
-        if (character.id != characterID) {
-          return;
+          character.channellingAbility.CheckInterruption();
         }
-        players.forEach(function (player) {
-          if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socket.id) == character.owner) {
-            if (!character.stunned && character.knight != null) {
-              data.itemID = itemID;
-              data.location = location;
-              data.character = characters[characterID];
-              data.characters = characters;
-              data.game_uuid = game_uuid;
-              data.io = io;//what is this used for? looks like a redundancy
-              character.knight.UseItem(data);
-            }
-          }
-        });
-      });
-    };
-    // Boss putting a trap down
-    //io.sockets.in(game_uuid).on(Event.input.boss.PUT_TRAP, 
-    Room.prototype.onBossPutTrap = function (socket,data) 
-    {
-      // TODO: Put a trap
-    };
-    // Boss using an ability
-    //io.sockets.in(game_uuid).on(Event.input.boss.ABILITY_START, 
-    Room.prototype.onBossAbilityStart = function (socket,data) 
-    {
-      var abilityID = parseInt(data.abilityID, 10);
-      var characterID = parseInt(data.characterID, 10);
-      var target = data.target;
-      if (isNaN(abilityID) || isNaN(characterID) || ((!target.hasOwnProperty("x") || !target.hasOwnProperty("y")) ||
-      !target.hasOwnProperty("toggle"))) {
-        return;
       }
       players.forEach(function (player) {
-        characters.forEach(function (character) {
-          if (character.type == "boss" && character.id == characterID &&
-            player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socket.id) == character.owner) {
-            if (!character.stunned && !isNaN(abilityID) && abilityID < character.boss.abilities.length) {
-              data.characters = characters;
-              data.game_uuid = game_uuid;
-              data.io = io;//?
-              data.character = character;
-              data.abilityID = abilityID;
-              character.boss.abilities[abilityID](data);
-            }
-            return;
-          }
-        });
+        if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socketID) == character.owner) {
+          location.UpdateDestination(key, data[key]);
+          return true;
+        }
       });
-    };
+    });
+  }
+};
+// Leave
+//io.sockets.in(game_uuid).on(Event.input.LEAVE,
+Room.prototype.onLeave = function (socket)
+{
+  var username = Finder.GetUsernameFromSocketID(players, socket.id);
+  require('./Disconnect')(socket, username, game_uuid, io);
+};
+// Knight changing equipped armor
+//io.sockets.in(game_uuid).on(Event.input.knight.CHANGE_EQUIPPED,
+Room.prototype.onKnightChangeEquipped = function (socket,data)
+{
+  var characterID = parseInt(data.characterID, 10);
+  if (!isNaN(characterID) && characterID < characters.length &&
+    Finder.GetAccountIDFromSocketID(players, socket.id) == characters[characterID].owner && characters[characterID].knight != null) {
+    characters[characterID].knight.ChangeEquipped(data.itemID, data.target);
+  }
+};
+// Knight using ability
+//io.sockets.in(game_uuid).on(Event.input.knight.ABILITY_START,
+Room.prototype.onKnightAbilityStart = function (socket,data)
+{
+  var abilityID = parseInt(data.abilityID, 10);
+  var characterID = parseInt(data.characterID, 10);
+  var weaponID = parseInt(data.weapon, 10);
+  if (isNaN(abilityID) || isNaN(characterID) || isNaN(weaponID) || data.target == null ||
+    !data.target.hasOwnProperty("x") || !data.target.hasOwnProperty("y")) {
+    return;
+  }
+  characters.forEach(function (character) {
+    if (character.id != characterID && character.type == "knight") {
+      return;
+    }
+    players.forEach(function (player) {
+      if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socket.id) == character.owner) {
+        if (!character.stunned && character.knight != null) {
+          data.abilityID = abilityID;
+          data.weaponID = weaponID;
+          data.location = location;
+          data.character = character;
+          data.characters = characterID;
+          data.game_uuid = game_uuid;
+          data.io = io;
+          character.knight.UseAbility(data);
+        }
+      }
+    });
+  });
+};
+// Knight using item
+//io.sockets.in(game_uuid).on(Event.input.knight.USE_ITEM_START,
+Room.prototype.onKnightUseItemStart = function (socket,data)
+{
+  var characterID = parseInt(data.characterID, 10);
+  var itemID = parseInt(data.itemID, 10);
+  if (isNaN(characterID) || isNaN(itemID)) {
+    return;
+  }
+  characters.forEach(function (character) {
+    if (character.id != characterID) {
+      return;
+    }
+    players.forEach(function (player) {
+      if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socket.id) == character.owner) {
+        if (!character.stunned && character.knight != null) {
+          data.itemID = itemID;
+          data.location = location;
+          data.character = characters[characterID];
+          data.characters = characters;
+          data.game_uuid = game_uuid;
+          data.io = io;//what is this used for? looks like a redundancy
+          character.knight.UseItem(data);
+        }
+      }
+    });
+  });
+};
+// Boss putting a trap down
+//io.sockets.in(game_uuid).on(Event.input.boss.PUT_TRAP,
+Room.prototype.onBossPutTrap = function (socket,data)
+{
+  // TODO: Put a trap
+};
+// Boss using an ability
+//io.sockets.in(game_uuid).on(Event.input.boss.ABILITY_START,
+Room.prototype.onBossAbilityStart = function (socket,data)
+{
+  var abilityID = parseInt(data.abilityID, 10);
+  var characterID = parseInt(data.characterID, 10);
+  var target = data.target;
+  if (isNaN(abilityID) || isNaN(characterID) || ((!target.hasOwnProperty("x") || !target.hasOwnProperty("y")) ||
+  !target.hasOwnProperty("toggle"))) {
+    return;
+  }
+  players.forEach(function (player) {
+    characters.forEach(function (character) {
+      if (character.type == "boss" && character.id == characterID &&
+        player.socketID == socket.id && Finder.GetAccountIDFromSocketID(players, socket.id) == character.owner) {
+        if (!character.stunned && !isNaN(abilityID) && abilityID < character.boss.abilities.length) {
+          data.characters = characters;
+          data.game_uuid = game_uuid;
+          data.io = io;//?
+          data.character = character;
+          data.abilityID = abilityID;
+          character.boss.abilities[abilityID](data);
+        }
+        return;
+      }
+    });
+  });
+};
 
 Room.prototype.stop = function () {
 // TODO : disconnect players, close socket, update redis, shutdown room
