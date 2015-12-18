@@ -21,7 +21,7 @@ var Trap = function(id, loc, map){
 
 Trap.prototype = {
 	isTriggered: function(knight_index){
-		var knight_position = Location.GetCharacterLocation(knight_index);
+		//var knight_position = Location.GetCharacterLocation(knight_index);
 		var trap_bottom_right = {x: this.position.x + this.width,
 							y: this.position.y + this.height};
 		for(var i = 0; i < map.traps.length; i++){

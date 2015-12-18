@@ -15,6 +15,7 @@ CharacterManager.SpawnKnight =  function(owner)
     char.knight = new knight();
     return char;
 };
+
 CharacterManager.SpawnBoss = function (owner, level, entity) 
 {
   var char = new character(this.count, owner, "boss", entity);
@@ -29,4 +30,4 @@ CharacterManager.SpawnBoss = function (owner, level, entity)
   return char;
 };
 
-module.exports.CharacterManager = CharacterManager;
+module.exports = CharacterManager;

@@ -54,10 +54,6 @@ if (cluster.isWorker)
     var Room = require("./classes/Room");
     var rooms = {};
 
-    // Set up server
-    app.set('port', process.env.port);
-    var server = app.listen(app.get("port"));
-
     // Listen for create room calls
     app.post('/createRoom', function (req, res)
     {
@@ -88,7 +84,7 @@ if (cluster.isWorker)
       res.send(matchID);
     });
 
-    
+    app.set('port', process.env.port);
     console.log('Worker ID: ' + process.env.workerID + ' listening at ' + ip + ' on port ' + app.get("port"));
 
     // Get region
@@ -128,8 +124,9 @@ if (cluster.isWorker)
       }
     });
 
-    // Start SocketIO
+    // Set up servers
     var io = require('socket.io')({transports: ['websocket']});
+    var server = app.listen(app.get("port"));
     io.listen(server);
 
     if (io) {
@@ -144,70 +141,68 @@ if (cluster.isWorker)
       socket.emit('ok');
 
       socket.on('joinRoom', function (data) {
-        console.log("in join room");
-        console.log(data);
-        socket.join(data.game_uuid);
-        socket.emit('joinedRoom');
-        console.log("socket rooms");
-        console.log(socket.rooms);
-        //starting now, rest of communication is with Room
-      });
-
-      socket.on('getRoom', function () 
-      {
-        socket.emit("room", socket.rooms);
+        if (data) {
+          return;
+        }
+        for (var key in rooms) {
+          if (key == data.matchID) {
+            console.log(socket.id + " joined room: " + data.matchID);
+            socket.room = rooms[key];
+            socket.join(data.matchID);
+            // Further communication is with the room
+          }
+        }
       });
 
       // The GameUUID that the socket belongs to is in socket.rooms[1]
-
-      socket.on('register', function  (data) 
+      socket.on('register', function (data)
       {
-        rooms[socket.rooms[1]].onRegister(socket,data);
+        socket.room.onRegister(socket,data);
       });
 
       socket.on('disconnect', function () 
       {
-        rooms[socket.rooms[1]].onDisconnect(socket);
+        socket.room.onDisconnect(socket);
       });
 
       socket.on(Event.input.TALK, function (data) 
       {
-        rooms[socket.rooms[1]].onTalk(socket,data);
+        socket.room.onTalk(socket,data);
       });
 
       socket.on(Event.input.MOVE, function (data) 
       {
-        rooms[socket.rooms[1]].onMove(socket,data);
+        socket.room.onMove(socket,data);
       });
 
       socket.on(Event.input.LEAVE, function () 
       {
-        rooms[socket.rooms[1]].onLeave(socket);
+        socket.room.onLeave(socket);
       });
       
       socket.on(Event.input.knight.CHANGE_EQUIPPED, function (data) 
       {
-        rooms[socket.rooms[1]].onKnightChangeEquipped(socket,data);
+        socket.room.onKnightChangeEquipped(socket,data);
       });
 
       socket.on(Event.input.knight.ABILITY_START, function (data) 
       {
-        rooms[socket.rooms[1]].onKnightAbilityStart(socket,data);
+        socket.room.onKnightAbilityStart(socket,data);
       });
 
       socket.on(Event.input.knight.USE_ITEM_START, function (data) 
       {
-        rooms[socket.rooms[1]].onKnightUseItemStart(socket,data);
+        socket.room.onKnightUseItemStart(socket,data);
       });
 
       socket.on(Event.input.boss.PUT_TRAP, function (data) 
       {
-        rooms[socket.rooms[1]].onBossPutTrap(socket,data);
+        socket.room.onBossPutTrap(socket,data);
       });
 
       socket.on(Event.input.boss.ABILITY_START, function (data) 
       {
-        rooms[socket.rooms[1]].onBossAbilityStart(socket,data);
+        socket.room.onBossAbilityStart(socket,data);
       });
     });
   });

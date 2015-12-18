@@ -6,53 +6,39 @@ var Vec2 = require("./Vector2");
 
 var Location = function (io, room, map) {
   this.characters = [];
-  this.characterIndex = [];
   this.charactersToUpdate = [];
   this.charactersToUpdateIndex = [];
   this.characterDestinations = [];
   this.characterDestinationsIndex = [];
   this.lastTime = new Date().getTime() / 1000;
 
-
-  this.addCharacter = function  (character, vector) 
+  this.AddCharacter = function (character, vector)
   {
-    this.characters.push(vector);
-    this.characterIndex.push(character);
-  }
+    character.position = vector;
+  };
 
   this.UpdateDestination = function (character, vector) {
     vector[0] = parseFloat(vector[0].toFixed(1));
     vector[1] = parseFloat(vector[1].toFixed(1));
-    vector = {y: vector[0], x: vector[1], c: character};
-
-    if (this.characterDestinationsIndex.indexOf(character) == -1) {
-      this.characterDestinations.push(vector);
-      this.characterDestinationsIndex.push(character);
-    }
-    else {
-      this.characterDestinations.splice(this.characterDestinationsIndex.indexOf(character), 1);
-      this.characterDestinationsIndex.splice(character, 1);
-      this.characterDestinations.push(vector);
-      this.characterDestinationsIndex.push(character);
-    }
+    character.destination = vector;
   };
 
-  this.UpdateCharacterLocation = function (character, speed) {
+  this.UpdateCharacterPositions = function () {
     var time = new Date().getTime() / 1000;
-    var vector = this.characterDestinations[this.characterDestinationsIndex.indexOf(character)];
-    if(vector === undefined) return;
-    speed = speed * (this.lastTime - time);
-    if (this.characterIndex.indexOf(character) != -1) {
-      var prevLocation = this.characters[this.characterIndex.indexOf(character)];
+    for (var key in this.characters) {
+      var vector = this.characters[key].destination;
+      if(vector == null) return;
+      var speed = this.characters[key].speed * (this.lastTime - time);
+      var prevLocation = this.characters[key].location;
       // Handle Collisions and Speed Limits
       if (Vec2.distanceTo(vector, prevLocation) > speed) {
         // If character is moving to fast, move it at maximum speed to destination
         vector = Vec2.add(prevLocation,
-                          Vec2.setLength(Vec2.sub(vector, prevLocation),
-                                         speed));
+          Vec2.setLength(Vec2.sub(vector, prevLocation),
+            speed));
         vector.c = character;
-        console.log("Character: " + character + " going to fast. Reverting to location: " +
-                    vector.x.toString() + " " + vector.y.toString());
+        //console.log("Character: " + character + " going to fast. Reverting to location: " +
+        //  vector.x.toString() + " " + vector.y.toString());
       }
       for (var i = 0; i < map.geom.length; i++) {
         var p = map.geom[i];
@@ -68,14 +54,7 @@ var Location = function (io, room, map) {
         }
       }
       // Update location
-      this.charactersToUpdate.push(vector);
-      this.charactersToUpdateIndex.push(character);
-      this.characters.splice(this.characterIndex.indexOf(character), 1);
-      this.characters.push(vector);
-      this.characterIndex.push(character);
-    } else {
-      this.characters.push(vector);
-      this.characterIndex.push(character);
+      this.characters[key].position = vector;
     }
   };
 
@@ -84,25 +63,21 @@ var Location = function (io, room, map) {
   };
 
   this.SendCharacterLocations = function () {
-  // TODO: Make it so that it only sends locations in a certain area for knights
+    // TODO: Make it so that it only sends locations in a certain area for knights
     var data = [];
-    this.charactersToUpdate.forEach(function (character) {
-      var info = {
-        i: character.c,
-        l: character
-      };
-      data.push(info);
-    });
+    for (var key in this.characters) {
+      var character = this.characters[key];
+      if (character.prevPosition != character.position) {
+        var info = {
+          i: character.id,
+          l: character
+        };
+        data.push(info);
+        character.prevPosition = character.position;
+      }
+    }
     if (data.length > 0) {
       io.to(room).emit(Event.output.CHAR_LOCATIONS, {"d":data});
-    }
-    this.charactersToUpdate = [];
-    this.charactersToUpdateIndex = [];
-  };
-
-  this.GetCharacterLocation = function(characterID) {
-    if (this.characterIndex.indexOf(characterID) != -1) {
-      return this.characters[characterID];
     }
   };
 };

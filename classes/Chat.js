@@ -6,7 +6,7 @@ var Event = require('./EventEnum');
 var Chat = function (io, room) {
   this.addMsg = function (player, msg) {
     var entry = {
-      username: player.username,
+      id: player.id,
       msg: msg
     };
     //this.stack.push(entry);
