@@ -125,9 +125,9 @@ if (cluster.isWorker)
     });
 
     // Set up servers
-    var io = require('socket.io')({transports: ['websocket']});
-    var server = app.listen(app.get("port"));
-    io.listen(server);
+    var io = require('socket.io')({transports: ['we1bsocket']});
+    var server = require('http').Server(app);
+    server.listen(app.get("port"));
 
     if (io) {
       console.log("Worker ID: " + process.env.workerID + " - Socket.IO running and accepting connections.");
@@ -138,72 +138,73 @@ if (cluster.isWorker)
       var socketID = socket.id;
       var clientIP = socket.request.connection.remoteAddress;
       console.log("WorkerID: " + process.env.workerID + ': ' + clientIP + " just connected.");
-      socket.emit('ok');
 
-      socket.on('joinRoom', function (data) {
-        if (data) {
-          return;
-        }
-        for (var key in rooms) {
-          if (key == data.matchID) {
-            console.log(socket.id + " joined room: " + data.matchID);
-            socket.room = rooms[key];
-            socket.join(data.matchID);
-            // Further communication is with the room
-          }
+      socket.on('join', function (data) {
+        if (Object.keys(rooms).indexOf(data.matchID) > -1) {
+          console.log(socket.id + " joined room: " + data.matchID);
+          socket.room = rooms[data.matchID];
+          socket.join(data.matchID);
+          // Further communication is with the room
+          socket.room.onRegister(socket, data);
         }
       });
 
       // The GameUUID that the socket belongs to is in socket.rooms[1]
-      socket.on('register', function (data)
-      {
-        socket.room.onRegister(socket,data);
-      });
-
       socket.on('disconnect', function () 
       {
-        socket.room.onDisconnect(socket);
+        if (socket.room)
+          socket.room.onDisconnect(socket);
       });
 
       socket.on(Event.input.TALK, function (data) 
       {
-        socket.room.onTalk(socket,data);
+        if (socket.room)
+          socket.room.onTalk(socket,data);
       });
 
       socket.on(Event.input.MOVE, function (data) 
       {
-        socket.room.onMove(socket,data);
+        if (socket.room)
+          socket.room.onMove(socket,data);
       });
 
       socket.on(Event.input.LEAVE, function () 
       {
-        socket.room.onLeave(socket);
+        if (socket.room)
+          socket.room.onLeave(socket);
       });
       
       socket.on(Event.input.knight.CHANGE_EQUIPPED, function (data) 
       {
-        socket.room.onKnightChangeEquipped(socket,data);
+        if (socket.room)
+          socket.room.onKnightChangeEquipped(socket,data);
       });
 
       socket.on(Event.input.knight.ABILITY_START, function (data) 
       {
-        socket.room.onKnightAbilityStart(socket,data);
+        if (socket.room)
+          socket.room.onKnightAbilityStart(socket,data);
       });
 
       socket.on(Event.input.knight.USE_ITEM_START, function (data) 
       {
-        socket.room.onKnightUseItemStart(socket,data);
+        if (socket.room)
+          socket.room.onKnightUseItemStart(socket,data);
       });
 
       socket.on(Event.input.boss.PUT_TRAP, function (data) 
       {
-        socket.room.onBossPutTrap(socket,data);
+        if (socket.room)
+          socket.room.onBossPutTrap(socket,data);
       });
 
       socket.on(Event.input.boss.ABILITY_START, function (data) 
       {
-        socket.room.onBossAbilityStart(socket,data);
+        if (socket.room)
+          socket.room.onBossAbilityStart(socket,data);
       });
     });
+
+    io.listen(server);
   });
 }

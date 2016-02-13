@@ -9,7 +9,7 @@ var Room = function (io, matchID, config) {
   // Bind parameters to room
   this.matchID = matchID;
   this.io = io;
-  this.config =   config;
+  this.config = config;
 
   // Start instances of modules
   this.map = new Map();
@@ -26,19 +26,20 @@ var Room = function (io, matchID, config) {
   /*
     Get player Data
    */
-  var StorePlayerData = function (config, characterManager, location, characters) {
+  var StorePlayerData = function (config, characterManager, location, characters, players) {
     // Get player data
-    var players = [];
+    var playerData = [];
     var itemList = require("./resources/items");
-    config.bosses.concat(config.knights).forEach(function (accountID) {
+    var playerIDs = config.bosses.concat(config.knights);
+    playerIDs.forEach(function (accountID) {
       MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?" , [accountID] , function(err,results) {
         if (err) {
+          throw err;
           return;
         }
         players.push(results[0]);
       });
     });
-    this.players = players;
     // Sort boss data
     config.bosses.forEach(function(accountID) {
       MySQLHandler.connection.query("SELECT boss_slots FROM br_inventory WHERE account_id = ?", [accountID], function(err, results) {
@@ -58,7 +59,7 @@ var Room = function (io, matchID, config) {
           // TODO: Filter bosses, minibosses, creatures, traps
           // Only create the boss for now
           if (item.purpose == "boss") {
-            var boss = characterManager.SpawnBoss(accountID, Finder.GetPlayerFromAccountID(players, accountID).boss_level, item.value);
+            var boss = characterManager.SpawnBoss(accountID, Finder.GetPlayerFromAccountID(players, accountID).boss_level, item.item_id - 3000);
             characters.push(boss);
             // TODO: Calculate proper starting positions
             //for now they all start in the same spot
@@ -120,7 +121,7 @@ var Room = function (io, matchID, config) {
       });
     });
   };
-  StorePlayerData(config, this.characterManager, this.location, this.characters);
+  StorePlayerData(config, this.characterManager, this.location, this.characters, this.players);
 
   /*
  Send Updates
@@ -141,7 +142,8 @@ var Room = function (io, matchID, config) {
         character.prevhp = character.hp;
       }
     });
-    io.to(matchID).emit(Event.output.CHAR_HP, hp);
+    if (hp.length > 0)
+      io.to(matchID).emit(Event.output.CHAR_HP, hp);
   };
   // Start Game Loop, 12 Updates per second
   setInterval(SendUpdates, 83, this.characters, this.location);
@@ -158,11 +160,10 @@ Room.prototype.onRegister = function (socket, data)
       player.socketID = socket.id;
       return true;
     }
-      return false;
   })) {
     socket.disconnect();
+    return;
   }
-  console.log("registr");
   // Emit the characters
   this.characters.forEach(function(character) {
     socket.emit(Event.output.CHAR_CREATED, {ID: character.id, Owner: character.owner, Entity: character.entity, HP: character.hp});
@@ -181,7 +182,7 @@ Room.prototype.onRegister = function (socket, data)
 Room.prototype.onDisconnect = function (socket)
 {
   var username = Finder.GetUsernameFromSocketID(this.players, socket.id);
-  require('./Disconnect')(socket, username, game_uuid, io);
+  require('./Disconnect')(socket, username, this.matchID, this.io);
 };
 // Text Chat
 //io.sockets.in(game_uuid).on(Event.input.TALK,
@@ -234,8 +235,8 @@ Room.prototype.onMove = function (socket , data)
 //io.sockets.in(game_uuid).on(Event.input.LEAVE,
 Room.prototype.onLeave = function (socket)
 {
-  var username = Finder.GetUsernameFromSocketID(players, socket.id);
-  require('./Disconnect')(socket, username, game_uuid, io);
+  var username = Finder.GetUsernameFromSocketID(this.players, socket.id);
+  require('./Disconnect')(socket, username, this.matchID, this.io);
 };
 // Knight changing equipped armor
 //io.sockets.in(game_uuid).on(Event.input.knight.CHANGE_EQUIPPED,

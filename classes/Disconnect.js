@@ -11,5 +11,5 @@ module.exports = function (socket, username, roomID, io) {
   }
   // Emit that the player has disconnected to all players
   io.to(roomID).emit(Event.output.PLAYER_LEAVES, username);
-  console.log("Game ID: " + roomID + " player at socket " + socketID + " left.")
+  console.log("Game ID: " + roomID + " player at socket " + socket.id + " left.")
 };
