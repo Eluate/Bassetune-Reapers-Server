@@ -28,125 +28,110 @@ var Room = function (io, matchID, config) {
    */
   var StorePlayerData = function (config, characterManager, location, characters, players) {
     // Get player data
-    var playerData = [];
     var itemList = require("./resources/items");
     var playerIDs = config.bosses.concat(config.knights);
+    var sortedIDs = playerIDs.sort(function(a, b) {
+      return a - b;
+    });
     playerIDs.forEach(function (accountID) {
       MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?" , [accountID] , function(err,results) {
-        if (err) {
-          throw err;
-          return;
+        if (err) throw err;
+
+        results[0].sID = sortedIDs.indexOf(accountID);
+        if (config.knights.indexOf(accountID) > -1) {
+          results[0].side = "knight";
+        } else {
+          results[0].side = "boss";
         }
         players.push(results[0]);
-      });
-    });
-    // Sort boss data
-    config.bosses.forEach(function(accountID) {
-      MySQLHandler.connection.query("SELECT boss_slots FROM br_inventory WHERE account_id = ?", [accountID], function(err, results) {
-        if (err || results.length < 1) {
-          return;
-        }
-        var bossSlots = JSON.parse(results[0].boss_slots);
-        for (var key in bossSlots) {
-          var slot = bossSlots[key];
-          var item = {};
-          // Find the item using the ID
-          itemList.forEach(function(itemInfo) {
-            if (itemInfo.id == slot[0]) {
-              item = itemInfo;
+        var player = Finder.GetPlayerFromAccountID(players, accountID);
+
+        // Sort boss data
+        if (config.bosses.indexOf(accountID) > -1) {
+          MySQLHandler.connection.query("SELECT boss_slots FROM br_inventory WHERE account_id = ?", [accountID], function(err, results) {
+            if (err || results.length < 1) {
+              return;
+            }
+            var bossSlots = JSON.parse(results[0].boss_slots);
+            for (var key in bossSlots) {
+              var slot = bossSlots[key];
+              var item = {};
+              // Find the item using the ID
+              itemList.forEach(function(itemInfo) {
+                if (itemInfo.id == slot[0]) {
+                  item = itemInfo;
+                }
+              });
+              // TODO: Filter bosses, minibosses, creatures, traps
+              // Only create the boss for now
+              if (item.purpose == "boss") {
+                var boss = characterManager.SpawnBoss(player.sID, player.boss_level, item.item_id - 3000);
+                boss.position = {x: 20, y : 20};
+                characters.push(boss);
+                // TODO: Calculate proper starting positions
+                //for now they all start in the same spot
+              }
             }
           });
-          // TODO: Filter bosses, minibosses, creatures, traps
-          // Only create the boss for now
-          if (item.purpose == "boss") {
-            var boss = characterManager.SpawnBoss(accountID, Finder.GetPlayerFromAccountID(players, accountID).boss_level, item.item_id - 3000);
-            characters.push(boss);
+        }
+        // Sort knight data
+        if (config.knights.indexOf(accountID) > -1) {
+          // Get all equipped items and abilities
+          MySQLHandler.connection.query("SELECT knight_slots, ability_slots FROM br_inventory WHERE account_id = ?", [accountID], function(err, results) {
+            if (err) throw err;
+            if (results.length == undefined || results.length == 0) return;
+            results = results[0];
+            var items = [];
+            var abilities = [];
+            var weapons = [];
+            for (var i = 0; i < results.length; i++) {
+              if (results[i].purpose == "weapon") {
+                weapons.push(results[i]);
+              } else if (results[i].purpose == "item") {
+                items.push(results[i]);
+              } else if (results[i].purpose == "ability") {
+                abilities.push(results[i]);
+              }
+            }
+            var character = characterManager.SpawnKnight(player.sID);
+            character.knight.inventory.items = items;
+            character.knight.abilities = abilities;
+            character.knight.inventory.weapons = weapons;
+            character.knight.inventory.sortInventory();
+            character.position = {x: 30, y: 30};
+            characters.push(character);
+            // Set character location
             // TODO: Calculate proper starting positions
-            //for now they all start in the same spot
-            location.AddCharacter(character.id, {x: 20, y : 20});
-          }
+          });
         }
       });
     });
-    config.knights.forEach(function(accountID) {
-      // Get all equipped items and abilities
-      MySQLHandler.connection.query("SELECT knight_slots, ability_slots FROM br_inventory WHERE account_id = ?", [accountID], function(err, results) {
-        var items = [];
-        var abilities = [];
-        var weapons = [];
-        var knightSlots = JSON.parse(results[0].knight_slots);
-        for (var key in knightSlots) {
-          var slot = knightSlots[key];
-          // Find the item using the ID
-          var item = {};
-          itemList.forEach(function (itemInfo) {
-            if (itemInfo.id == slot[0]) {
-              item = itemInfo;
-            }
-          });
-          for (var i = 0; i < results.length; i++) {
-            if (item.purpose == "weapon") {
-              weapons.push(results[i]);
-            } else if (item.purpose == "item") {
-              items.push(results[i]);
-            }
-          }
-        }
-        var abilitySlots = JSON.parse(results[0].ability_slots);
-        for (var key in abilitySlots) {
-          var slot = abilitySlots[key];
-          // Find the item using the ID
-          var item = {};
-          itemList.forEach(function (itemInfo) {
-            if (itemInfo.id == slot[0]) {
-              item = itemInfo;
-            }
-          });
-          for (var i = 0; i < results.length; i++) {
-            console.log("weapon id: " + results[i].weapon_id);
-            if (item.purpose == "ability") {
-              abilities.push(results[i]);
-            }
-          }
-        }
-        var character = characterManager.SpawnKnight(accountID);
-        character.knight.inventory.items = items;
-        character.knight.abilities = abilities;
-        character.knight.inventory.weapons = weapons;
-        character.knight.inventory.sortInventory();
-        characters.push(character);
-        // Set character location
-        // TODO: Calculate proper starting positions
-        location.AddCharacter(character.id, {x: 30, y: 30});
-      });
-    });
+
   };
   StorePlayerData(config, this.characterManager, this.location, this.characters, this.players);
 
   /*
  Send Updates
  */
-  var SendUpdates  = function (characters, location)
-  {
-    // Locations
-    characters.forEach(function(character) {
-      location.UpdateCharacterPositions(character.id, character.speed);
-    });
-    location.SendCharacterLocations();
-    location.UpdateTime();
-    // HP
-    var hp = [];
-    characters.forEach(function(character) {
-      if (character.hp != character.prevhp) {
-        hp.push({i:character.id, h:character.hp});
-        character.prevhp = character.hp;
-      }
-    });
-    if (hp.length > 0)
-      io.to(matchID).emit(Event.output.CHAR_HP, hp);
-  };
   // Start Game Loop, 12 Updates per second
-  setInterval(SendUpdates, 83, this.characters, this.location);
+  setInterval(this.sendUpdates, 83, this.characters, this.location);
+};
+
+Room.prototype.sendUpdates = function (characters, location) {
+  // Locations
+  location.UpdateCharacterPositions();
+  location.SendCharacterLocations();
+  location.UpdateTime();
+  // HP
+  var hp = [];
+  characters.forEach(function(character) {
+    if (character.hp != character.prevhp) {
+      hp.push({i:character.id, h:character.hp});
+      character.prevhp = character.hp;
+    }
+  });
+  if (hp.length > 0)
+    io.to(this.matchID).emit(Event.output.CHAR_HP, hp);
 };
 
 /*
@@ -166,11 +151,21 @@ Room.prototype.onRegister = function (socket, data)
   }
   // Emit the characters
   this.characters.forEach(function(character) {
-    socket.emit(Event.output.CHAR_CREATED, {ID: character.id, Owner: character.owner, Entity: character.entity, HP: character.hp});
+    socket.emit(Event.output.CHAR_CREATED, {I: character.id, O: character.owner, E: character.entity, H: character.hp, L: character.position});
   });
-  // Emit the locations of each character
 
   // Emit the players
+  var playerData = {"d":[]};
+  this.players.forEach(function(player) {
+    playerData["d"].push({i: player.sID, u: player.username, n: player.nickname, s: player.side})
+  });
+  socket.emit(Event.output.PLAYER, playerData);
+  // Send knight inventory
+  this.characters.forEach(function(character) {
+    if (character.knight) {
+      // Emit inventory and abilities
+    }
+  });
 };
 
 /*
@@ -198,16 +193,17 @@ Room.prototype.onTalk = function (socket , data)
 //io.sockets.in(game_uuid).on(Event.input.MOVE,
 Room.prototype.onMove = function (socket , data)
 {
-  // Received data in form of {characterID:[locationX, locationY}, ...}
+  // Received data in form of {characterID:[locationX, locationY], ...}
   for (var key in data) {
-    if (!Object.prototype.hasOwnProperty.call(data, key)) {
+    if (data[key].constructor !== Array) {
       continue;
     }
     // Check if data is valid or not
-    if (isNaN(parseFloat(data[key][0])) || isNaN(parseFloat(data[key][1]))) {
+    if (data[key].length != 2 || isNaN(parseFloat(data[key][0])) || isNaN(parseFloat(data[key][1]))) {
       return;
     }
-    characters.some(function (character) {
+    for (var i = 0; i < this.characters.length; i++) {
+      var character = this.characters[i];
       if (character.id != key) {
         return false;
       }
@@ -222,13 +218,14 @@ Room.prototype.onMove = function (socket , data)
           character.channellingAbility.CheckInterruption();
         }
       }
-      this.players.forEach(function (player) {
-        if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(this.players, socketID) == character.owner) {
-          location.UpdateDestination(key, data[key]);
+      for (var n = 0; n < this.players.length; n++) {
+        var player = this.players[n];
+        if (player.socketID == socket.id && player.sID == character.owner) {
+          this.location.UpdateDestination(character, data[key]);
           return true;
         }
-      });
-    });
+      }
+    }
   }
 };
 // Leave

@@ -3,6 +3,7 @@
  */
 var Event = require('./EventEnum');
 var Vec2 = require("./Vector2");
+var PF = require("pathfinding");
 
 var Location = function (io, room, map) {
   this.characters = [];
@@ -12,14 +13,11 @@ var Location = function (io, room, map) {
   this.characterDestinationsIndex = [];
   this.lastTime = new Date().getTime() / 1000;
 
-  this.AddCharacter = function (character, vector)
-  {
-    character.position = vector;
-  };
-
   this.UpdateDestination = function (character, vector) {
-    vector[0] = parseFloat(vector[0].toFixed(1));
-    vector[1] = parseFloat(vector[1].toFixed(1));
+    var vector = {
+      x: parseFloat(vector[0].toFixed(1)),
+      y: parseFloat(vector[1].toFixed(1))
+    };
     character.destination = vector;
   };
 
@@ -28,31 +26,28 @@ var Location = function (io, room, map) {
     for (var key in this.characters) {
       var vector = this.characters[key].destination;
       if(vector == null) return;
-      var speed = this.characters[key].speed * (this.lastTime - time);
-      var prevLocation = this.characters[key].location;
+      var speed = this.characters[key].speed * (time - this.lastTime);
+      var prevLocation = this.characters[key].position;
       // Handle Collisions and Speed Limits
       if (Vec2.distanceTo(vector, prevLocation) > speed) {
         // If character is moving to fast, move it at maximum speed to destination
-        vector = Vec2.add(prevLocation,
-          Vec2.setLength(Vec2.sub(vector, prevLocation),
-            speed));
-        vector.c = character;
-        //console.log("Character: " + character + " going to fast. Reverting to location: " +
-        //  vector.x.toString() + " " + vector.y.toString());
+        vector = Vec2.add(prevLocation, Vec2.setLength(Vec2.sub(vector, prevLocation), speed));
+        console.log("Character: " + this.characters[key].id + " going to fast. Reverting to location: " +
+          vector.x.toString() + " " + vector.y.toString());
       }
-      for (var i = 0; i < map.geom.length; i++) {
-        var p = map.geom[i];
+      /*for (var i = 0; i < map.geometry.length; i++) {
+        var p = map.geometry[i];
         // Broad Phase
-        if (Vec2.distanceTo(vector, {x: p.x1 , y : p.y1}) > speed) {
+        if (Vec2.distanceTo(vector, {x: p[0] , y : p[1]}) > speed) {
           continue;
         }
         // Narrow Phase
-        if (Vec2.wallCollision(vector, prevLocation, {x: p.x1 , y : p.y1})) {
+        if (Vec2.pointCollision(vector, prevLocation, {x: p[0] , y : p[1]})) {
           // Collision occurred, revert to prev position (generous, the bounds of model aren't tested)
           vector = Vec2.sub(vector, Vec2.setLength(Vec2.sub(vector, prevLocation), 0.2));
           console.log("Character: " + character + " collided with a wall at " + p.x1 + "," + p.y1);
         }
-      }
+      }*/
       // Update location
       this.characters[key].position = vector;
     }
@@ -70,8 +65,10 @@ var Location = function (io, room, map) {
       if (character.prevPosition != character.position) {
         var info = {
           i: character.id,
-          l: character
+          l: [0,0]
         };
+        info.l[0] = character.position.x;
+        info.l[1] = character.position.y;
         data.push(info);
         character.prevPosition = character.position;
       }

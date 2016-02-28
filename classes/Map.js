@@ -310,6 +310,7 @@ var Map = function () {
     return regions;
   };
 
+  // Get wall regions
   var wallRegions = GetRegions(1, this.geometry);
   var wallThresholdSize = 50;
   for (var i = 0; i < wallRegions.length; i++) {
@@ -320,6 +321,7 @@ var Map = function () {
     }
   }
 
+  // Get room regions
   var roomRegions = GetRegions(0, this.geometry);
   var survivingRooms = [];
   var roomThresholdSize = 50;
@@ -353,8 +355,6 @@ var Map = function () {
       }
     }
   }
-
-  console.log("Map Generated");
 };
 
 

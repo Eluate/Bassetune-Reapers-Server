@@ -47,7 +47,7 @@ var TheSavageTillBeast = function (level) {
       projectiles.forEach(function (projectile) {
         // Check if the ability hits a wall (if its ranged)
         var collisionPoints = [];
-        var prevLocation = location.characters[location.characterIndex.indexOf(character.id)].location;
+        var prevLocation = location.characters[location.characterIndex.indexOf(character.id)].position;
         for (var i = 0; i < location.map.geom.length; i++) {
           var p = location.map.geom[i];
           if (Vec2.wallCollision(prevLocation, projectile, p)) {
@@ -58,7 +58,7 @@ var TheSavageTillBeast = function (level) {
         // Check for target hits
         var hitTargets = [];
         for (var j = 0; j < location.character.length; j++) {
-          var charLocation = location.character[j].location;
+          var charLocation = location.character[j].position;
           if (Vec2.pointCollision(prevLocation, charLocation, projectile)) {
             // Collision occurred
             hitTargets.push(location.character[j]);

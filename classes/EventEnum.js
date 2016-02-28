@@ -25,6 +25,7 @@ exports.output = {
   NEW_CHAT_MSG: 'c',
   CHAR_LOCATIONS: 'm',
   CHAR_HP: 'h',
+  PLAYER: 'p',
   PLAYER_LEAVES: 'l',
   EFFECT: 'e',
   TRAP_TRIGGERED: 't',

@@ -130,7 +130,7 @@ Ability.prototype.UseKnightAbility = function (data) {
         // Check for target hits
         var hitTargets = [];
         for (var j = 0; j < location.character.length; j++) {
-          var charLocation = location.character[j].location;
+          var charLocation = location.character[j].position;
           if (Vec2.pointCollision(prevLocation, charLocation, projectile)) {
             // Collision occurred
             hitTargets.push(location.character[j]);
@@ -144,7 +144,7 @@ Ability.prototype.UseKnightAbility = function (data) {
         var hitTarget = [];
         for (i = 0; i < hitTargets.length; i++) {
           for (j = 0; j < collisionPoints.length; i++) {
-            if (collisionPoints[j].distanceTo(prevLocation) < hitTargets[i].location.distanceTo(prevLocation)) {
+            if (collisionPoints[j].distanceTo(prevLocation) < hitTargets[i].position.distanceTo(prevLocation)) {
               if (hitTarget.indexOf(hitTargets[i]) == -1) {
                 hitTarget.push(hitTargets[i]);
               }
@@ -258,10 +258,10 @@ Ability.prototype.UseKnightAbility = function (data) {
         var newLocation = characterLocation.add(Vec2.setLength({x: target.x, y: target.y}, ability.moveDistance));
         // Update new location
         if (location.characterIndex.indexOf(character.id) > 0) {
-          location.characters[location.characterIndex.indexOf(character.id)].location = newLocation;
+          location.characters[location.characterIndex.indexOf(character.id)].position = newLocation;
         }
         if (location.charactersToUpdateIndex.indexOf(character.id)> 0) {
-          location.charactersToUpdate[location.charactersToUpdateIndex.indexOf(character.id)].location = newLocation;
+          location.charactersToUpdate[location.charactersToUpdateIndex.indexOf(character.id)].position = newLocation;
         }
       }
       // Increase Range

@@ -29,6 +29,15 @@ var finder =  {
     });
     return accountID;
   },
+  GetPlayerFromSocketID: function(players, accountID) {
+    var playerObject = "";
+    players.forEach(function(player) {
+      if (player.socketID == accountID) {
+        playerObject = player;
+      }
+    });
+    return playerObject;
+  },
   GetPlayerFromAccountID: function(players, accountID) {
     var playerObject = "";
     players.forEach(function(player) {

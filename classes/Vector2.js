@@ -15,7 +15,9 @@ var Vector2 = {
     return {x: v1.x / scale, y: v1.y / scale};
   },
   distanceTo: function(v1, v2) {
-    return Math.pow(((v2.x - v1.x) * (v2.x - v1.x)) + ((v2.y - v1.y) * (v2.y - v1.y)), 0.5);
+    var xd = v2.x - v1.x;
+    var yd = v2.y - v1.y;
+    return Math.pow((xd * xd) + (yd * yd), 0.5);
   },
   length: function(v1) {
     return this.distanceTo({x: 0, y: 0}, v1);
