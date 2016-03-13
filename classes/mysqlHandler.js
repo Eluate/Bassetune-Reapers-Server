@@ -11,6 +11,7 @@ var connection = mysql.createPool(
     user : 'brMaster',
     password: 'BrMaster1',
     database : 'brPrototype001',
+    acquireTimeout: 30000,
     connectTimeout : 40000
   });
 

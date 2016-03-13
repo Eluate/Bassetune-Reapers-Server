@@ -3,37 +3,64 @@
  */
 var Event = require('./EventEnum');
 var Vec2 = require("./Vector2");
-var PF = require("pathfinding");
 
 var Location = function (io, room, map) {
+  this.PF = require("pathfinding");
+  this.pathfinder = new this.PF.AStarFinder();
   this.characters = [];
-  this.charactersToUpdate = [];
-  this.charactersToUpdateIndex = [];
-  this.characterDestinations = [];
-  this.characterDestinationsIndex = [];
   this.lastTime = new Date().getTime() / 1000;
+  this.map = map;
+  this.io = io;
+  this.room = room;
+};
 
-  this.UpdateDestination = function (character, vector) {
+Location.prototype = {
+  UpdateDestination: function (character, vector) {
     var vector = {
-      x: parseFloat(vector[0].toFixed(1)),
-      y: parseFloat(vector[1].toFixed(1))
+      x: parseInt(vector[0]),
+      y: parseInt(vector[1])
     };
-    character.destination = vector;
-  };
+    if (vector.x < this.map.pfGrid.width && vector.y < this.map.pfGrid.height) {
+      var grid = this.map.pfGrid.clone();
+      var path = this.pathfinder.findPath(parseInt(character.position.x), parseInt(character.position.y), vector.x, vector.y, grid);
+      path = this.PF.Util.compressPath(path);
+      character.path = path;
+      console.log("Updated path");
+      console.log(character.path)
+    } else {
+      character.path = null;
+    }
+  },
 
-  this.UpdateCharacterPositions = function () {
+  UpdateCharacterPositions: function () {
     var time = new Date().getTime() / 1000;
     for (var key in this.characters) {
-      var vector = this.characters[key].destination;
-      if(vector == null) return;
+      if (!this.characters.hasOwnProperty(key)) return;
+      var path = this.characters[key].path;
+      if(path == null || path == undefined || path.length == 0) continue;
       var speed = this.characters[key].speed * (time - this.lastTime);
       var prevLocation = this.characters[key].position;
-      // Handle Collisions and Speed Limits
-      if (Vec2.distanceTo(vector, prevLocation) > speed) {
-        // If character is moving to fast, move it at maximum speed to destination
-        vector = Vec2.add(prevLocation, Vec2.setLength(Vec2.sub(vector, prevLocation), speed));
-        console.log("Character: " + this.characters[key].id + " going to fast. Reverting to location: " +
-          vector.x.toString() + " " + vector.y.toString());
+      var distanceTravelled = 0.0;
+      while (distanceTravelled < speed && path.length > 0) {
+        var vector = {
+          x: path[0][0],
+          y: path[0][1]
+        };
+        var distanceToPoint = Vec2.distanceTo(vector, prevLocation);
+        // Handle speed Limits
+        if (distanceToPoint > speed) {
+          // If character is moving to fast, move it at maximum speed to destination
+          prevLocation = Vec2.add(prevLocation, Vec2.setLength(Vec2.sub(vector, prevLocation), speed - distanceTravelled));
+          console.log("Character: " + this.characters[key].id + " going to fast. Reverting to location: " +
+            vector.x.toString() + " " + vector.y.toString());
+          // Finish loop
+          distanceTravelled += speed;
+        } else {
+          prevLocation = vector;
+          distanceTravelled += speed;
+          // Remove element from path
+          path.shift();
+        }
       }
       /*for (var i = 0; i < map.geometry.length; i++) {
         var p = map.geometry[i];
@@ -49,15 +76,15 @@ var Location = function (io, room, map) {
         }
       }*/
       // Update location
-      this.characters[key].position = vector;
+      this.characters[key].position = prevLocation;
     }
-  };
+  },
 
-  this.UpdateTime = function () {
+  UpdateTime: function () {
     this.lastTime = new Date().getTime() / 1000;
-  };
+  },
 
-  this.SendCharacterLocations = function () {
+  SendCharacterLocations: function () {
     // TODO: Make it so that it only sends locations in a certain area for knights
     var data = [];
     for (var key in this.characters) {
@@ -74,9 +101,9 @@ var Location = function (io, room, map) {
       }
     }
     if (data.length > 0) {
-      io.to(room).emit(Event.output.CHAR_LOCATIONS, {"d":data});
+      this.io.to(this.room).emit(Event.output.CHAR_LOCATIONS, {"d":data});
     }
-  };
+  }
 };
 
 module.exports = Location;

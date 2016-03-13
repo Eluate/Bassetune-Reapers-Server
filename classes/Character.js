@@ -15,7 +15,6 @@ var Character = function (id, owner, type, entity) {
   this.blockArmor = 0; // any extra armor given by a block
   this.stunCount = 0; // number of stuns on character
   this.position = null;
-  this.destination = null;
   this.prevPosition = null;
   this.stunned = function () {
     return this.stunCount > 0 || this.dead();

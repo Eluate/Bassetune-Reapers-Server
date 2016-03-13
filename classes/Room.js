@@ -149,6 +149,8 @@ Room.prototype.onRegister = function (socket, data)
     socket.disconnect();
     return;
   }
+  // Emit the seed for map generation
+  socket.emit("seed", {"s":this.map.seed});
   // Emit the characters
   this.characters.forEach(function(character) {
     socket.emit(Event.output.CHAR_CREATED, {I: character.id, O: character.owner, E: character.entity, H: character.hp, L: character.position});

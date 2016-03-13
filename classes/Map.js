@@ -53,12 +53,15 @@ Room.ConnectRooms = function (roomA, roomB) {
 var Map = function () {
   var height = 72;
   var width = 128;
+  var borderSize = 10;
+  var PF = require('pathfinding');
   var randomFillPercent = 0.48;
   // Set up 2D array for the map
   this.geometry = new Array(width);
   for (var i = 0; i < width; i++) {
     this.geometry[i] = new Array(height);
   }
+  this.pfGrid = new PF.Grid(width + (borderSize * 2), height + (borderSize * 2));
   // Generate the seed
   this.seed = 1;
   // Randomly fill the map
@@ -157,8 +160,8 @@ var Map = function () {
     var dy = to[1] - from[1];
 
     var inverted = false;
-    var step = Math.Sign(dx);
-    var gradientStep = Math.Sign(dy);
+    var step = Math.sign(dx);
+    var gradientStep = Math.sign(dy);
 
     var longest = Math.abs(dx);
     var shortest = Math.abs(dy);
@@ -169,7 +172,7 @@ var Map = function () {
       shortest = Math.abs(dx);
 
       step = Math.Sign(dy);
-      gradientStep = Math.Sign(dx);
+      gradientStep = Math.sign(dx);
     }
 
     var gradientAccumulation = longest / 2;
@@ -223,7 +226,8 @@ var Map = function () {
     var roomListA = [];
     var roomListB = [];
     if (forceAccessibilityFromMainRoom) {
-      for (var i = 0; i < survivingRooms; i++) {
+      for (var i = 0; i < allRooms.length; i++) {
+        var room = allRooms[i];
         if (room.isAccessibleFromMainRoom) {
           roomListB.push(room);
         } else {
@@ -339,7 +343,6 @@ var Map = function () {
   survivingRooms[0].isAccessibleFromMainRoom = true;
   ConnectClosestRooms(survivingRooms, false, this.geometry);
 
-  var borderSize = 10;
   var borderedMap = new Array(width + borderSize * 2);
   for (var i = 0; i < width + borderSize * 2; i++) {
     borderedMap[i] = new Array(height + borderSize * 2);
@@ -354,6 +357,25 @@ var Map = function () {
         borderedMap[x][y] = 1;
       }
     }
+  }
+
+  // Loop through map and set pathfinding grid
+  for (var x = 0; x < borderedMap.length; x++) {
+    for (var y = 0; y < borderedMap[x].length; y++) {
+      if (borderedMap[x][y] == 1) {
+        this.pfGrid.setWalkableAt(x, y, true);
+      }
+      else {
+        this.pfGrid.setWalkableAt(x, y, false);
+      }
+    }
+  }
+
+  for (i = 0; i < borderedMap.length; i++) {
+    for (var j = 0; j < borderedMap[i].length; j++) {
+      process.stdout.write(borderedMap[i][j]);
+    }
+    console.log("");
   }
 };
 
