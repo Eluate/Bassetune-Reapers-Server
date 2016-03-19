@@ -54,14 +54,12 @@ var Map = function () {
   var height = 72;
   var width = 128;
   var borderSize = 10;
-  var PF = require('pathfinding');
   var randomFillPercent = 0.48;
   // Set up 2D array for the map
   this.geometry = new Array(width);
   for (var i = 0; i < width; i++) {
     this.geometry[i] = new Array(height);
   }
-  this.pfGrid = new PF.Grid(width + (borderSize * 2), height + (borderSize * 2));
   // Generate the seed
   this.seed = 1;
   // Randomly fill the map
@@ -344,11 +342,12 @@ var Map = function () {
   ConnectClosestRooms(survivingRooms, false, this.geometry);
 
   var borderedMap = new Array(width + borderSize * 2);
+
   for (var i = 0; i < width + borderSize * 2; i++) {
     borderedMap[i] = new Array(height + borderSize * 2);
   }
 
-  for (var x = 0; x < borderedMap.length; x++) {
+  /*for (var x = 0; x < borderedMap.length; x++) {
     for (var y = 0; y < borderedMap[x].length; y++) {
       if (x >= borderSize && x < width + borderSize && y >= borderSize && y < height + borderSize) {
         borderedMap[x][y] = this.geometry[x - borderSize][y - borderSize];
@@ -357,26 +356,10 @@ var Map = function () {
         borderedMap[x][y] = 1;
       }
     }
-  }
+    console.log(borderedMap[x]);
+  }*/
 
-  // Loop through map and set pathfinding grid
-  for (var x = 0; x < borderedMap.length; x++) {
-    for (var y = 0; y < borderedMap[x].length; y++) {
-      if (borderedMap[x][y] == 1) {
-        this.pfGrid.setWalkableAt(x, y, true);
-      }
-      else {
-        this.pfGrid.setWalkableAt(x, y, false);
-      }
-    }
-  }
-
-  for (i = 0; i < borderedMap.length; i++) {
-    for (var j = 0; j < borderedMap[i].length; j++) {
-      process.stdout.write(borderedMap[i][j]);
-    }
-    console.log("");
-  }
+  this.borderedMap = this.geometry;
 };
 
 

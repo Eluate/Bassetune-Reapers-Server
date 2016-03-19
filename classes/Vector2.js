@@ -52,12 +52,14 @@ var Vector2 = {
       return false;
     }
   },
+  // Broken
+  /*
   pointCollision: function(v1, v2, v3) {
     var rect2 = {
       x: v3.x,
       y: v3.y,
-      w: 0.05,
-      h: 0.05
+      w: 1,
+      h: 1
     };
     var rect1 = {
       x: v1.x + (v1.x - v2.x / 2),
@@ -75,6 +77,11 @@ var Vector2 = {
     else {
       return false;
     }
+  }
+  */
+  pointCollision: function(v1, v2, v3) {
+    return (v3.x < Math.min(v1.x,v2.x) || v3.y < Math.min(v1.y,v2.y) ||
+            v3.x > Math.max(v1.x,v2.x) || v3.y > Math.max(v1.y,v2.y))
   }
 };
 
