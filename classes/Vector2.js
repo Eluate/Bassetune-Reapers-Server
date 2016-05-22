@@ -52,33 +52,6 @@ var Vector2 = {
       return false;
     }
   },
-  // Broken
-  /*
-  pointCollision: function(v1, v2, v3) {
-    var rect2 = {
-      x: v3.x,
-      y: v3.y,
-      w: 1,
-      h: 1
-    };
-    var rect1 = {
-      x: v1.x + (v1.x - v2.x / 2),
-      y: v1.x + (v1.x - v2.x / 2),
-      w: Math.abs(v1.x - v2.x),
-      h: Math.abs(v1.y - v2.y)
-    };
-    if (rect1.x < rect2.x + rect2.w &&
-      rect1.x + rect1.w > rect2.x &&
-      rect1.y < rect2.y + rect2.h &&
-      rect1.h + rect1.y > rect2.y) {
-      // Collision occurred
-      return true;
-    }
-    else {
-      return false;
-    }
-  }
-  */
   pointCollision: function(v1, v2, v3) {
     return (v3.x < Math.min(v1.x,v2.x) || v3.y < Math.min(v1.y,v2.y) ||
             v3.x > Math.max(v1.x,v2.x) || v3.y > Math.max(v1.y,v2.y))
@@ -123,7 +96,6 @@ var Vector2 = {
 
 		return {x: y, y: x};
   }
-
 };
 
 //Vector2.prototype.add = function (v1, v2) {

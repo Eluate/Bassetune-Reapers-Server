@@ -12,6 +12,7 @@
     "external-ip":"0.2.3",
     "request":"2.60.0",
     "body-parser": "*",
-    "multer" : "*"
+    "multer" : "*",
+    "pathfinding" : "0.4.17"
   }
 }
