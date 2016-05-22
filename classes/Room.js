@@ -80,23 +80,30 @@ var Room = function (io, matchID, config) {
           MySQLHandler.connection.query("SELECT knight_slots, ability_slots FROM br_inventory WHERE account_id = ?", [accountID], function(err, results) {
             if (err) throw err;
             if (results.length == undefined || results.length == 0) return;
-            results = results[0];
-            var items = [];
+
+						var inventory = [];
+						var items = [];
+
+						var itemFile = require('./resources/items');
+
+						var itemResults = JSON.parse(results[0].knight_slots);
+						for (var i = 0; i < itemResults.length; i++) {
+							for (var n = 0; n < itemFile.length; n++) {
+								if (itemFile[n].item_id == itemResults[i][0]) {
+									items.push(itemFile[n]);
+									inventory.push(itemResults[i]);
+								}
+							}
+						}
+
             var abilities = [];
+						var armor = [];
             var weapons = [];
-            for (var i = 0; i < results.length; i++) {
-              if (results[i].purpose == "weapon") {
-                weapons.push(results[i]);
-              } else if (results[i].purpose == "item") {
-                items.push(results[i]);
-              } else if (results[i].purpose == "ability") {
-                abilities.push(results[i]);
-              }
-            }
             var character = characterManager.SpawnKnight(player.sID);
             character.knight.inventory.items = items;
             character.knight.abilities = abilities;
             character.knight.inventory.weapons = weapons;
+						character.knight.inventory.slots = inventory;
             character.knight.inventory.sortInventory();
             character.position = {x: 30, y: 30};
             characters.push(character);
@@ -109,6 +116,19 @@ var Room = function (io, matchID, config) {
 
   };
   StorePlayerData(config, this.characterManager, this.location, this.characters, this.players);
+
+	this.sendInventories = function (characters, socket) {
+		// Send knight inventory
+		characters.forEach(function(character) {
+			if (character.knight) {
+				// Emit inventory and abilities
+				socket.emit(Event.output.knight.ITEM_INVENTORY, {
+					id: character.owner,
+					i: character.knight.inventory.slots
+				});
+			}
+		});
+	};
 
   /*
  Send Updates
@@ -162,12 +182,8 @@ Room.prototype.onRegister = function (socket, data)
     playerData["d"].push({i: player.sID, u: player.username, n: player.nickname, s: player.side})
   });
   socket.emit(Event.output.PLAYER, playerData);
-  // Send knight inventory
-  this.characters.forEach(function(character) {
-    if (character.knight) {
-      // Emit inventory and abilities
-    }
-  });
+	// Wait 1s until sending inventories
+	setTimeout(this.sendInventories(this.characters, socket), 1000);
 };
 
 /*

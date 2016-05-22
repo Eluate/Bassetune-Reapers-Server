@@ -4,6 +4,9 @@
 var Vec2 = require("./Vector2");
 var Event = require('./EventEnum');
 
+var Melee = ["Axe, Sword, Dagger, Knife"]; // Add more later
+var Ranged = ["Bow"]; // Add more later
+
 var Ability = function (entityID) {
   var abilityInfo = require('./resources/abilities')[entityID];
   // Set ability info
@@ -54,7 +57,11 @@ Ability.prototype.UseKnightAbility = function (data) {
   // Retrieve weapon data
   weapon = Ability.GetWeaponInfo(weapon);
   // Check if weapon matches the required weapon
-  if (ability.reqType != weapon.type && ability.reqType != null) {
+  if (!Melee.some(function(weapon) {
+      return weapon == weapon.type && weapon.type == ability.reqType;
+    }) && !Ranged.some(function(weapon) {
+      return weapon == weapon.type && weapon.type == ability.reqType;
+    }) && ability.reqType != weapon.type && ability.reqType != null ) {
     return;
   }
   // Check if weapon is busy
@@ -95,7 +102,7 @@ Ability.prototype.UseKnightAbility = function (data) {
       // Projectile array
       var projectiles = [];
       // The location of the character who cast
-      var prevLocation = location.characters[location.characterIndex.indexOf(character.id)].location;
+      var prevLocation = character.location;
       // Set target as direction
       target = Vec2.sub(target, prevLocation);
       // Multiple projectiles
@@ -119,8 +126,8 @@ Ability.prototype.UseKnightAbility = function (data) {
         // Check if the ability hits a wall (if its ranged)
         var collisionPoints = [];
         if (ability.numProjectiles > 1) {
-          for (var i = 0; i < location.map.geom.length; i++) {
-            var p = location.map.geom[i];
+          for (var i = 0; i < location.map.borderedMap.length; i++) {
+            var p = location.map.borderedMap[i];
             if (Vec2.wallCollision(prevLocation, projectile, p)) {
               // Collision occurred
               collisionPoints.push(p);
@@ -182,8 +189,7 @@ Ability.prototype.UseKnightAbility = function (data) {
           // Damage
           if (ability.hasOwnProperty("damage")) {
             // Calculate range for range damage modifier
-            var totalRange = location.characters[location.characterIndex.indexOf(character.id)].location.distanceTo(
-              hitTarget[i].location);
+            var totalRange = Vec2.distanceTo(character.position, hitTarget[i].position);
             var totalDamage = ability.damage + weapon.damage * ability.damageModifier + (this.rangeDamageModifier * totalRange);
             // Check if ability should ignore armor
             if (!ability.ignoreArmor) {
@@ -254,15 +260,10 @@ Ability.prototype.UseKnightAbility = function (data) {
       }
       // Dodge
       if (ability.hasOwnProperty("moveDistance") && target.hasOwnProperty("x") && target.hasOwnProperty("y")) {
-        var characterLocation = location.characters[character.id].location;
+        var characterLocation = character.position ;
         var newLocation = characterLocation.add(Vec2.setLength({x: target.x, y: target.y}, ability.moveDistance));
         // Update new location
-        if (location.characterIndex.indexOf(character.id) > 0) {
-          location.characters[location.characterIndex.indexOf(character.id)].position = newLocation;
-        }
-        if (location.charactersToUpdateIndex.indexOf(character.id)> 0) {
-          location.charactersToUpdate[location.charactersToUpdateIndex.indexOf(character.id)].position = newLocation;
-        }
+        character.position = newLocation;
       }
       // Increase Range
       if (ability.hasOwnProperty("increaseRange")) {
@@ -273,8 +274,14 @@ Ability.prototype.UseKnightAbility = function (data) {
       }
     }
     // Check if channeling has been interrupted
-    if (character.channelItem != null) {
-      character.channelItem.CheckInterruption(data);
+    if (character.channelling != false) {
+      if (character.channelling == true) {
+        character.channelling = "a";
+      }
+      else {
+        character.channelling += "a";
+      }
+      character.channellingAbility.CheckInterruption();
     }
     // Set the new cooldown
     ability.curCoolDown = new Date().getTime();
@@ -291,7 +298,7 @@ Ability.GetWeaponInfo = function (entityID) {
   var weapons = require('./resources/weapons');
   var weapon = weapons[entityID];
   return {
-    weaponType: weapon.weapon_type,
+    type: weapon.weapon_type,
     damage: weapon.damage,
     busy: false
   };

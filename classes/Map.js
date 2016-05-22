@@ -53,7 +53,7 @@ Room.ConnectRooms = function (roomA, roomB) {
 var Map = function () {
   var height = 72;
   var width = 128;
-  var borderSize = 10;
+  var borderSize = 0;
   var PF = require('pathfinding');
   var randomFillPercent = 0.48;
   // Set up 2D array for the map
@@ -362,20 +362,13 @@ var Map = function () {
   // Loop through map and set pathfinding grid
   for (var x = 0; x < borderedMap.length; x++) {
     for (var y = 0; y < borderedMap[x].length; y++) {
-      if (borderedMap[x][y] == 1) {
+      if (borderedMap[x][y] == 0) {
         this.pfGrid.setWalkableAt(x, y, true);
       }
       else {
         this.pfGrid.setWalkableAt(x, y, false);
       }
     }
-  }
-
-  for (i = 0; i < borderedMap.length; i++) {
-    for (var j = 0; j < borderedMap[i].length; j++) {
-      process.stdout.write(borderedMap[i][j]);
-    }
-    console.log("");
   }
 };
 

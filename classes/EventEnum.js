@@ -30,7 +30,15 @@ exports.output = {
   EFFECT: 'e',
   TRAP_TRIGGERED: 't',
   CHAR_CREATED: 'nc',
-  USE_ITEM_END: 'ie',
-  USE_ITEM_INTERRUPTED: "ii",
-  SERVER: "s"
+  SERVER: "s",
+
+	knight: {
+		ITEM_INVENTORY: "inv",
+		ABILITY_INVENTORY: "anv",
+		USE_ITEM_START: 'i',
+		USE_ITEM_END: 'ie',
+		USE_ITEM_INTERRUPTED: "ii",
+		ABILITY_START: 'as',
+		ABILITY_END: 'ae'
+	}
 };
