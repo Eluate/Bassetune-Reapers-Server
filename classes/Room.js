@@ -82,6 +82,7 @@ var Room = function (io, matchID, config) {
             if (results.length == undefined || results.length == 0) return;
 
 						var inventory = [];
+						var abilities = [];
 						var items = [];
 
 						var itemFile = require('./resources/items');
@@ -96,7 +97,16 @@ var Room = function (io, matchID, config) {
 							}
 						}
 
-            var abilities = [];
+						var abilityResults = JSON.parse(results[0].knight_slots);
+						for (var i = 0; i < abilityResults.length; i++) {
+							for (var n = 0; n < itemFile.length; n++) {
+								if (itemFile[n].item_id == abilityResults[i][0]) {
+									items.push(itemFile[n]);
+									abilities.push(abilityResults[i]);
+								}
+							}
+						}
+
 						var armor = [];
             var weapons = [];
             var character = characterManager.SpawnKnight(player.sID);
@@ -125,6 +135,10 @@ var Room = function (io, matchID, config) {
 				socket.emit(Event.output.knight.ITEM_INVENTORY, {
 					id: character.owner,
 					i: character.knight.inventory.slots
+				});
+				socket.emit(Event.output.knight.ABILITY_INVENTORY, {
+					id: character.owner,
+					i: character.knight.abilities
 				});
 			}
 		});
