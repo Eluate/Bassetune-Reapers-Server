@@ -7,10 +7,11 @@ var mysql = require('mysql');
 // Connection settings
 var connection = mysql.createPool(
   {
-    host :'db-prototype002.cwifk3vfe6px.us-east-1.rds.amazonaws.com',
-    user : 'brMaster',
-    password: 'BrMaster1',
-    database : 'brPrototype001',
+		host : 'mainbr.czcedyst2rii.us-west-2.rds.amazonaws.com',
+		port: 3306,
+		user : 'Static',
+		password: 'BRPrototype101',
+		database : 'brprototype001',
     acquireTimeout: 30000,
     connectTimeout : 40000
   });
