@@ -86,6 +86,7 @@ var Room = function (io, matchID, config) {
 						var items = [];
 
 						var itemFile = require('./resources/items');
+						var abilityFile = require('./resources/abilities');
 
 						var itemResults = JSON.parse(results[0].knight_slots);
 						for (var i = 0; i < itemResults.length; i++) {
@@ -97,11 +98,18 @@ var Room = function (io, matchID, config) {
 							}
 						}
 
-						var abilityResults = JSON.parse(results[0].knight_slots);
+						var abilityResults = JSON.parse(results[0].ability_slots);
 						for (var i = 0; i < abilityResults.length; i++) {
+							// Get offensive and defensive abilities
+							for (var n = 0; n < abilityFile.length; n++) {
+								if (abilityFile[n].item_id == abilityResults[i][0]) {
+									abilities.push(abilityResults[i]);
+								}
+							}
+							// Get items equipped to hotbar
 							for (var n = 0; n < itemFile.length; n++) {
 								if (itemFile[n].item_id == abilityResults[i][0]) {
-									items.push(itemFile[n]);
+									inventory.push(itemFile[n]);
 									abilities.push(abilityResults[i]);
 								}
 							}
@@ -109,7 +117,7 @@ var Room = function (io, matchID, config) {
 
 						var armor = [];
             var weapons = [];
-            var character = characterManager.SpawnKnight(player.sID);
+            var character = characterManager.SpawnKnight(player.sID, player.knight_level);
             character.knight.inventory.items = items;
             character.knight.abilities = abilities;
             character.knight.inventory.weapons = weapons;
@@ -317,24 +325,26 @@ Room.prototype.onKnightUseItemStart = function (socket,data)
   if (isNaN(characterID) || isNaN(itemID)) {
     return;
   }
-  this.characters.forEach(function (character) {
-    if (character.id != characterID) {
-      return;
-    }
-    this.players.forEach(function (player) {
-      if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(this.players, socket.id) == character.owner) {
-        if (!character.stunned && character.knight != null) {
-          data.itemID = itemID;
-          data.location = location;
-          data.character = characters[characterID];
-          data.characters = characters;
-          data.game_uuid = game_uuid;
-          data.io = this.io;
-          character.knight.UseItem(data);
-        }
-      }
-    });
-  });
+	for (var i = 0; i < this.characters.length; i++) {
+		var character = this.characters[i];
+		if (character.id != characterID) {
+			return;
+		}
+		for (var n = 0; i < this.players.length; n++) {
+			var player = this.players[n];
+			if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(this.players, socket.id) == character.owner) {
+				if (!character.stunned && character.knight != null) {
+					data.itemID = itemID;
+					data.location = location;
+					data.character = characters[characterID];
+					data.characters = characters;
+					data.game_uuid = game_uuid;
+					data.io = this.io;
+					character.knight.UseItem(data);
+				}
+			}
+		}
+	}
 };
 // Boss putting a trap down
 //io.sockets.in(game_uuid).on(Event.input.boss.PUT_TRAP,
