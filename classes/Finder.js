@@ -38,6 +38,15 @@ var finder =  {
     });
     return playerObject;
   },
+	GetPlayerSIDFromSocketID: function(players, accountID) {
+		var sID = "";
+		players.forEach(function(player) {
+			if (player.socketID == accountID) {
+				sID = player.sID;
+			}
+		});
+		return sID;
+	},
   GetPlayerFromAccountID: function(players, accountID) {
     var playerObject = "";
     players.forEach(function(player) {

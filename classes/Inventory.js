@@ -18,7 +18,6 @@ var Inventory = function () {
 
   // TODO : create appropriate classes for stuff
   this.weapons = null;
-  this.items = null;
   this.armor = null;
 };
 
@@ -32,15 +31,6 @@ Inventory.prototype.getMaxStackSize = function (isThrowing) {
   } else {
     return 1;
   }
-};
-
-Inventory.prototype.sortInventory = function () {
-  var sortedItems = [];
-  for (var i = 0; i < this.items.length; i++) {
-    sortedItems.push(new Item(this.items[i].item_id));
-    sortedItems[i].itemQuantity = this.items.item_quantity;
-  }
-  this.items = sortedItems;
 };
 
 module.exports = Inventory;
