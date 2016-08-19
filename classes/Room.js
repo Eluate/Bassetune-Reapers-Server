@@ -97,13 +97,13 @@ var Room = function (io, matchID, config) {
 						}
 
             var abilities = [];
-						var armor = [];
+            var armor = [];
             var weapons = [];
             var character = characterManager.SpawnKnight(player.sID);
             character.knight.inventory.items = items;
             character.knight.abilities = abilities;
             character.knight.inventory.weapons = weapons;
-						character.knight.inventory.slots = inventory;
+            character.knight.inventory.slots = inventory;
             character.knight.inventory.sortInventory();
             character.position = {x: 30, y: 30};
             characters.push(character);
@@ -135,6 +135,11 @@ var Room = function (io, matchID, config) {
  */
   // Start Game Loop, 12 Updates per second
   setInterval(this.sendUpdates, 83, this.characters, this.location);
+};
+
+// Sets the data object for further use in different modules
+Room.prototype.retrieveData = function() {
+  var data = {};
 };
 
 Room.prototype.sendUpdates = function (characters, location) {
@@ -201,9 +206,10 @@ Room.prototype.onDisconnect = function (socket)
 //io.sockets.in(game_uuid).on(Event.input.TALK,
 Room.prototype.onTalk = function (socket , data)
 {
+  var msgTarget = data.target;
   this.players.forEach(function (player) {
     if (player.socketID == socket.id) {
-      this.chat.addMsg(player.username, data.message);
+      this.chat.addMsg(this.players, player, data.message, msgTarget);
     }
   });
 };
