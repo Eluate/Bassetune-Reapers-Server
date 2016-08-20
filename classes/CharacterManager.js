@@ -8,9 +8,9 @@ var bosses = require ("./Bosses").Bosses;
 var CharacterManager =  {};
 CharacterManager.count = 0;
 
-CharacterManager.SpawnKnight =  function(owner) 
+CharacterManager.SpawnKnight =  function(owner, level)
 {
-    var char = new character(this.count, owner, "knight", 0);
+    var char = new character(this.count, owner, "knight", 0, level);
     this.count++;
     char.knight = new knight();
     return char;
@@ -18,7 +18,7 @@ CharacterManager.SpawnKnight =  function(owner)
 
 CharacterManager.SpawnBoss = function (owner, level, entity) 
 {
-  var char = new character(this.count, owner, "boss", entity);
+  var char = new character(this.count, owner, "boss", entity, level);
   this.count++;
   var boss = (new bosses[entity](level));
   // Set boss attributes

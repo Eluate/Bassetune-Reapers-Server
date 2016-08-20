@@ -3,7 +3,7 @@
  */
 
 // constructor
-var Character = function (id, owner, type, entity) {
+var Character = function (id, owner, type, entity, level) {
   this.id = id;
   this.owner = owner; // player
   this.type = type; // creature, miniboss, boss, trap or knight
