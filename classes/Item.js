@@ -34,12 +34,14 @@ var Item = {
 			}
 			// Start effects of the item
 			if (item.purpose == "H_Heal") {
-				console.log("Health changed from " + character.hp + " to " + Math.max(Math.min(character.maxhp, character.hp + item.value), character.maxhp));
-				character.hp = Math.max(Math.min(character.maxhp, character.hp + item.value), character.maxhp);
+				console.log("Health changed from " + character.hp + " to " + Math.min(Math.min(character.maxhp, character.hp + item.value), character.maxhp));
+				character.hp = Math.min(Math.min(character.maxhp, character.hp + item.value), character.maxhp);
 			}
 			else if (item.purpose == "H_Regeneration") {
 				var regen = setInterval(function() {
-					character.hp = character.hp + (item.value / item.duration);
+					console.log("Regeneration from " + character.hp + " to " +
+						Math.min(Math.min(character.maxhp, character.hp + (item.value / item.duration)), character.maxhp) + ".");
+					character.hp = Math.min(Math.min(character.maxhp, character.hp + (item.value / item.duration)), character.maxhp);
 				}, 1000);
 				setTimeout(function() {
 					clearInterval(regen);

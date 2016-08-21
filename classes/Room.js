@@ -125,7 +125,7 @@ var Room = function (io, matchID, config) {
 						character.position = {x: 30, y: 30};
 						characters.push(character);
 
-						character.hp = 50;
+						character.hp = 30;
 						// Set character location
 						// TODO: Calculate proper starting positions
 					});
@@ -156,25 +156,25 @@ var Room = function (io, matchID, config) {
 	/*
 	 Send Updates
 	 */
-	// Start Game Loop, 12 Updates per second
-	setInterval(this.sendUpdates, 83, this.characters, this.location, this.io);
-};
-
-Room.prototype.sendUpdates = function (characters, location, io) {
-	// Locations
-	location.UpdateCharacterPositions();
-	location.SendCharacterLocations();
-	location.UpdateTime();
-	// HP
-	var hp = [];
-	characters.forEach(function (character) {
-		if (character.hp != character.prevhp) {
-			hp.push({i: character.id, h: character.hp});
-			character.prevhp = character.hp;
+	var sendUpdates = function (characters, location, io, matchID) {
+		// Locations
+		location.UpdateCharacterPositions();
+		location.SendCharacterLocations();
+		location.UpdateTime();
+		// HP
+		var hp = {d:[]};
+		characters.forEach(function (character) {
+			if (character.hp != character.prevhp) {
+				hp.d.push({i: character.id, h: character.hp});
+				character.prevhp = character.hp;
+			}
+		});
+		if (hp.d.length > 0) {
+			io.to(matchID).emit(Event.output.CHAR_HP, hp);
 		}
-	});
-	if (hp.length > 0)
-		io.to(this.matchID).emit(Event.output.CHAR_HP, hp);
+	};
+	// Start Game Loop, 12 Updates per second
+	setInterval(sendUpdates, 83, this.characters, this.location, this.io, this.matchID);
 };
 
 /*
@@ -301,7 +301,7 @@ Room.prototype.onKnightAbilityStart = function (socket, data) {
 					data.location = location;
 					data.character = character;
 					data.characters = characterID;
-					data.game_uuid = game_uuid;
+					data.game_uuid = this.matchID;
 					data.io = this.io;
 					character.knight.UseAbility(data);
 				}
