@@ -177,6 +177,11 @@ var Room = function (io, matchID, config) {
 	setInterval(sendUpdates, 83, this.characters, this.location, this.io, this.matchID);
 };
 
+// Sets the data object for further use in different modules
+Room.prototype.retrieveData = function() {
+	var data = {};
+};
+
 /*
  Handle Reconnection
  */
@@ -221,9 +226,11 @@ Room.prototype.onDisconnect = function (socket) {
 // Text Chat
 //io.sockets.in(game_uuid).on(Event.input.TALK,
 Room.prototype.onTalk = function (socket, data) {
+	var target = data.target;
+	var message = data.message;
 	this.players.forEach(function (player) {
 		if (player.socketID == socket.id) {
-			this.chat.addMsg(player.username, data.message);
+			this.chat.addMsg(this.players, player, message, target);
 		}
 	});
 };
