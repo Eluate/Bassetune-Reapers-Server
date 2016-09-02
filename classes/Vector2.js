@@ -56,7 +56,7 @@ var Vector2 = {
     return (v3.x < Math.min(v1.x,v2.x) || v3.y < Math.min(v1.y,v2.y) ||
             v3.x > Math.max(v1.x,v2.x) || v3.y > Math.max(v1.y,v2.y))
   },
-  collisionPointDistanced: function (v1, v2, v3) {
+  collisionPointDistanced: function (v1, v2, v3, length) {
     var x = v3.x;
     var y = v3.y;
     var minX = Math.min(v1.x, v2.x);
@@ -66,35 +66,39 @@ var Vector2 = {
 
     var midX = (minX + maxX) / 2;
     var midY = (minY + maxY) / 2;
-    // if (midX - x == 0) -> m == ±Inf -> minYx/maxYx == x (because value / ±Inf = ±0)
+    // if (midX - x == 0) -> m == ï¿½Inf -> minYx/maxYx == x (because value / ï¿½Inf = ï¿½0)
+    if (midX - x == 0 || midY - y == 0) {
+      return {x: x, y: y};
+    }
+
     var m = (midY - y) / (midX - x);
 
     // Check left side
     if (x <= midX) {
       var minXy = m * (minX - x) + y;
       if (minY < minXy && minXy < maxY)
-        return {x: minX - 0.5, y: minXy};
+        return {x: minX - length, y: minXy};
     }
     // Check right side
     if (x >= midX) {
       var maxXy = m * (maxX - x) + y;
       if (minY < maxXy && maxXy < maxY)
-        return {x: maxX + 0.5, y: maxXy};
+        return {x: maxX + length, y: maxXy};
     }
     // Check bottom side
     if (y <= midY) {
       var minYx = (minY - y) / m + x;
       if (minX < minYx && minYx < maxX)
-        return {x: minYx, y: minY - 0.5};
+        return {x: minYx, y: minY - length};
     }
     // Check top side
     if (y >= midY) {
       var maxYx = (maxY - y) / m + x;
       if (minX < maxYx && maxYx < maxX)
-        return {x: maxYx, y: maxY + 0.5};
+        return {x: maxYx, y: maxY + length};
     }
 
-		return {x: y, y: x};
+    return {x: y, y: x};
   }
 };
 
