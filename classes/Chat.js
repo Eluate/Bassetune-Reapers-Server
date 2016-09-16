@@ -7,7 +7,7 @@ var Chat = function (io, room) {
   this.addMsg = function (players, player, msg, target) {
     var entry = {
       id: player.sID,
-      msg: msg
+      msg: msg.toString()
     };
     
     for (var i = 0; players.length; i++) {
