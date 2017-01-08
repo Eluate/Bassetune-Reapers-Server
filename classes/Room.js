@@ -87,7 +87,7 @@ var Room = function (io, matchID, config) {
 						var inventory = [];
 						// Fill inventory with blank slots
 						for (var i = 0; i <= 24; i++) {
-							inventory.push([0,0,i,0]);
+							inventory.push([0, 0, i, 0]);
 						}
 
 						// Abilities refers to the abilities equipped, and loads the initial consumable items into the hotbar on the client

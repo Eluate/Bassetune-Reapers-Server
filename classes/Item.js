@@ -20,8 +20,8 @@ var Item = {
 		// Overwrite any abilities/items being channelled
 		character.channelling = true;
 		character.channellingAbility = this;
-		data.io.to(data.game_uuid).emit(Event.output.knight.USE_ITEM_START, {"i":character.id, "t":item.id});
-		setTimeout(function() {
+		data.io.to(data.game_uuid).emit(Event.output.knight.USE_ITEM_START, {"i": character.id, "t": item.id});
+		setTimeout(function () {
 			// Check if channelling has been cancelled
 			if (character.channelling != true) {
 				if (item.intByStun == true && character.channelling.indexOf("s") > -1) {
@@ -83,7 +83,7 @@ var Item = {
 					}
 				}
 			}
-			data.io.to(data.game_uuid).emit(Event.output.knight.USE_ITEM_END, {"i":character.id});
+			data.io.to(data.game_uuid).emit(Event.output.knight.USE_ITEM_END, {"i": character.id});
 			// Decrement item count by one
 			data.slot[1] -= 1;
 			// Character has stopped channelling if it was channelling prior
@@ -122,13 +122,13 @@ Item.H_Specials = function () {
 };
 
 /* Item types include:
-- H_Heal
-- H_Regen
-- H_Special
-- H_Resurrect
-- A_Arrows
-- A_Bolts
-- I_Ranged
+ - H_Heal
+ - H_Regen
+ - H_Special
+ - H_Resurrect
+ - A_Arrows
+ - A_Bolts
+ - I_Ranged
  */
 
 module.exports = Item;

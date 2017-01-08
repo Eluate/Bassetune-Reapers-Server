@@ -1,9 +1,9 @@
 /*
-  This should contain all ammo information
-*/
+ This should contain all ammo information
+ */
 
 var Ammo = [
-  // Armor list here in json format
+	// Armor list here in json format
 
 ];
 

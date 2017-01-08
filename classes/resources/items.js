@@ -1,6 +1,6 @@
 /*
-  This should contain all item information
-*/
+ This should contain all item information
+ */
 
 var Items = [
 	{

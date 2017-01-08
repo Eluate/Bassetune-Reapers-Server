@@ -7,15 +7,14 @@ var EventEnum = require('./EventEnum');
 var Ability = require('./Ability');
 var Item = require('./Item');
 
-var Knight = function (character)
-{
+var Knight = function (character) {
 	this.character = character;
-  this.inventory = new Inventory();
-  this.abilities = [];
+	this.inventory = new Inventory();
+	this.abilities = [];
 };
 
-Knight.prototype.LoadAbilities = function() {
-  var abilityFile = require('./resources/abilities');
+Knight.prototype.LoadAbilities = function () {
+	var abilityFile = require('./resources/abilities');
 	for (var i = 0; i < this.inventory.abilities.length; i++) {
 		for (var n = 0; n < abilityFile.length; n++) {
 			if (abilityFile[n].item_id == this.inventory.abilities[i][0]) {
@@ -26,7 +25,7 @@ Knight.prototype.LoadAbilities = function() {
 };
 
 Knight.prototype.ChangeEquipped = function (data, slotID, target) {
-	if (this.character.stunned()) return; 
+	if (this.character.stunned()) return;
 
 	var slots = this.inventory.slots;
 	if (target == 0) {
@@ -48,23 +47,23 @@ Knight.prototype.ChangeEquipped = function (data, slotID, target) {
 			item1[2] = tempNumber;
 
 			console.log(slots);
-			data.io.emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"a": item1[2], "b": item2[2], "p":this.character.owner});
+			data.io.emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"a": item1[2], "b": item2[2], "p": this.character.owner});
 		}
 		return;
 	}
 
 	// For setting new armor/weapons/ammo
-  for (var i = 0, slotLength = slots.length; i < slotLength; i++) {
+	for (var i = 0, slotLength = slots.length; i < slotLength; i++) {
 		var slot = slots[i];
-    if (slot[2] != slotID) continue;
+		if (slot[2] != slotID) continue;
 
 		if (target == 2 || target == 3 || target == 9) {
 			// Start item switch delay
-			data.io.to(data.room).emit(EventEnum.output.knight.START_CHANGE_EQUIPPED, {"i": slot[2], "t":target, "p": this.character.owner});
+			data.io.to(data.room).emit(EventEnum.output.knight.START_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": this.character.owner});
 			var self = this;
 			// Overwrite any abilities/items being channelled
 			this.character.channelling = slot;
-			setTimeout(function() {
+			setTimeout(function () {
 				// Check if channelling has been cancelled
 				if (self.character.channelling != slot) {
 					return;
@@ -105,11 +104,11 @@ Knight.prototype.ChangeEquipped = function (data, slotID, target) {
 					self.inventory.armor = slot;
 					slot[3] = 4;
 				}
-				data.io.to(data.room).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t":target, "p": self.character.owner});
+				data.io.to(data.room).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": self.character.owner});
 			}, 3000);
 		}
 		else {
-			data.io.to(data.room).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t":target, "p": this.character.owner});
+			data.io.to(data.room).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": this.character.owner});
 		}
 
 		i = slotLength;
@@ -118,25 +117,25 @@ Knight.prototype.ChangeEquipped = function (data, slotID, target) {
 };
 
 Knight.prototype.UseAbility = function (data) {
-  for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
-    if (data.abilityID == this.abilities[i].id) {
-      this.abilities[i].UseKnightAbility(data);
-    }
-  }
+	for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
+		if (data.abilityID == this.abilities[i].id) {
+			this.abilities[i].UseKnightAbility(data);
+		}
+	}
 };
 
 Knight.prototype.UseItem = function (data) {
 	var inventory = this.inventory.slots;
 	console.log(inventory);
-  for (var i = 0, inventoryLength = inventory.length; i < inventoryLength; i++) {
+	for (var i = 0, inventoryLength = inventory.length; i < inventoryLength; i++) {
 		// Check if item id matches the item and if an item is available (item count)
-    if (data.itemID == inventory[i][0] && inventory[i][1] > 0) {
+		if (data.itemID == inventory[i][0] && inventory[i][1] > 0) {
 			data.slot = inventory[i];
-      Item.UseItem(data);
-      // Only use the first one
-      i = inventoryLength;
-    }
-  }
+			Item.UseItem(data);
+			// Only use the first one
+			i = inventoryLength;
+		}
+	}
 };
 
 module.exports = Knight;

@@ -1,9 +1,9 @@
 /*
-  This should contain all ability information
-*/
+ This should contain all ability information
+ */
 
 var Abilities = [
-  // Ability list here in json format
+	// Ability list here in json format
 	{
 		"item_id": 2500,
 		"required_type": "Melee",

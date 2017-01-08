@@ -1,9 +1,9 @@
 /*
-  This should contain all weapon information
-*/
+ This should contain all weapon information
+ */
 
 var Weapons = [
-  // Weapon list here in json format
+	// Weapon list here in json format
 	{
 		"item_id": 2000,
 		"weapon_type": "dagger",

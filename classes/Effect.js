@@ -24,10 +24,10 @@ Effect.Regeneration = function (character, item) {
 				Math.min(Math.min(character.maxhp, character.hp + (item.value / item.duration)), character.maxhp) + ".");
 			character.hp = Math.min(Math.min(character.maxhp, character.hp + (item.value / item.duration)), character.maxhp);
 		}, 1000 * i);
-		character.effects.push({Effect:Effect.EffectTypes.Regeneration, Interval:interval});
+		character.effects.push({Effect: Effect.EffectTypes.Regeneration, Interval: interval});
 	}
-	var data = {e:Effect.EffectTypes.Regeneration, d:item.duration, i:item.id};
-	this.io.to(this.room).emit(Event.output.Effect, {"d":data});
+	var data = {e: Effect.EffectTypes.Regeneration, d: item.duration, i: item.id};
+	this.io.to(this.room).emit(Event.output.Effect, {"d": data});
 };
 
 Effect.Bleed = function (character) {
@@ -41,7 +41,7 @@ Effect.Bleed = function (character) {
 				var interval = setTimeout(function () {
 					character.hp -= 1 * character.level;
 				}, 1000 * i);
-				character.effects.push({Effect:Effect.EffectTypes.Bleed, Timeout:interval});
+				character.effects.push({Effect: Effect.EffectTypes.Bleed, Timeout: interval});
 			}
 		}
 	}
@@ -50,11 +50,11 @@ Effect.Bleed = function (character) {
 		var interval = setTimeout(function () {
 			character.hp -= 1 * character.level;
 		}, 1000 * i);
-		character.effects.push({Effect:Effect.EffectTypes.Bleed, Timeout:interval});
+		character.effects.push({Effect: Effect.EffectTypes.Bleed, Timeout: interval});
 	}
 
-	var data = {e:Effect.EffectTypes.Bleed, d:3000, s:stack};
-	this.io.to(this.room).emit(Event.output.Effect, {"d":data});
+	var data = {e: Effect.EffectTypes.Bleed, d: 3000, s: stack};
+	this.io.to(this.room).emit(Event.output.Effect, {"d": data});
 };
 
 Effect.Burn = function (character) {
@@ -69,23 +69,23 @@ Effect.Burn = function (character) {
 		var interval = setTimeout(function () {
 			character.hp -= 5 * character.level;
 		}, 1000 * i);
-		character.effects.push({Effect:Effect.EffectTypes.Burn, Timeout:interval});
+		character.effects.push({Effect: Effect.EffectTypes.Burn, Timeout: interval});
 	}
 
-	var data = {e:Effect.EffectTypes.Burn, d:2000};
-	this.io.to(this.room).emit(Event.output.Effect, {"d":data});
+	var data = {e: Effect.EffectTypes.Burn, d: 2000};
+	this.io.to(this.room).emit(Event.output.Effect, {"d": data});
 };
 
 Effect.Stun = function (character, seconds) {
-	var effect = {Effect:Effect.EffectTypes.Stun, Active: true}
+	var effect = {Effect: Effect.EffectTypes.Stun, Active: true}
 	var interval = setTimeout(function () {
 		effect.Active = false;
 	}, 1000 * seconds);
 	effect.Timeout = interval;
 	character.effects.push(effect);
 
-	var data = {e:Effect.EffectTypes.Stun, d: 1000 * seconds};
-	this.io.to(this.room).emit(Event.output.Effect, {"d":data});
+	var data = {e: Effect.EffectTypes.Stun, d: 1000 * seconds};
+	this.io.to(this.room).emit(Event.output.Effect, {"d": data});
 };
 
 Effect.EffectTypes = {

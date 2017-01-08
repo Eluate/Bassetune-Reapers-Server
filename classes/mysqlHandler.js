@@ -6,20 +6,20 @@ var mysql = require('mysql');
 
 // Connection settings
 var connection = mysql.createPool(
-  {
-		host : 'mainbr.czcedyst2rii.us-west-2.rds.amazonaws.com',
+	{
+		host: 'mainbr.czcedyst2rii.us-west-2.rds.amazonaws.com',
 		port: 3306,
-		user : 'Static',
+		user: 'Static',
 		password: 'BRPrototype101',
-		database : 'brprototype001',
-    acquireTimeout: 30000,
-    connectTimeout : 40000
-  });
+		database: 'brprototype001',
+		acquireTimeout: 30000,
+		connectTimeout: 40000
+	});
 
 connection.getConnection(function (err, connection) {
-  // Use the connection again on error
-  if (err) throw err;
-  if (connection) connection.release();
+	// Use the connection again on error
+	if (err) throw err;
+	if (connection) connection.release();
 });
 
 module.exports.connection = connection;
