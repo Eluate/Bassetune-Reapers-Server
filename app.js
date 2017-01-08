@@ -85,7 +85,7 @@ if (cluster.isWorker)
     console.log('Worker ID: ' + process.env.workerID + ' listening at ' + ip + ' on port ' + app.get("port"));
 
     // Get region
-    var request = require('request');
+    /*var request = require('request');
     request('http://169.254.169.254/latest/meta-data/placement/availability-zone', function (error, response, body) {
       if (!error && response.statusCode == 200) {
         // Update redis
@@ -106,7 +106,7 @@ if (cluster.isWorker)
             region: region
           });
         console.log("Worker ID: " + process.env.workerID + " - Updated Redis.");
-      } else {
+      } else {*/
         console.log("Worker ID: " + process.env.workerID + " - couldn't get region.");
         //process.exit(0);
         //THIS STUFF IS TO BE DELETED
@@ -118,8 +118,8 @@ if (cluster.isWorker)
             numberGames: 0,
             region: "us-east-1"
           });
-      }
-    });
+      //}
+    //});
 
     // Set up servers
     var io = require('socket.io')(http);

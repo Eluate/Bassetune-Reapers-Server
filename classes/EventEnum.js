@@ -39,6 +39,8 @@ exports.output = {
 		USE_ITEM_END: 'ie',
 		USE_ITEM_INTERRUPTED: "ii",
 		ABILITY_START: 'as',
-		ABILITY_END: 'ae'
+		ABILITY_END: 'ae',
+		START_CHANGE_EQUIPPED: 'se',
+		END_CHANGE_EQUIPPED: 'ce'
 	}
 };

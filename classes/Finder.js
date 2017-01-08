@@ -55,6 +55,15 @@ var finder =  {
       }
     });
     return playerObject;
+  },
+  GetSocketFromPlayerSID: function(players, playerSID) {
+    var socket = null;
+    players.forEach(function (player) {
+      if (player.sID == playerSID) {
+        socket = player.socket;
+      }
+    });
+    return socket;
   }
 };
 

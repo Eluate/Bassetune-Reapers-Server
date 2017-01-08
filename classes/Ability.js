@@ -4,11 +4,10 @@
 var Vec2 = require("./Vector2");
 var Event = require('./EventEnum');
 
-var Melee = ["Axe, Sword, Dagger, Knife"]; // Add more later
-var Ranged = ["Bow"]; // Add more later
+var Melee = ["axe, sword, dagger, knife, twohandedsword"]; // Add more later
+var Ranged = ["bow"]; // Add more later
 
-var Ability = function (entityID) {
-  var abilityInfo = require('./resources/abilities')[entityID];
+var Ability = function (abilityInfo) {
   // Set ability info
   this.id = abilityInfo.id;
   this.reqType = abilityInfo.required_type;
@@ -35,7 +34,7 @@ var Ability = function (entityID) {
   // Check if any are undefined
   for (var abilityProperty in this) {
     if (this.hasOwnProperty(abilityProperty)) {
-      if (this[abilityProperty].toString().toLowerCase() == "null") {
+      if (!this[abilityProperty] || this[abilityProperty].toString().toLowerCase() == "null") {
         this[abilityProperty] = undefined;
       }
     }
@@ -47,45 +46,41 @@ var Ability = function (entityID) {
 Ability.prototype.UseKnightAbility = function (data) {
   // Assign variables from data
   var ability = this,
-      weapon = data.weapon,
       character = data.character,
-      target = data.target,
       location = data.location,
       characters = data.characters,
       roomID = data.game_uuid,
       io = data.io;
+
+	// Select mainhand or offhand weapon
+	if (data.weapon == 1 && character.knight.inventory.weapons[1]) {
+		var weapon = character.knight.inventory.weapons[1];
+	} else if (character.knight.inventory.weapons[0]) {
+		weapon = character.knight.inventory.weapons[0];
+	}
+	if (weapon == null) {
+		return;
+	}
   // Retrieve weapon data
   weapon = Ability.GetWeaponInfo(weapon);
+	console.log(weapon);
+
   // Check if weapon matches the required weapon
-  if (!Melee.some(function(weapon) {
-      return weapon == weapon.type && weapon.type == ability.reqType;
-    }) && !Ranged.some(function(weapon) {
-      return weapon == weapon.type && weapon.type == ability.reqType;
-    }) && ability.reqType != weapon.type && ability.reqType != null ) {
-    return;
-  }
-  // Check if weapon is busy
-  if (weapon.busy) {
+  if ((weapon.type == "melee" && !Melee.some(function(weaponElement) {
+      return weaponElement == weapon.type;
+    })) && (weapon.type == "ranged" && !Ranged.some(function(weaponElement) {
+      return weaponElement == weapon.type;
+    })) && ability.reqType != weapon.type && ability.reqType != null) {
     return;
   }
   // Check is cooldown has finished
   if (new Date().getTime() - ability.curCoolDown < ability.coolDown * 1000) {
     return;
   }
-  if (!target.hasOwnProperty("x") || !target.hasOwnProperty("y")) {
-    return;
-  }
-  if (character.channelling != false) {
-    if (character.channelling == true) {
-      character.channelling = "a";
-    }
-    else {
-      character.channelling += "a";
-    }
-    character.channellingAbility.CheckInterruption();
-  }
   // Make it so that the weapon can't be used while casting
   weapon.busy = true;
+  // Cancel any active channels
+	character.channelling = false;
   // Emit the use of the ability
   Ability.EmitKnightUse(character.id, ability.id, roomID, io);
   // Wait until the cast time is up
@@ -97,7 +92,8 @@ Ability.prototype.UseKnightAbility = function (data) {
     // Allow the weapon to be used again
     weapon.busy = false;
     // Handle different ability types
-    // For offence, target is another character (can't target knights) and/or position
+		var target = character.rotation;
+    // For offence, target is a position
     if (ability.type == Ability.AbilityType.OFFENSIVE) {
       // Projectile array
       var projectiles = [];
@@ -197,17 +193,6 @@ Ability.prototype.UseKnightAbility = function (data) {
             }
             // Damage taken by must be at least 1 and most 18000
             hitCharacter.hp -= Math.max(1, Math.min(totalDamage, 18000));
-            if (hitCharacter.channelling) {
-              if (hitCharacter.channelling != false) {
-                if (hitCharacter.channelling == true) {
-                  hitCharacter.channelling = "d";
-                }
-                else {
-                  hitCharacter.channelling += "d";
-                }
-                hitCharacter.channellingAbility.CheckInterruption();
-              }
-            }
           }
           // Bleed
           if (ability.hasOwnProperty("bleed") && ability.bleed > 1) {
@@ -223,16 +208,6 @@ Ability.prototype.UseKnightAbility = function (data) {
           // Stun
           if (ability.hasOwnProperty("stun") && ability.stun > 0) {
             hitCharacter.stunCount = hitCharacter.stunCount + 1;
-            if (hitCharacter.channelling) {
-              if (hitCharacter.channelling != false) {
-                if (hitCharacter.channelling == true) {
-                  hitCharacter.channelling = "s";
-                } else {
-                  hitCharacter.channelling += "s";
-                }
-                hitCharacter.channellingAbility.CheckInterruption();
-              }
-            }
             setTimeout (function() {
               hitCharacter.stunCount -= 1;
             }, ability.stun * 1000);
@@ -273,18 +248,10 @@ Ability.prototype.UseKnightAbility = function (data) {
         }, ability.duration * 1000);
       }
     }
-    // Check if channeling has been interrupted
-    if (character.channelling != false) {
-      if (character.channelling == true) {
-        character.channelling = "a";
-      }
-      else {
-        character.channelling += "a";
-      }
-      character.channellingAbility.CheckInterruption();
-    }
     // Set the new cooldown
     ability.curCoolDown = new Date().getTime();
+    // Reset channelled
+		character.channelling = false;
   }, ability.castTime * 1000);
   Ability.EmitKnightFinish(character.id, ability.id, roomID, io);
 };
@@ -300,7 +267,6 @@ Ability.GetWeaponInfo = function (entityID) {
   return {
     type: weapon.weapon_type,
     damage: weapon.damage,
-    busy: false
   };
 };
 

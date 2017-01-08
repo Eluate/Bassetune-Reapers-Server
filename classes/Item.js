@@ -7,15 +7,17 @@ var Event = require('./EventEnum');
 
 var Item = {
 	UseItem: function (data) {
+		var Effect = require('./Effect', data);
 		// Variables are characters, character, location and target
 		var characters = data.characters;
 		var character = data.character;
 		var target = data.target;
 		var location = data.location;
 		var item = this.RetrieveItemInfo(data.itemID);
-		if (character.channelling == true) {
-			return;
-		}
+
+		if (!item) return;
+
+		// Overwrite any abilities/items being channelled
 		character.channelling = true;
 		character.channellingAbility = this;
 		data.io.to(data.game_uuid).emit(Event.output.knight.USE_ITEM_START, {"i":character.id, "t":item.id});
@@ -38,27 +40,21 @@ var Item = {
 				character.hp = Math.min(Math.min(character.maxhp, character.hp + item.value), character.maxhp);
 			}
 			else if (item.purpose == "H_Regeneration") {
-				var regen = setInterval(function() {
-					console.log("Regeneration from " + character.hp + " to " +
-						Math.min(Math.min(character.maxhp, character.hp + (item.value / item.duration)), character.maxhp) + ".");
-					character.hp = Math.min(Math.min(character.maxhp, character.hp + (item.value / item.duration)), character.maxhp);
-				}, 1000);
-				setTimeout(function() {
-					clearInterval(regen);
-				}, item.duration * 1000);
+				Effect.Regeneration(character, item);
 			}
 			else if (item.purpose == "Resurrect") {
 				// Location of knight using the item
 				var curLocation = character.position;
 				for (var i = 0, charactersLength = characters.length; i < charactersLength; i++) {
 					// Can't revive self or non-knights
-					if (character.id = characters[i] || characters[i].type != "knight" || !characters[i].isDead()) {
+					if (character.id = characters[i].id || characters[i].type != "knight" || !characters[i].isDead()) {
 						return;
 					}
 					// Location of knight to be revived
 					var knightLocation = characters[i].position;
 					if (Vec2.distanceTo(curLocation, knightLocation) < item.range) {
-						// Convert the percentage to a decimal of item value and multiply it by maxhp to revive character
+						// Convert the percentage to a decimal of item 	value and multiply it by maxhp to revive character
+						characters[i].hp = 0;
 						characters[i].hp += characters[i].maxhp * (item.value / 100);
 					}
 				}
@@ -94,30 +90,6 @@ var Item = {
 			character.channelling = false;
 		}, item.consumeTime * 1000);
 	},
-	CheckInterruption: function () {
-		var data = this.info;
-		var character = data.character;
-		var roomID = data.game_uuid;
-		var io = data.io;
-		if (character.channelling != true) {
-			if (this.intByStun == true && character.channelling.indexOf("s") > -1) {
-				io.to(roomID).emit(Event.output.knight.USE_ITEM_INTERRUPTED, {"i":character.id});
-				character.channelling = false;
-			}
-			else if (this.intByDamage == true && character.channelling.indexOf("d") > -1) {
-				io.to(roomID).emit(Event.output.knight.USE_ITEM_INTERRUPTED, {"i":character.id});
-				character.channelling = false;
-			}
-			else if (this.intByAbilityUse == true && character.channelling.indexOf("a") > -1) {
-				io.to(roomID).emit(Event.output.knight.USE_ITEM_INTERRUPTED, {"i":character.id});
-				character.channelling = false;
-			}
-			else if (this.intByMovement == true && character.channelling.indexOf("m") > -1) {
-				io.to(roomID).emit(Event.output.knight.USE_ITEM_INTERRUPTED, {"i":character.id});
-				character.channelling = false;
-			}
-		}
-	},
 	RetrieveItemInfo: function (id) {
 		var item = null;
 		// Search for the item id
@@ -126,6 +98,9 @@ var Item = {
 				item = Items[i];
 			}
 		}
+
+		if (!item) return;
+
 		// Return item information
 		var formattedItem = {};
 		formattedItem.id = id;

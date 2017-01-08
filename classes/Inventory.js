@@ -17,8 +17,10 @@ var Inventory = function () {
   };
 
   // TODO : create appropriate classes for stuff
-  this.weapons = null;
+  this.weapons = [null, null];
   this.armor = null;
+  this.ammo = null;
+  this.abilities = null;
 };
 
 Inventory.prototype.getMaxSpace = function () {

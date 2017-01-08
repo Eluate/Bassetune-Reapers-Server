@@ -21,12 +21,14 @@ var Room = function (io, matchID, config) {
 	this.players = [];
 	// All characters
 	this.characters = [];
+	// All knights (character objects)
+	this.knights = [];
 	this.location.characters = this.characters;
 
 	/*
 	 Get player Data
 	 */
-	var StorePlayerData = function (config, characterManager, location, characters, players) {
+	var StorePlayerData = function (config, characterManager, location, characters, knights, players) {
 		// Get player data
 		var itemList = require("./resources/items");
 		var playerIDs = config.bosses.concat(config.knights);
@@ -83,17 +85,71 @@ var Room = function (io, matchID, config) {
 
 						// Inventory refers to any consumable, passive, weapon or armor item
 						var inventory = [];
+						// Fill inventory with blank slots
+						for (var i = 0; i <= 24; i++) {
+							inventory.push([0,0,i,0]);
+						}
+
 						// Abilities refers to the abilities equipped, and loads the initial consumable items into the hotbar on the client
 						var abilities = [];
 
+						var armor = null;
+						var ammo = null;
+						var weapons = [];
+
 						var itemFile = require('./resources/items');
+						var weaponFile = require('./resources/weapons');
+						var armorFile = require('./resources/armor');
 						var abilityFile = require('./resources/abilities');
+						var ammoFile = require('./resources/ammo');
 
 						var itemResults = JSON.parse(results[0].knight_slots);
 						for (var i = 0; i < itemResults.length; i++) {
 							for (var n = 0; n < itemFile.length; n++) {
 								if (itemFile[n].item_id == itemResults[i][0]) {
-									inventory.push(itemResults[i]);
+									inventory[itemResults[i][2]] = itemResults[i];
+								}
+							}
+
+							for (var n = 0; n < weaponFile.length; n++) {
+								if (weaponFile[n].item_id == itemResults[i][0]) {
+									inventory[itemResults[i][2]] = itemResults[i];
+
+									if (itemResults[i][3] == 9) {
+										// Two-handed
+										weapons[0] = itemResults[i];
+										weapons[1] = itemResults[i];
+									}
+									else if (itemResults[i][3] == 2) {
+										// Main
+										weapons[0] = itemResults[i];
+									}
+									else if (itemResults[i][3] == 3) {
+										// Auxiliary
+										weapons[1] = itemResults[i];
+									}
+								}
+							}
+
+							for (var n = 0; n < armorFile.length; n++) {
+								if (armorFile[n].item_id == itemResults[i][0]) {
+									inventory[itemResults[i][2]] = itemResults[i];
+
+									if (itemResults[i][3] == 4) {
+										// Armor
+										armor = itemResults[i];
+									}
+								}
+							}
+
+							for (var n = 0; n < ammoFile.length; n++) {
+								if (ammoFile[n].item_id == itemResults[i][0]) {
+									inventory[itemResults[i][2]] = itemResults[i];
+
+									if (itemResults[i][3] == 4) {
+										// Ammo
+										ammo = itemResults[i];
+									}
 								}
 							}
 						}
@@ -106,24 +162,18 @@ var Room = function (io, matchID, config) {
 									abilities.push(abilityResults[i]);
 								}
 							}
-							// Get items equipped to hotbar
-							for (var n = 0; n < itemFile.length; n++) {
-								if (itemFile[n].item_id == abilityResults[i][0]) {
-									inventory.push(abilityResults[n]);
-									// Push these items into ability array so that these items are loaded into the hotbar when loaded
-									abilities.push(abilityResults[i]);
-								}
-							}
 						}
 
-						var armor = [];
-						var weapons = [];
 						var character = characterManager.SpawnKnight(player.sID, player.knight_level);
-						character.knight.abilities = abilities;
+						character.knight.inventory.abilities = abilities;
 						character.knight.inventory.weapons = weapons;
+						character.knight.inventory.armor = armor;
+						character.knight.inventory.ammo = ammo;
 						character.knight.inventory.slots = inventory;
+						character.knight.LoadAbilities();
 						character.position = {x: 30, y: 30};
 						characters.push(character);
+						knights.push(character);
 
 						character.hp = 30;
 						// Set character location
@@ -134,7 +184,7 @@ var Room = function (io, matchID, config) {
 		});
 
 	};
-	StorePlayerData(config, this.characterManager, this.location, this.characters, this.players);
+	StorePlayerData(config, this.characterManager, this.location, this.characters, this.knights, this.players);
 
 	this.sendInventories = function (characters, socket) {
 		// Send knight inventory
@@ -147,7 +197,7 @@ var Room = function (io, matchID, config) {
 				});
 				socket.emit(Event.output.knight.ABILITY_INVENTORY, {
 					id: character.owner,
-					i: character.knight.abilities
+					i: character.knight.inventory.abilities
 				});
 			}
 		});
@@ -162,7 +212,7 @@ var Room = function (io, matchID, config) {
 		location.SendCharacterLocations();
 		location.UpdateTime();
 		// HP
-		var hp = {d:[]};
+		var hp = {d: []};
 		characters.forEach(function (character) {
 			if (character.hp != character.prevhp) {
 				hp.d.push({i: character.id, h: character.hp});
@@ -177,11 +227,6 @@ var Room = function (io, matchID, config) {
 	setInterval(sendUpdates, 83, this.characters, this.location, this.io, this.matchID);
 };
 
-// Sets the data object for further use in different modules
-Room.prototype.retrieveData = function() {
-	var data = {};
-};
-
 /*
  Handle Reconnection
  */
@@ -190,6 +235,7 @@ Room.prototype.onRegister = function (socket, data) {
 	if (!this.players.some(function (player) {
 			if (data.uuid == player.last_uuid) {
 				player.socketID = socket.id;
+				player.socket = socket;
 				return true;
 			}
 		})) {
@@ -212,7 +258,6 @@ Room.prototype.onRegister = function (socket, data) {
 	// Wait 1s until sending inventories
 	setTimeout(this.sendInventories(this.characters, socket), 1000);
 };
-
 /*
  Listeners: Input from the player
  */
@@ -228,11 +273,11 @@ Room.prototype.onDisconnect = function (socket) {
 Room.prototype.onTalk = function (socket, data) {
 	var target = data.target;
 	var message = data.message;
-	this.players.forEach(function (player) {
-		if (player.socketID == socket.id) {
-			this.chat.addMsg(this.players, player, message, target);
+	for (var i = 0; i < this.players.length; i++) {
+		if (this.players[i].socketID == socket.id) {
+			this.chat.addMsg(this.players, this.players[i], message, target);
 		}
-	});
+	}
 };
 // Movement
 //io.sockets.in(game_uuid).on(Event.input.MOVE,
@@ -250,17 +295,6 @@ Room.prototype.onMove = function (socket, data) {
 			var character = this.characters[i];
 			if (character.id != key) {
 				return false;
-			}
-			// Check if channelling
-			if (character.channelling) {
-				if (character.channelling != false) {
-					if (character.channelling == true) {
-						character.channelling = "m";
-					} else {
-						character.channelling += "m";
-					}
-					character.channellingAbility.CheckInterruption();
-				}
 			}
 			for (var n = 0; n < this.players.length; n++) {
 				var player = this.players[n];
@@ -281,10 +315,17 @@ Room.prototype.onLeave = function (socket) {
 // Knight changing equipped armor
 //io.sockets.in(game_uuid).on(Event.input.knight.CHANGE_EQUIPPED,
 Room.prototype.onKnightChangeEquipped = function (socket, data) {
-	var characterID = parseInt(data.characterID, 10);
-	if (!isNaN(characterID) && characterID < characters.length &&
-		Finder.GetAccountIDFromSocketID(this.players, socket.id) == characters[characterID].owner && characters[characterID].knight != null) {
-		characters[characterID].knight.ChangeEquipped(data.itemID, data.target);
+	// Find knight belonging to player id
+	var playerID = Finder.GetPlayerSIDFromSocketID(this.players, socket.id);
+	for (var i = 0; i < this.characters.length; i++) {
+		if (this.characters[i].owner == playerID && this.characters[i].knight) {
+			data.io = this.io;
+			data.room = this.matchID;
+			data.players = this.players;
+			data.knights = this.knights;
+			this.characters[i].knight.ChangeEquipped(data, data.slotID, data.target);
+			i = this.players.length;
+		}
 	}
 };
 // Knight using ability
@@ -296,25 +337,33 @@ Room.prototype.onKnightAbilityStart = function (socket, data) {
 	if (isNaN(abilityID) || isNaN(characterID) || isNaN(weaponID) || data.target == null || !data.target.hasOwnProperty("x") || !data.target.hasOwnProperty("y")) {
 		return;
 	}
-	characters.forEach(function (character) {
-		if (character.id != characterID && character.type == "knight") {
+	console.log("a");
+	for (var i = 0; i < this.characters.length; i++) {
+		console.log(this.characters[i]);
+		var character = this.characters[i];
+		if (character.id != characterID) {
 			return;
 		}
-		this.players.forEach(function (player) {
-			if (player.socketID == socket.id && Finder.GetAccountIDFromSocketID(this.players, socket.id) == character.owner) {
-				if (!character.stunned && character.knight != null) {
+		for (var n = 0; n < this.players.length; n++) {
+			var player = this.players[n];
+			console.log(n);
+			if (player.socketID == socket.id && Finder.GetPlayerSIDFromSocketID(this.players, socket.id) == character.owner) {
+				console.log(player);
+				if (!character.stunned() && character.knight != null) {
+					console.log(data);
 					data.abilityID = abilityID;
-					data.weaponID = weaponID;
-					data.location = location;
+					data.location = this.location;
 					data.character = character;
-					data.characters = characterID;
+					data.characters = this.characters;
 					data.game_uuid = this.matchID;
 					data.io = this.io;
 					character.knight.UseAbility(data);
+
+					console.log("Player " + player.sID + " used ability " + data.abilityID + ".");
 				}
 			}
-		});
-	});
+		}
+	}
 };
 // Knight using item
 //io.sockets.in(game_uuid).on(Event.input.knight.USE_ITEM_START,
@@ -364,7 +413,7 @@ Room.prototype.onBossAbilityStart = function (socket, data) {
 	this.players.forEach(function (player) {
 		characters.forEach(function (character) {
 			if (character.type == "boss" && character.id == characterID &&
-				player.socketID == socket.id && Finder.GetAccountIDFromSocketID(this.players, socket.id) == character.owner) {
+				player.socketID == socket.id && Finder.GetPlayerSIDFromSocketID(this.players, socket.id) == character.owner) {
 				if (!character.stunned && !isNaN(abilityID) && abilityID < character.boss.abilities.length) {
 					data.characters = characters;
 					data.game_uuid = game_uuid;

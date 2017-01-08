@@ -12,7 +12,7 @@ CharacterManager.SpawnKnight =  function(owner, level)
 {
     var char = new character(this.count, owner, "knight", 0, level);
     this.count++;
-    char.knight = new knight();
+    char.knight = new knight(char);
     return char;
 };
 
