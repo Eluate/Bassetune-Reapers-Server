@@ -4,14 +4,14 @@
 var Event = require('./EventEnum');
 var Vec2 = require("./Vector2");
 
-var Location = function (io, room, map) {
+var Location = function (self) {
 	this.PF = require("pathfinding");
 	this.pathfinder = new this.PF.AStarFinder();
 	this.characters = [];
 	this.lastTime = new Date().getTime() / 1000;
-	this.map = map;
-	this.io = io;
-	this.room = room;
+	this.map = self.map;
+	this.io = self.io;
+	this.matchID = self.matchID;
 };
 
 Location.prototype = {
@@ -33,30 +33,48 @@ Location.prototype = {
 	},
 
 	UpdateCharacterPositions: function () {
-		var time = new Date().getTime() / 1000;
+		var time = new Date().getTime() / 1000; // todo rotation
 		for (var key in this.characters) {
+			var character = this.characters[key];
 			if (!this.characters.hasOwnProperty(key)) return;
-			var path = this.characters[key].path;
+			var path = character.path;
 			if (path == null || path == undefined || path.length == 0) continue;
-			var speed = this.characters[key].speed * (time - this.lastTime);
-			var prevLocation = this.characters[key].position;
+			// Disable pathfinding if character is channelling
+			if (character.channelling != false || character.stunned()) {
+				character.path = null;
+				continue;
+			}
+
+			var prevLocation = character.position;
+			var speed = character.speed * (time - this.lastTime);
 			var distanceTravelled = 0.0;
+			var destination = {
+				x: path[0][0],
+				y: path[0][1]
+			};
+
 			while (distanceTravelled < speed && path.length > 0) {
-				var vector = {
-					x: path[0][0],
-					y: path[0][1]
-				};
-				var distanceToPoint = Vec2.distanceTo(vector, prevLocation);
+				// Change rotation prior to position
+				console.log("A: " + character.rotation.toString());
+				character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevLocation)), (time - this.lastTime) * 4);
+				console.log("B: " + character.rotation.toString());
+
+				var prevLocation = character.position;
+				var distanceToPoint = Vec2.distanceTo(destination, prevLocation);
 				// Handle speed Limits
 				if (distanceToPoint > speed) {
 					// If character is moving to fast, move it at maximum speed to destination
-					prevLocation = Vec2.add(prevLocation, Vec2.setLength(Vec2.sub(vector, prevLocation), speed - distanceTravelled));
-					console.log("Character: " + this.characters[key].id + " going to fast. Reverting to location: " +
-						vector.x.toString() + " " + vector.y.toString());
+					prevLocation = Vec2.add(prevLocation, Vec2.setLength(Vec2.sub(destination, prevLocation), speed - distanceTravelled));
+					//console.log("Character: " + this.characters[key].id + " going to fast. Reverting to location: " +
+					//	destination.x.toString() + " " + destination.y.toString());
 					// Finish loop
 					distanceTravelled += speed;
 				} else {
-					prevLocation = vector;
+					// Change rotation prior to position
+					character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevLocation)), (time - this.lastTime) * 4);
+					console.log(character.rotation);
+
+					prevLocation = destination;
 					distanceTravelled += speed;
 					// Remove element from path
 					path.shift();
@@ -65,13 +83,13 @@ Location.prototype = {
 			/*for (var i = 0; i < map.geometry.length; i++) {
 			 var p = map.geometry[i];
 			 // Broad Phase
-			 if (Vec2.distanceTo(vector, {x: p[0] , y : p[1]}) > speed) {
+			 if (Vector2.distanceTo(destination, {x: p[0] , y : p[1]}) > speed) {
 			 continue;
 			 }
 			 // Narrow Phase
-			 if (Vec2.pointCollision(vector, prevLocation, {x: p[0] , y : p[1]})) {
+			 if (Vector2.pointCollision(destination, prevLocation, {x: p[0] , y : p[1]})) {
 			 // Collision occurred, revert to prev position (generous, the bounds of model aren't tested)
-			 vector = Vec2.sub(vector, Vec2.setLength(Vec2.sub(vector, prevLocation), 0.2));
+			 destination = Vector2.sub(destination, Vector2.setLength(Vector2.sub(destination, prevLocation), 0.2));
 			 console.log("Character: " + character + " collided with a wall at " + p.x1 + "," + p.y1);
 			 }
 			 }*/
@@ -101,7 +119,7 @@ Location.prototype = {
 			}
 		}
 		if (data.length > 0) {
-			this.io.to(this.room).emit(Event.output.CHAR_LOCATIONS, {"d": data});
+			this.io.to(this.matchID).emit(Event.output.CHAR_LOCATIONS, {"d": data});
 		}
 	}
 };

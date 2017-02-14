@@ -53,7 +53,7 @@ if (cluster.isWorker) {
 		var Room = require("./classes/Room");
 		var rooms = {};
 
-		// Listen for create room calls
+		// Listen for create matchID calls
 		app.post('/createRoom', function (req, res) {
 			console.log("Create Room request: " + JSON.stringify(req.body, null, 2));
 			// Check authentication
@@ -68,7 +68,7 @@ if (cluster.isWorker) {
 				bosses: match.bosses,
 				knights: match.knights
 			};
-			// Create room using data
+			// Create matchID using data
 			var room = new Room(io, matchID, config);
 			rooms[matchID] = room;
 			// Update redis
@@ -136,9 +136,9 @@ if (cluster.isWorker) {
 
 			socket.on('join', function (data) {
 				if (Object.keys(rooms).indexOf(data.matchID) > -1) {
-					console.log(socket.id + " joined room: " + data.matchID);
+					console.log(socket.id + " joined matchID: " + data.matchID);
 					socket.join(data.matchID);
-					// Further communication is with the room
+					// Further communication is with the matchID
 					socket.roomInstance = rooms[data.matchID];
 					socket.roomInstance.onRegister(socket, data);
 				}

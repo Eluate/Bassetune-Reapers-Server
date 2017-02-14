@@ -3,7 +3,8 @@
  */
 var character = require("./Character");
 var knight = require("./Knight");
-var bosses = require("./Bosses").Bosses;
+var bosses = require("./Lords").Bosses;
+var minions = require("./Minions").Minions;
 
 var CharacterManager = {};
 CharacterManager.count = 0;
@@ -16,15 +17,28 @@ CharacterManager.SpawnKnight = function (owner, level) {
 };
 
 CharacterManager.SpawnBoss = function (owner, level, entity) {
-	var char = new character(this.count, owner, "boss", entity, level);
+	var char = new character(this.count, owner, "lord", entity, level);
 	this.count++;
-	var boss = (new bosses[entity](level));
+	var boss = (new bosses[entity - 3000](level));
 	// Set boss attributes
 	char.boss = boss;
 	char.hp = boss.hp;
 	char.maxhp = boss.hp;
 	char.blockArmor = boss.armor;
 	char.speed = boss.speed;
+	return char;
+};
+
+CharacterManager.SpawnMinion = function (owner, level, entity) {
+	var char = new character(this.count, owner, "minion", entity, level);
+	this.count++;
+	var minion = (new minions[entity - 3400](level));
+	// Set minion attributes
+	char.minion = minion;
+	char.hp = minion.hp;
+	char.maxhp = minion.hp;
+	char.blockArmor = minion.armor;
+	char.speed = minion.speed;
 	return char;
 };
 

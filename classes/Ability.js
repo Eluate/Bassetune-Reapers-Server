@@ -9,7 +9,7 @@ var Ranged = ["bow"]; // Add more later
 
 var Ability = function (abilityInfo) {
 	// Set ability info
-	this.id = abilityInfo.id;
+	this.id = abilityInfo.item_id;
 	this.reqType = abilityInfo.required_type;
 	this.aoeSize = abilityInfo.aoe_size;
 	this.range = abilityInfo.range;
@@ -53,22 +53,26 @@ Ability.prototype.UseKnightAbility = function (data) {
 		io = data.io;
 
 	// Select mainhand or offhand weapon
-	if (data.weapon == 1 && character.knight.inventory.weapons[1]) {
-		var weapon = character.knight.inventory.weapons[1];
-	} else if (character.knight.inventory.weapons[0]) {
+	var weapon = null;
+	if (data.weapon == 1) {
+		weapon = character.knight.inventory.weapons[1];
+	} else {
 		weapon = character.knight.inventory.weapons[0];
 	}
 	if (weapon == null) {
 		return;
 	}
+
 	// Retrieve weapon data
-	weapon = Ability.GetWeaponInfo(weapon);
+	weapon = Ability.GetWeaponInfo(weapon[0]);
+	if (!weapon) return;
 	console.log(weapon);
+	console.log(this);
 
 	// Check if weapon matches the required weapon
-	if ((weapon.type == "melee" && !Melee.some(function (weaponElement) {
+	if ((weapon.type == "Melee" && !Melee.some(function (weaponElement) {
 			return weaponElement == weapon.type;
-		})) && (weapon.type == "ranged" && !Ranged.some(function (weaponElement) {
+		})) && (weapon.type == "Ranged" && !Ranged.some(function (weaponElement) {
 			return weaponElement == weapon.type;
 		})) && ability.reqType != weapon.type && ability.reqType != null) {
 		return;
@@ -263,15 +267,23 @@ Ability.AbilityType = {
 
 Ability.GetWeaponInfo = function (entityID) {
 	var weapons = require('./resources/weapons');
-	var weapon = weapons[entityID];
-	return {
+
+	var weapon = null;
+	for (var n = 0; n < weapons.length; n++) {
+		if (weapons[n].item_id == entityID) {
+			weapon = weapons[n];
+		}
+	}
+
+	if (weapon == null) return;
+	else return {
 		type: weapon.weapon_type,
-		damage: weapon.damage,
+		damage: weapon.damage
 	};
 };
 
 Ability.Effect = function (abilityID, characterID, positive, type, roomID, io) {
-	io.to(roomID).emit(Event.output.EFFECT, {"a": abilityID, "c": characterID, "t": type});
+	io.to(roomID).emit(Event.output.EFFECT, {"a": slotID, "c": characterID, "t": type});
 };
 
 Ability.EffectTypes = {
@@ -293,19 +305,19 @@ Ability.AttackSpeeds = {
 };
 
 Ability.EmitKnightUse = function (characterID, abilityID, roomID, io) {
-	io.to(roomID).emit(Event.input.knight.ABILITY_START, {"i": characterID, "a": abilityID});
+	io.to(roomID).emit(Event.input.knight.ABILITY_START, {"i": characterID, "a": slotID});
 };
 
 Ability.EmitKnightFinish = function (characterID, abilityID, roomID, io) {
-	io.to(roomID).emit(Event.input.knight.ABILITY_END, {"i": characterID, "a": abilityID});
+	io.to(roomID).emit(Event.input.knight.ABILITY_END, {"i": characterID, "a": slotID});
 };
 
 Ability.EmitBossUse = function (characterID, abilityID, roomID, io) {
-	io.to(roomID).emit(Event.input.boss.ABILITY_START, {"i": characterID, "a": abilityID});
+	io.to(roomID).emit(Event.input.boss.ABILITY_START, {"i": characterID, "a": slotID});
 };
 
 Ability.EmitBossFinish = function (characterID, abilityID, roomID, io) {
-	io.to(roomID).emit(Event.input.boss.ABILITY_END, {"i": characterID, "a": abilityID});
+	io.to(roomID).emit(Event.input.boss.ABILITY_END, {"i": characterID, "a": slotID});
 };
 
 module.exports = Ability;

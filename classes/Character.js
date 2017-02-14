@@ -24,8 +24,8 @@ var Character = function (id, owner, type, entity, level) {
 
 	this.blockArmor = 0; // any extra armor given by a block
 	this.stunCount = 0; // number of stuns on character
-	this.position = null;
-	this.rotation = null;
+	this.position = {x: 0, y: 0};
+	this.rotation = {x: 0, y: 0};
 	this.prevPosition = null;
 	this.effects = [];
 	this.channelling = false;

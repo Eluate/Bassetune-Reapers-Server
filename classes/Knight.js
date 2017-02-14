@@ -46,7 +46,6 @@ Knight.prototype.ChangeEquipped = function (data, slotID, target) {
 			item2[2] = item1[2];
 			item1[2] = tempNumber;
 
-			console.log(slots);
 			data.io.emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"a": item1[2], "b": item2[2], "p": this.character.owner});
 		}
 		return;
@@ -59,7 +58,7 @@ Knight.prototype.ChangeEquipped = function (data, slotID, target) {
 
 		if (target == 2 || target == 3 || target == 9) {
 			// Start item switch delay
-			data.io.to(data.room).emit(EventEnum.output.knight.START_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": this.character.owner});
+			data.io.to(data.matchID).emit(EventEnum.output.knight.START_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": this.character.owner});
 			var self = this;
 			// Overwrite any abilities/items being channelled
 			this.character.channelling = slot;
@@ -104,11 +103,11 @@ Knight.prototype.ChangeEquipped = function (data, slotID, target) {
 					self.inventory.armor = slot;
 					slot[3] = 4;
 				}
-				data.io.to(data.room).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": self.character.owner});
+				data.io.to(data.matchID).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": self.character.owner});
 			}, 3000);
 		}
 		else {
-			data.io.to(data.room).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": this.character.owner});
+			data.io.to(data.matchID).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": this.character.owner});
 		}
 
 		i = slotLength;
@@ -117,9 +116,17 @@ Knight.prototype.ChangeEquipped = function (data, slotID, target) {
 };
 
 Knight.prototype.UseAbility = function (data) {
-	for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
-		if (data.abilityID == this.abilities[i].id) {
-			this.abilities[i].UseKnightAbility(data);
+	var inventory = this.inventory.abilities;
+	for (var i = 0, inventoryLength = this.inventory.abilities; i < inventoryLength; i++) {
+		// Check if slot id matches the item
+		if (data.slotID == inventory[i][2]) {
+			var slot = inventory[i];
+			for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
+				if (slot[0] == this.abilities[i].id) {
+					this.abilities[i].UseKnightAbility(data);
+				}
+			}
+			i = inventoryLength;
 		}
 	}
 };
@@ -129,7 +136,7 @@ Knight.prototype.UseItem = function (data) {
 	console.log(inventory);
 	for (var i = 0, inventoryLength = inventory.length; i < inventoryLength; i++) {
 		// Check if item id matches the item and if an item is available (item count)
-		if (data.itemID == inventory[i][0] && inventory[i][1] > 0) {
+		if (data.slotID == inventory[i][2] && inventory[i][1] > 0) {
 			data.slot = inventory[i];
 			Item.UseItem(data);
 			// Only use the first one

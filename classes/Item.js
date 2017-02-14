@@ -12,7 +12,6 @@ var Item = {
 		var characters = data.characters;
 		var character = data.character;
 		var target = data.target;
-		var location = data.location;
 		var item = this.RetrieveItemInfo(data.itemID);
 
 		if (!item) return;
@@ -121,6 +120,7 @@ Item.H_Specials = function () {
 
 };
 
+
 /* Item types include:
  - H_Heal
  - H_Regen
@@ -130,5 +130,52 @@ Item.H_Specials = function () {
  - A_Bolts
  - I_Ranged
  */
+
+Item.ItemType = {
+	isItem: function(itemID)
+	{
+		return !(itemID < 1000 || itemID >= 2500);
+	},
+	isConsumable: function(itemID)
+	{
+		return !(itemID < 1000 || itemID >= 2400);
+	},
+	isAmmo: function(itemID)
+	{
+		return !(itemID < 1900 || itemID >= 2000);
+	},
+	isWeapon: function(itemID)
+	{
+		return !(itemID < 2000 || itemID >= 2400);
+	},
+	isArmor: function(itemID)
+	{
+		return !(itemID < 2400 || itemID >= 2500);
+	},
+	isLord: function(itemID)
+	{
+		return !(itemID < 3000 || itemID >= 3200);
+	},
+	isLesserLord: function(itemID)
+	{
+		return !(itemID < 3200 || itemID >= 3400);
+	},
+	isMinion: function(itemID)
+	{
+		return !(itemID < 3400 || itemID >= 3600);
+	},
+	isTrap: function(itemID)
+	{
+		return !(itemID < 3600 || itemID >= 3800);
+	},
+	isOffensiveAbility: function(itemID)
+	{
+		return !(itemID < 2500 || itemID >= 2750);
+	},
+	isDefensiveAbility: function(itemID)
+	{
+		return !(itemID < 2750 || itemID >= 3000);
+	}
+};
 
 module.exports = Item;

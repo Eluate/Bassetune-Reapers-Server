@@ -22,6 +22,13 @@ var Vector2 = {
 	length: function (v1) {
 		return this.distanceTo({x: 0, y: 0}, v1);
 	},
+	lerp: function(v1, v2, amount)
+  {
+		return {
+			x: MathHelper.lerp(v1.x, v2.x, amount),
+			y: MathHelper.lerp(v1.y, v2.y, amount)
+		};
+  },
 	normalise: function (v1) {
 		return this.divideScalar(v1, this.length(v1));
 	},
@@ -95,6 +102,27 @@ var Vector2 = {
 		}
 
 		return {x: y, y: x};
+	}
+};
+
+var MathHelper = {
+	// Get a value between two values
+	clamp: function (value, min, max) {
+
+		if (value < min) {
+			return min;
+		}
+		else if (value > max) {
+			return max;
+		}
+
+		return value;
+	},
+	// Get the linear interpolation between two value
+	lerp: function (value1, value2, amount) {
+		amount = amount < 0 ? 0 : amount;
+		amount = amount > 1 ? 1 : amount;
+		return value1 + (value2 - value1) * amount;
 	}
 };
 

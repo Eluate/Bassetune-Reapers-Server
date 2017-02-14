@@ -3,7 +3,7 @@
  */
 var Event = require('./EventEnum');
 
-var Chat = function (io, room) {
+var Chat = function (self) {
 	this.addMsg = function (players, player, msg, target) {
 		var entry = {
 			id: player.sID,
@@ -14,10 +14,10 @@ var Chat = function (io, room) {
 		for (var i = 0; i < players.length; i++) {
 			var tPlayer = players[i];
 			if (tPlayer.side == player.side && target == "F") {
-				io.to(tPlayer.socketID).emit(Event.output.NEW_CHAT_MSG, entry);
+				self.io.to(tPlayer.socketID).emit(Event.output.NEW_CHAT_MSG, entry);
 			}
 			else if (target == "A") {
-				io.to(tPlayer.socketID).emit(Event.output.NEW_CHAT_MSG, entry);
+				self.io.to(tPlayer.socketID).emit(Event.output.NEW_CHAT_MSG, entry);
 			}
 		}
 	}

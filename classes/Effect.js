@@ -27,7 +27,7 @@ Effect.Regeneration = function (character, item) {
 		character.effects.push({Effect: Effect.EffectTypes.Regeneration, Interval: interval});
 	}
 	var data = {e: Effect.EffectTypes.Regeneration, d: item.duration, i: item.id};
-	this.io.to(this.room).emit(Event.output.Effect, {"d": data});
+	this.io.to(this.matchID).emit(Event.output.Effect, {"d": data});
 };
 
 Effect.Bleed = function (character) {
@@ -54,7 +54,7 @@ Effect.Bleed = function (character) {
 	}
 
 	var data = {e: Effect.EffectTypes.Bleed, d: 3000, s: stack};
-	this.io.to(this.room).emit(Event.output.Effect, {"d": data});
+	this.io.to(this.matchID).emit(Event.output.Effect, {"d": data});
 };
 
 Effect.Burn = function (character) {
@@ -73,7 +73,7 @@ Effect.Burn = function (character) {
 	}
 
 	var data = {e: Effect.EffectTypes.Burn, d: 2000};
-	this.io.to(this.room).emit(Event.output.Effect, {"d": data});
+	this.io.to(this.matchID).emit(Event.output.Effect, {"d": data});
 };
 
 Effect.Stun = function (character, seconds) {
@@ -85,7 +85,7 @@ Effect.Stun = function (character, seconds) {
 	character.effects.push(effect);
 
 	var data = {e: Effect.EffectTypes.Stun, d: 1000 * seconds};
-	this.io.to(this.room).emit(Event.output.Effect, {"d": data});
+	this.io.to(this.matchID).emit(Event.output.Effect, {"d": data});
 };
 
 Effect.EffectTypes = {

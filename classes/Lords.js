@@ -1,9 +1,8 @@
 /*
- Bosses data
+ Lords data
  */
-var ABILITY = require('./Ability');
-var Vec2 = require('./Vector2');
-var Character = require('./Character');
+var Ability = require('./Ability');
+var Vector2 = require('./Vector2');
 
 var Bosses = [];
 
@@ -34,7 +33,7 @@ var TheSavageTillBeast = function (level) {
 			return;
 		}
 		this.busy = true;
-		ABILITY.EmitBossUse(character.id, data.abilityID, data.room, data.io);
+		Ability.EmitBossUse(character.id, data.slotID, data.matchID, data.io);
 		setTimeout(function () {
 			// Return if stunned
 			if (character.stunned) {
@@ -43,14 +42,14 @@ var TheSavageTillBeast = function (level) {
 			// Allow the weapon to be used again
 			this.busy = false;
 			var projectiles = [];
-			projectiles.push(Vec2.setLength({x: target.x, y: target.y}, this.base_range + character.rangeModifier));
+			projectiles.push(Vector2.setLength({x: target.x, y: target.y}, this.base_range + character.rangeModifier));
 			projectiles.forEach(function (projectile) {
 				// Check if the ability hits a wall (if its ranged)
 				var collisionPoints = [];
 				var prevLocation = location.characters[location.characterIndex.indexOf(character.id)].position;
 				for (var i = 0; i < location.map.geom.length; i++) {
 					var p = location.map.geom[i];
-					if (Vec2.wallCollision(prevLocation, projectile, p)) {
+					if (Vector2.wallCollision(prevLocation, projectile, p)) {
 						// Collision occurred
 						collisionPoints.push(p);
 					}
@@ -59,7 +58,7 @@ var TheSavageTillBeast = function (level) {
 				var hitTargets = [];
 				for (var j = 0; j < location.character.length; j++) {
 					var charLocation = location.character[j].position;
-					if (Vec2.pointCollision(prevLocation, charLocation, projectile)) {
+					if (Vector2.pointCollision(prevLocation, charLocation, projectile)) {
 						// Collision occurred
 						hitTargets.push(location.character[j]);
 					}
@@ -104,8 +103,8 @@ var TheSavageTillBeast = function (level) {
 					}
 				}
 			});
-		}, ABILITY.AttackSpeeds.Slow);
-		ABILITY.EmitBossFinish(character.id, data.abilityID, data.room, data.io);
+		}, Ability.AttackSpeeds.Slow);
+		Ability.EmitBossFinish(character.id, data.slotID, data.matchID, data.io);
 	};
 	// Right-Click Block
 	this.ability2 = function (data) {
@@ -116,11 +115,11 @@ var TheSavageTillBeast = function (level) {
 		if (data.toggle.toString() != "true" && this.blocking != false) {
 			this.character.blockArmor -= 10000;
 			this.blocking = false;
-			ABILITY.EmitBossFinish(character.id, data.abilityID, data.room, data.io);
+			Ability.EmitBossFinish(character.id, data.slotID, data.matchID, data.io);
 		} else {
 			this.character.blockArmor += 10000;
 			this.blocking = true;
-			ABILITY.EmitBossUse(character.id, data.abilityID, data.room, data.io);
+			Ability.EmitBossUse(character.id, data.slotID, data.matchID, data.io);
 		}
 	};
 	// Store all abilities
