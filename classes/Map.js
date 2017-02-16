@@ -2,10 +2,13 @@ require("./lib/mscorlib.js");
 require("./lib/dungen.js");
 var SpawningGenerator = require("./src/SpawningGenerator.js");
 var SpawnGenUtil = require("./src/util/SpawnGenUtil.js");
+var CSharpUtil = require("./src/util/CSharpUtil.js");
+var PF = require('pathfinding');
 
 var Map = function (self) {
 
 	this.seed = parseInt(Math.random() * 10000);
+	this.pfGrid = new PF.Grid(40, 50);
 
 	this.SpawnDungeon = function() {
 		/***********************************/
@@ -45,6 +48,19 @@ var Map = function (self) {
 		spawnGen.setLordDoorId(lordDoorId);
 
 		var spawnPoints = spawnGen.result();
+		self.map.grid = CSharpUtil.csMatrixToJs(dunMatrix);
+
+		// Loop through map and set pathfinding grid
+		for (var x = 0; x < self.map.grid.length; x++) {
+			for (var y = 0; y < self.map.grid[x].length; y++) {
+				if (self.map.grid[x][y] == 0) {
+					self.map.pfGrid.setWalkableAt(x, y, true);
+				}
+				else {
+					self.map.pfGrid.setWalkableAt(x, y, false);
+				}
+			}
+		}
 
 		SpawnGenUtil.print(dunMatrix, spawnPoints, self);
 
