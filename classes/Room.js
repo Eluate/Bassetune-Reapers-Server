@@ -1,9 +1,11 @@
+// Get all modules required for initialization
 var Chat = require('./Chat');
 var Location = require('./Location');
-var Map = require('./Map');
-var Event = require('./EventEnum');
-var Finder = require('./Finder');
+var Map = require('./Map');1
 var MySQLHandler = require('./mysqlHandler');
+var Finder = require('./Finder');
+var Event = require('./EventEnum');
+
 
 var Room = function (io, matchID, config) {
 	// Bind parameters to matchID
@@ -29,7 +31,7 @@ var Room = function (io, matchID, config) {
 	this.currentFloor = 0;
 
 	// Options
-	this.tick = 4;
+	this.tick = 12;
 
 	/*
 	 Get player Data
@@ -156,13 +158,14 @@ var Room = function (io, matchID, config) {
 						self.characters.push(character);
 						self.knights.push(character);
 
+						character.hp = 30;
+
 						// Increment finished count
 						finishedCount = finishedCount + 1;
 						if (finishedCount == playerIDs.length) {
 							SpawnMapAndCharacters(self);
 						}
 
-						character.hp = 30;
 						// TODO: Calculate proper starting positions
 					}
 					// Sort boss data
@@ -334,7 +337,7 @@ Room.prototype.onMove = function (socket, data) {
 			continue;
 		}
 		// Check if data is valid or not
-		if (data[key].length != 2 || isNaN(parseFloat(data[key][0])) || isNaN(parseFloat(data[key][1]))) {
+		if (data[key].length != 2 ) {
 			return;
 		}
 		for (var i = 0; i < this.characters.length; i++) {
@@ -377,6 +380,7 @@ Room.prototype.onKnightChangeEquipped = function (socket, data) {
 // Knight using ability
 //io.sockets.in(game_uuid).on(Event.input.knight.ABILITY_START,
 Room.prototype.onKnightAbilityStart = function (socket, data) {
+	console.log(data);
 	var slotID = parseInt(data.slotID, 10);
 	var characterID = parseInt(data.characterID, 10);
 	var weaponID = parseInt(data.weapon, 10);
@@ -392,7 +396,6 @@ Room.prototype.onKnightAbilityStart = function (socket, data) {
 			var player = this.players[n];
 			if (player.socketID == socket.id && Finder.GetPlayerSIDFromSocketID(this.players, socket.id) == character.owner) {
 				if (!character.stunned() && character.knight != null) {
-					console.log(data);
 					data.slotID = slotID;
 					data.location = this.location;
 					data.character = character;
@@ -403,15 +406,17 @@ Room.prototype.onKnightAbilityStart = function (socket, data) {
 
 					//console.log("Player " + player.sID + " used ability " + data.slotID + ".");
 				}
+				break;
 			}
 		}
+		break;
 	}
 };
 // Knight using item
 //io.sockets.in(game_uuid).on(Event.input.knight.USE_ITEM_START,
 Room.prototype.onKnightUseItemStart = function (socket, data) {
 	var characterID = parseInt(data.characterID, 10);
-	var slotID = parseInt(data.itemID, 10);
+	var slotID = parseInt(data.slotID, 10);
 	if (isNaN(characterID) || isNaN(slotID)) {
 		return;
 	}
@@ -424,7 +429,7 @@ Room.prototype.onKnightUseItemStart = function (socket, data) {
 			var player = this.players[n];
 			if (player.socketID == socket.id && Finder.GetPlayerSIDFromSocketID(this.players, socket.id) == character.owner) {
 				if (!character.stunned() && character.knight != null) {
-					data.itemID = slotID;
+					data.slotID = slotID;
 					data.location = this.location;
 					data.character = character;
 					data.characters = this.characters;
@@ -432,7 +437,7 @@ Room.prototype.onKnightUseItemStart = function (socket, data) {
 					data.io = this.io;
 					character.knight.UseItem(data);
 
-					console.log("Player " + player.sID + " used " + data.itemID + ".");
+					console.log("Player " + player.sID + " used " + data.slotID + ".");
 				}
 			}
 		}

@@ -4,41 +4,34 @@
 var Vec2 = require("./Vector2");
 var Items = require('./resources/items');
 var Event = require('./EventEnum');
+var Effects = require('./Effect');
 
 var Item = {
 	UseItem: function (data) {
-		var Effect = require('./Effect', data);
 		// Variables are characters, character, location and target
 		var characters = data.characters;
 		var character = data.character;
 		var target = data.target;
-		var item = this.RetrieveItemInfo(data.itemID);
+		var item = this.RetrieveItemInfo(data.slot[0]);
 
 		if (!item) return;
 
 		// Overwrite any abilities/items being channelled
-		character.channelling = true;
-		character.channellingAbility = this;
+		character.channelling = item;
 		data.io.to(data.game_uuid).emit(Event.output.knight.USE_ITEM_START, {"i": character.id, "t": item.id});
 		setTimeout(function () {
 			// Check if channelling has been cancelled
-			if (character.channelling != true) {
-				if (item.intByStun == true && character.channelling.indexOf("s") > -1) {
-					return;
-				}
-				if (item.intByDamage == true && character.channelling.indexOf("d") > -1) {
-					return;
-				}
-				if (item.intByAbilityUse == true && character.channelling.indexOf("a") > -1) {
-					return;
-				}
+			if (character.channelling != item) {
+				return;
 			}
+			var Effect = new Effects(data);
 			// Start effects of the item
 			if (item.purpose == "H_Heal") {
 				console.log("Health changed from " + character.hp + " to " + Math.min(Math.min(character.maxhp, character.hp + item.value), character.maxhp));
 				character.hp = Math.min(Math.min(character.maxhp, character.hp + item.value), character.maxhp);
 			}
 			else if (item.purpose == "H_Regeneration") {
+				console.log(Effect);
 				Effect.Regeneration(character, item);
 			}
 			else if (item.purpose == "Resurrect") {
@@ -132,6 +125,10 @@ Item.H_Specials = function () {
  */
 
 Item.ItemType = {
+	isKnight: function(itemID)
+	{
+		return itemID == 0 || itemID == 1;
+	},
 	isItem: function(itemID)
 	{
 		return !(itemID < 1000 || itemID >= 2500);

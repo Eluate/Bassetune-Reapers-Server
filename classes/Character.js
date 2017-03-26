@@ -11,7 +11,7 @@ var Character = function (id, owner, type, entity, level) {
 	this.level = level;
 	this.type = type; // creature, miniboss, boss, trap or knight
 	this.entity = entity; // the characters entity (eg first trap is entity 1 if type trap is picked)
-	this.speed = 6; // the speed at which character moves at (6 by default)
+	this.speed = 2; // the speed at which character moves at (2 by default)
 
 	if (entity == 0 || entity == 1) {
 		this.hp = 100 * level; // 100 base for knights

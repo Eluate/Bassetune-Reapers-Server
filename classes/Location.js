@@ -2,6 +2,7 @@
  Model class for location (characters, traps...)
  */
 var Event = require('./EventEnum');
+var Item = require('./Item');
 var Vec2 = require("./Vector2");
 
 var Location = function (self) {
@@ -17,12 +18,20 @@ var Location = function (self) {
 Location.prototype = {
 	UpdateDestination: function (character, vector) {
 		var vector = {
-			x: parseInt(vector[0]),
-			y: parseInt(vector[1])
+			x: Number(vector[0]).toFixed(2),
+			y: Number(vector[1]).toFixed(2)
 		};
-		if (vector.x < this.map.pfGrid.width && vector.y < this.map.pfGrid.height) {
+
+		if (isNaN(vector.x) || isNaN(vector.y)) return;
+
+		// Check if character is player controlled
+		if (Item.ItemType.isKnight(character.entity) || Item.ItemType.isLord(character.entity) || Item.ItemType.isLesserLord(character.entity)) {
+			character.path = [[vector.x, vector.y]];
+		}
+		// Otherwise use pathfinding for AI
+		else if (vector.x < this.map.pfGrid.width && vector.y < this.map.pfGrid.height) {
 			var grid = this.map.pfGrid.clone();
-			var path = this.pathfinder.findPath(parseInt(character.position.x), parseInt(character.position.y), vector.x, vector.y, grid);
+			var path = this.pathfinder.findPath(parseInt(character.position.x), parseInt(character.position.y), parseInt(vector.x), parseInt(vector.y), grid);
 			path = this.PF.Util.compressPath(path);
 			character.path = path;
 			console.log("Updated path");
@@ -30,6 +39,7 @@ Location.prototype = {
 		} else {
 			character.path = null;
 		}
+		character.channelling = false;
 	},
 
 	UpdateCharacterPositions: function () {
@@ -39,7 +49,7 @@ Location.prototype = {
 			if (!this.characters.hasOwnProperty(key)) return;
 			var path = character.path;
 			if (path == null || path == undefined || path.length == 0) continue;
-			// Disable pathfinding if character is channelling
+			// Disable pathfinding if character starts channelling
 			if (character.channelling != false || character.stunned()) {
 				character.path = null;
 				continue;
@@ -49,15 +59,19 @@ Location.prototype = {
 			var speed = character.speed * (time - this.lastTime);
 			var distanceTravelled = 0.0;
 			var destination = {
-				x: path[0][0],
-				y: path[0][1]
+				x: Number(path[0][0]),
+				y: Number(path[0][1])
 			};
 
 			while (distanceTravelled < speed && path.length > 0) {
 				// Change rotation prior to position
-				console.log("A: " + character.rotation.toString());
-				character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevLocation)), (time - this.lastTime) * 4);
-				console.log("B: " + character.rotation.toString());
+				//console.log("A: " + character.rotation.x.toString() + " " + character.rotation.x.toString());
+				//console.log(destination);
+				//console.log(prevLocation);
+				//console.log(Vec2.normalise(Vec2.sub(destination, prevLocation)));
+				//console.log((time - this.lastTime) * 4);
+				character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevLocation)), (time - this.lastTime) * 16);
+				//console.log("B: " + character.rotation.x.toString() + " " + character.rotation.x.toString());
 
 				var prevLocation = character.position;
 				var distanceToPoint = Vec2.distanceTo(destination, prevLocation);
@@ -72,7 +86,6 @@ Location.prototype = {
 				} else {
 					// Change rotation prior to position
 					character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevLocation)), (time - this.lastTime) * 4);
-					console.log(character.rotation);
 
 					prevLocation = destination;
 					distanceTravelled += speed;

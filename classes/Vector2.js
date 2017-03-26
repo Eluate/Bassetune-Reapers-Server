@@ -30,7 +30,7 @@ var Vector2 = {
 		};
   },
 	normalise: function (v1) {
-		return this.divideScalar(v1, this.length(v1));
+		return this.divideScalar(v1, this.length(v1) || 1);
 	},
 	setLength: function (v1, length) {
 		return this.multiplyScalar(this.normalise(v1), length);
@@ -60,8 +60,8 @@ var Vector2 = {
 		}
 	},
 	pointCollision: function (v1, v2, v3) {
-		return (v3.x < Math.min(v1.x, v2.x) || v3.y < Math.min(v1.y, v2.y) ||
-		v3.x > Math.max(v1.x, v2.x) || v3.y > Math.max(v1.y, v2.y))
+		return (v3.x >= Math.min(v1.x, v2.x) && v3.x <= Math.max(v1.x, v2.x) &&
+						v3.y >= Math.min(v1.y, v2.y) && v3.y <= Math.max(v1.y, v2.y))
 	},
 	collisionPointDistanced: function (v1, v2, v3) {
 		var x = v3.x;

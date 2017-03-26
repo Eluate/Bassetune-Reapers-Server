@@ -31,14 +31,7 @@ var Ability = function (abilityInfo) {
 	this.bleed = abilityInfo.bleed;
 	this.stun = abilityInfo.stun;
 	this.rangeModifier = abilityInfo.range_modifier;
-	// Check if any are undefined
-	for (var abilityProperty in this) {
-		if (this.hasOwnProperty(abilityProperty)) {
-			if (!this[abilityProperty] || this[abilityProperty].toString().toLowerCase() == "null") {
-				this[abilityProperty] = undefined;
-			}
-		}
-	}
+
 	// The current cooldown
 	this.curCoolDown = 0;
 };
@@ -50,7 +43,10 @@ Ability.prototype.UseKnightAbility = function (data) {
 		location = data.location,
 		characters = data.characters,
 		roomID = data.game_uuid,
+		target = data.target,
 		io = data.io;
+
+	console.log(target);
 
 	// Select mainhand or offhand weapon
 	var weapon = null;
@@ -69,116 +65,135 @@ Ability.prototype.UseKnightAbility = function (data) {
 	console.log(weapon);
 	console.log(this);
 
+	// Skip if already channelling same ability and weapon
+	if (character.channelling == {"ability": ability, "weapon": weapon}) return;
+
 	// Check if weapon matches the required weapon
-	if ((weapon.type == "Melee" && !Melee.some(function (weaponElement) {
+	if ((weapon.type == "melee" && !Melee.some(function (weaponElement) {
 			return weaponElement == weapon.type;
-		})) && (weapon.type == "Ranged" && !Ranged.some(function (weaponElement) {
+		})) && (weapon.type == "ranged" && !Ranged.some(function (weaponElement) {
 			return weaponElement == weapon.type;
 		})) && ability.reqType != weapon.type && ability.reqType != null) {
 		return;
 	}
+	console.log("Meets required type");
 	// Check is cooldown has finished
 	if (new Date().getTime() - ability.curCoolDown < ability.coolDown * 1000) {
 		return;
 	}
-	// Make it so that the weapon can't be used while casting
-	weapon.busy = true;
-	// Cancel any active channels
-	character.channelling = false;
+	console.log("Not on cooldown.");
 	// Emit the use of the ability
-	Ability.EmitKnightUse(character.id, ability.id, roomID, io);
+	Ability.EmitKnightUse(character.id, ability.id, target, roomID, io);
+	character.channelling = {"ability": ability, "weapon": weapon};
 	// Wait until the cast time is up
 	setTimeout(function () {
-		// Return if stunned
-		if (character.stunned) {
-			return;
-		}
-		// Allow the weapon to be used again
-		weapon.busy = false;
-		// Handle different ability types
-		var target = character.rotation;
+		// Return if stunned or overridden
+		if (character.stunned()) return;
+		if (character.channelling != {"ability": ability, "weapon": weapon}) return;
+
 		// For offence, target is a position
 		if (ability.type == Ability.AbilityType.OFFENSIVE) {
 			// Projectile array
 			var projectiles = [];
 			// The location of the character who cast
-			var prevLocation = character.location;
+			var prevPosition = character.position;
 			// Set target as direction
-			target = Vec2.sub(target, prevLocation);
+			target = Vec2.sub(target, prevPosition);
 			// Multiple projectiles
 			if (ability.numProjectiles > 1) {
 				for (var i = 0; i < ability.numProjectiles; i++) {
 					if (i > ability.numProjectiles / 2) {
-						projectiles.push(Vec2.add(Vec2.setLength({x: target.x + i, y: target.y + i}, ability.range + character.rangeModifier)), prevLocation);
+						projectiles.push(Vec2.add(Vec2.setLength({
+							x: target.x + i,
+							y: target.y + i
+						}, ability.range + character.rangeModifier), prevPosition));
 					}
 					else if (i < ability.numProjectiles / 2) {
-						projectiles.push(Vec2.add(Vec2.setLength({x: target.x - i, y: target.y - i}, ability.range + character.rangeModifier)), prevLocation);
+						projectiles.push(Vec2.add(Vec2.setLength({
+							x: target.x - i,
+							y: target.y - i
+						}, ability.range + character.rangeModifier), prevPosition));
 					}
 					else {
-						projectiles.push(Vec2.add(Vec2.setLength(target, ability.range + character.rangeModifier)), prevLocation);
+						projectiles.push(Vec2.add(Vec2.setLength(target, ability.range + character.rangeModifier), prevPosition));
 					}
 				}
 			}
 			else {
-				projectiles.push(Vec2.add(Vec2.setLength({x: target.x, y: target.y}, ability.range + character.rangeModifier)), prevLocation);
+				projectiles.push(Vec2.add(Vec2.setLength({
+					x: target.x,
+					y: target.y
+				}, ability.range + character.rangeModifier), prevPosition));
 			}
+			// Check for target hits
 			projectiles.forEach(function (projectile) {
+				var hitTargets = [];
 				// Check if the ability hits a wall (if its ranged)
 				var collisionPoints = [];
-				if (ability.numProjectiles > 1) {
-					for (var i = 0; i < location.map.borderedMap.length; i++) {
-						var p = location.map.borderedMap[i];
-						if (Vec2.wallCollision(prevLocation, projectile, p)) {
+
+				for (var i = 0; i < location.map.grid.length; i++) {
+					for (var j = 0; j < location.map.grid[0].length; j++) {
+						var wall = {
+							x1: i - 0.5, x2: i + 0.5,
+							y1: j - 0.5, y2: j + 0.5
+						};
+						if (Vec2.wallCollision(prevPosition, projectile, wall)) {
 							// Collision occurred
-							collisionPoints.push(p);
+							collisionPoints.push(wall);
 						}
 					}
 				}
-				// Check for target hits
-				var hitTargets = [];
-				for (var j = 0; j < location.character.length; j++) {
-					var charLocation = location.character[j].position;
-					if (Vec2.pointCollision(prevLocation, charLocation, projectile)) {
+
+				for (var j = 0; j < location.characters.length; j++) {
+					if (Vec2.pointCollision(prevPosition, projectile, location.characters[j].position)) {
 						// Collision occurred
-						hitTargets.push(location.character[j]);
+						hitTargets.push(location.characters[j]);
 					}
 				}
+
 				// Check if any targets have been hit
 				if (hitTargets.length < 1) {
 					return;
 				}
-				// Check whether target it wall or target first
-				var hitTarget = [];
+
+				// Remove dead characters from selection
 				for (i = 0; i < hitTargets.length; i++) {
-					for (j = 0; j < collisionPoints.length; i++) {
-						if (collisionPoints[j].distanceTo(prevLocation) < hitTargets[i].position.distanceTo(prevLocation)) {
-							if (hitTarget.indexOf(hitTargets[i]) == -1) {
-								hitTarget.push(hitTargets[i]);
-							}
-						}
-					}
-					if (collisionPoints.length == 0) {
-						hitTarget.push(hitTargets[i]);
+					if (hitTargets[i].dead()) {
+						hitTargets.splice(i, 1);
+						i -= 1;
 					}
 				}
-				if (hitTarget.length > 0) {
-					// Make sure target isnt a friendly
-					for (i = 0; i < hitTarget.length; i++) {
-						if (hitTarget[i].character.type == "knight") {
-							hitTarget.splice(i, 1);
+
+				// Remove allied characters from selection
+				for (i = 0; i < hitTargets.length; i++) {
+					if (hitTargets[i].type == "knight") {
+						hitTargets.splice(i, 1);
+						i -= 1;
+					}
+				}
+
+				// Check whether target hit wall or target first
+				for (var j = 0; j < collisionPoints.length; j++) {
+					for (var i = 0; i < hitTargets.length; i++) {
+						if (Vec2.distanceTo({x: collisionPoints[j].x1 + 0.5, y: collisionPoints[j].y1 + 0.5}, prevPosition) < Vec2.distanceTo(hitTargets[i].position, prevPosition)) {
+							hitTargets.splice(i, 1);
+							i -= 1;
 						}
 					}
 				}
+
 				// Only use one hitTarget if its not piercing
-				if (!ability.piercing && hitTarget.length > 0) {
+				if (!ability.piercing && hitTargets.length > 0) {
+					// TODO: Select the one closest to the character
 					// Only one target
-					hitTarget.splice(1, 100);
+					hitTargets.splice(1, hitTargets.length);
 				}
+
 				// Apply offensive loop for hit targets
-				for (i = 0; i < hitTarget.length; i++) {
+				for (i = 0; i < hitTargets.length; i++) {
 					var hitCharacter = 0;
 					characters.forEach(function (character) {
-						if (character.id == hitTarget[i].id && character.type != "knight") {
+						if (character.id == hitTargets[i].id && character.type != "knight") {
 							hitCharacter = character;
 						}
 					});
@@ -189,14 +204,22 @@ Ability.prototype.UseKnightAbility = function (data) {
 					// Damage
 					if (ability.hasOwnProperty("damage")) {
 						// Calculate range for range damage modifier
-						var totalRange = Vec2.distanceTo(character.position, hitTarget[i].position);
-						var totalDamage = ability.damage + weapon.damage * ability.damageModifier + (this.rangeDamageModifier * totalRange);
+						var totalRange = Vec2.distanceTo(character.position, hitCharacter.position);
+						var totalDamage = ability.damage + weapon.damage * ability.damageModifier + (ability.rangeDamageModifier * totalRange);
+						console.log(totalDamage);
+						console.log(ability.damage);
+						console.log(weapon.damage);
+						console.log(ability.damageModifier);
+						console.log(ability.rangeDamageModifier);
+						console.log(totalRange);
 						// Check if ability should ignore armor
 						if (!ability.ignoreArmor) {
 							totalDamage -= hitCharacter.blockArmor;
 						}
 						// Damage taken by must be at least 1 and most 18000
+						console.log(totalDamage);
 						hitCharacter.hp -= Math.max(1, Math.min(totalDamage, 18000));
+						console.log(hitCharacter);
 					}
 					// Bleed
 					if (ability.hasOwnProperty("bleed") && ability.bleed > 1) {
@@ -240,7 +263,10 @@ Ability.prototype.UseKnightAbility = function (data) {
 			// Dodge
 			if (ability.hasOwnProperty("moveDistance") && target.hasOwnProperty("x") && target.hasOwnProperty("y")) {
 				var characterLocation = character.position;
-				var newLocation = characterLocation.add(Vec2.setLength({x: target.x, y: target.y}, ability.moveDistance));
+				var newLocation = characterLocation.add(Vec2.setLength({
+					x: target.x,
+					y: target.y
+				}, ability.moveDistance));
 				// Update new location
 				character.position = newLocation;
 			}
@@ -254,7 +280,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 		}
 		// Set the new cooldown
 		ability.curCoolDown = new Date().getTime();
-		// Reset channelled
+		// Reset channelled so that same ability/weapon combo can be used again
 		character.channelling = false;
 	}, ability.castTime * 1000);
 	Ability.EmitKnightFinish(character.id, ability.id, roomID, io);
@@ -283,7 +309,7 @@ Ability.GetWeaponInfo = function (entityID) {
 };
 
 Ability.Effect = function (abilityID, characterID, positive, type, roomID, io) {
-	io.to(roomID).emit(Event.output.EFFECT, {"a": slotID, "c": characterID, "t": type});
+	io.to(roomID).emit(Event.output.EFFECT, {"a": abilityID, "c": characterID, "t": type});
 };
 
 Ability.EffectTypes = {
@@ -304,20 +330,20 @@ Ability.AttackSpeeds = {
 	ExtremelySlow: 5000
 };
 
-Ability.EmitKnightUse = function (characterID, abilityID, roomID, io) {
-	io.to(roomID).emit(Event.input.knight.ABILITY_START, {"i": characterID, "a": slotID});
+Ability.EmitKnightUse = function (characterID, abilityID, target, roomID, io) {
+	io.to(roomID).emit(Event.input.knight.ABILITY_START, {"i": characterID, "a": abilityID, "t": target});
 };
 
 Ability.EmitKnightFinish = function (characterID, abilityID, roomID, io) {
-	io.to(roomID).emit(Event.input.knight.ABILITY_END, {"i": characterID, "a": slotID});
+	io.to(roomID).emit(Event.input.knight.ABILITY_END, {"i": characterID, "a": abilityID});
 };
 
 Ability.EmitBossUse = function (characterID, abilityID, roomID, io) {
-	io.to(roomID).emit(Event.input.boss.ABILITY_START, {"i": characterID, "a": slotID});
+	io.to(roomID).emit(Event.input.boss.ABILITY_START, {"i": characterID, "a": abilityID});
 };
 
 Ability.EmitBossFinish = function (characterID, abilityID, roomID, io) {
-	io.to(roomID).emit(Event.input.boss.ABILITY_END, {"i": characterID, "a": slotID});
+	io.to(roomID).emit(Event.input.boss.ABILITY_END, {"i": characterID, "a": abilityID});
 };
 
 module.exports = Ability;

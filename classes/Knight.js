@@ -116,19 +116,12 @@ Knight.prototype.ChangeEquipped = function (data, slotID, target) {
 };
 
 Knight.prototype.UseAbility = function (data) {
-	var inventory = this.inventory.abilities;
-	for (var i = 0, inventoryLength = this.inventory.abilities; i < inventoryLength; i++) {
-		// Check if slot id matches the item
-		if (data.slotID == inventory[i][2]) {
-			var slot = inventory[i];
-			for (var i = 0, abilitiesLength = this.abilities.length; i < abilitiesLength; i++) {
-				if (slot[0] == this.abilities[i].id) {
-					this.abilities[i].UseKnightAbility(data);
-				}
+		for (var i = 0, abilitiesLength = this.inventory.abilities.length; i < abilitiesLength; i++) {
+			if (data.slotID == this.inventory.abilities[i][2]) {
+				this.abilities[i].UseKnightAbility(data);
+				break;
 			}
-			i = inventoryLength;
 		}
-	}
 };
 
 Knight.prototype.UseItem = function (data) {
