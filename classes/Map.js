@@ -19,7 +19,8 @@ var Map = function (self) {
 		dunGen.setMapSize(40, 50);
 		dunGen.setRoomsNumberRange(4, 7);
 		dunGen.setRoomSizeRange(9, 15);
-		dunGen.setCorridorSizeRange(5, 8);
+		dunGen.setCorridorLengthRange(5, 8);
+		dunGen.setCorridorWidthRange(3, 3);
 
 		dunGen.setSeed(self.map.seed);
 		console.log("Seed: " + self.map.seed);
