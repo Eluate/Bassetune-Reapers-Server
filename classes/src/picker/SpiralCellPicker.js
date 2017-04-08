@@ -4,18 +4,18 @@ function SpiralCellPicker(height, width, barycenterRow, barycenterCol, cells, ty
     this.type = (!type) ? "horizontal" : type; // { "horizontal", "vertical" }
     
 
-    this.priv_isWest = function(cell) {return cell.columnIndex() < barycenterCol;}
-    this.priv_isNorth = function(cell) {return cell.rowIndex() < barycenterRow;}
-    this.priv_isEast = function(cell) {return cell.columnIndex() > barycenterCol;}
-    this.priv_isSouth = function(cell) {return cell.rowIndex() > barycenterRow;}
+    this.priv_isWest = function(cell) {return cell.col() < barycenterCol;}
+    this.priv_isNorth = function(cell) {return cell.row() < barycenterRow;}
+    this.priv_isEast = function(cell) {return cell.col() > barycenterCol;}
+    this.priv_isSouth = function(cell) {return cell.row() > barycenterRow;}
 
-    var areRowsEven = height % 2 === 0 ? true : false;
-    var factor = areRowsEven ? 1 : 0;
+    //var areRowsEven = height % 2 === 0 ? true : false;
+    //var factor = areRowsEven ? 1 : 0;
 
     for(var i=0; i< this.cells.length; i++) {
         var each = this.cells[i];
-        var rowDiff = Math.abs(barycenterRow - each.rowIndex());
-        var colDiff = Math.abs(barycenterCol - each.columnIndex());
+        var rowDiff = Math.abs(barycenterRow - each.row());
+        var colDiff = Math.abs(barycenterCol - each.col());
         
         var circle = rowDiff >= colDiff ? rowDiff : colDiff;
         var diff = rowDiff + colDiff;
@@ -30,7 +30,7 @@ function SpiralCellPicker(height, width, barycenterRow, barycenterCol, cells, ty
         each.weight = circle + "" + diff + "" + penalty;
         each.originalIndex = i;
 
-       // console.log(each.rowIndex() + " " + each.columnIndex() + " " + weight);
+       // console.log(each.row() + " " + each.col() + " " + weight);
     }
 
 
@@ -39,13 +39,13 @@ function SpiralCellPicker(height, width, barycenterRow, barycenterCol, cells, ty
         var weightDiff = cell1.weight - cell2.weight;
         if (weightDiff != 0) return weightDiff;        
        
-        var rowDiff = cell1.rowIndex() - cell2.rowIndex();
+        var rowDiff = cell1.row() - cell2.row();
         if (rowDiff !== 0) return rowDiff;
-        return cell1.columnIndex() - cell2.columnIndex();
+        return cell1.col() - cell2.col();
        /*
-        var colDiff = cell1.columnIndex() - cell2.columnIndex();
+        var colDiff = cell1.col() - cell2.col();
         if (colDiff !== 0) return colDiff;
-        return cell1.rowIndex() - cell2.rowIndex();
+        return cell1.row() - cell2.row();
         */
         
     }); 

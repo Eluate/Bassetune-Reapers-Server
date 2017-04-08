@@ -1,9 +1,9 @@
 var MinPickStrategy = require("./picker/MinPickStrategy.js");
 var RandomPickStrategy = require("./picker/RandomPickStrategy.js");
-var DungeonModePickerFactory = require("./picker/DungeonModePickerFactory.js");
-var LordRoomModePickerFactory = require("./picker/LordRoomModePickerFactory.js");
 
-function SpawningGenerator() {
+function BaseSpawningAlgorithm(pickerFactorySelector) {
+    this.pickerFactorySelector = pickerFactorySelector;
+
     this.board = null;
     this.knightIds = new Array();
     this.lordIds = new Array();
@@ -29,7 +29,6 @@ function SpawningGenerator() {
         } else {
             this.isDungeonMode = false;
         }
-
     };
     this.setKnightIds = function(ids) {
         this.knightIds = ids;
@@ -46,14 +45,13 @@ function SpawningGenerator() {
     this.setTrapIds = function(ids) {
         this.trapIds = ids;
     };
-
     this.setLordDoorId = function(id) {
         this.lordDoorId = id;
     };
 
     this.result = function() {
         this.priv_initCellPickers();
-
+    
         var spawnPoints = new Array();
         if (this.isDungeonMode) {
             this.priv_spawnKnightsOn(spawnPoints);
@@ -81,8 +79,8 @@ function SpawningGenerator() {
             id = this.knightIds[i];
             cell = cellPicker.draw();
             if (!cell) return;
-            x = cell.rowIndex();
-            y = cell.columnIndex();
+            x = cell.row();
+            y = cell.col();
             spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
         }
     }
@@ -97,8 +95,8 @@ function SpawningGenerator() {
             id = this.lordIds[i];
             cell = cellPicker.draw();
             if (!cell) return;
-            x = cell.rowIndex();
-            y = cell.columnIndex();
+            x = cell.row();
+            y = cell.col();
             spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
         }
     }
@@ -113,8 +111,8 @@ function SpawningGenerator() {
             id = this.lesserLordIds[i];
             cell = cellPicker.draw();
             if (!cell) return;
-            x = cell.rowIndex();
-            y = cell.columnIndex();
+            x = cell.row();
+            y = cell.col();
             spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
         }
     }
@@ -144,8 +142,8 @@ function SpawningGenerator() {
                         distribRest++;
                         continue;
                     }
-                    x = cell.rowIndex();
-                    y = cell.columnIndex();
+                    x = cell.row();
+                    y = cell.col();
                     spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
                     trapIndex++;
                 }            
@@ -163,8 +161,8 @@ function SpawningGenerator() {
                         distribRest++; 
                         continue;
                     }
-                    x = cell.rowIndex();
-                    y = cell.columnIndex();
+                    x = cell.row();
+                    y = cell.col();
                     spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
                     trapIndex++;
                 }            
@@ -184,8 +182,8 @@ function SpawningGenerator() {
                 cell = cellPickers[pickerIndex].forTraps().draw();
                 if (cell) {
                     atLeastOneSpawn = true;
-                    x = cell.rowIndex();
-                    y = cell.columnIndex();
+                    x = cell.row();
+                    y = cell.col();
                     spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
                     trapIndex++;
                 } else {
@@ -233,8 +231,8 @@ function SpawningGenerator() {
                         continue;
                     }
 
-                    x = cell.rowIndex();
-                    y = cell.columnIndex();
+                    x = cell.row();
+                    y = cell.col();
                     spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
                     creatureIndex++;
                 }            
@@ -250,8 +248,8 @@ function SpawningGenerator() {
                     cell = this.priv_cellPickerForRoom(roomIndex).forCreatures().draw();
                     if (cell) {
                         atLeastOneSpawn = true;
-                        x = cell.rowIndex();
-                        y = cell.columnIndex();
+                        x = cell.row();
+                        y = cell.col();
                         spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
                         creatureIndex++;
                     } else {
@@ -272,21 +270,22 @@ function SpawningGenerator() {
     this.priv_spawnLordDoorOn = function(spawnPointArray) {
         if (!this.lordDoorId) return;
         if (!this.board.rooms().length === 0) return;
-        
+
         id = this.lordDoorId;
         cell = this.priv_lastRoomCellPicker().forLordDoor().draw();
-        x = cell.rowIndex();
-        y = cell.columnIndex();
+        x = cell.row();
+        y = cell.col();
         spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
     
     }
 
-    this.priv_initCellPickers = function() {
+    this.priv_initCellPickers = function() {        
         //ROOMS
         this.roomCellPickers = new Array();
         var rooms = this.board.rooms();
         for(var i=0; i<rooms.length; i++) {
-            var fact = this.isDungeonMode ? new DungeonModePickerFactory(rooms[i], this.pickStrategy):new LordRoomModePickerFactory(rooms[i], this.pickStrategy);
+            var fact = this.pickerFactorySelector.forRoom(this.isDungeonMode, rooms[i], this.pickStrategy);
+            fact.label = "room" + i;
             this.roomCellPickers.push(fact);
         }
 
@@ -294,17 +293,17 @@ function SpawningGenerator() {
         this.corrCellPickers = new Array();
         corrs = this.board.corridors();
         for(i=0; i<corrs.length; i++) {
-            this.corrCellPickers.push(new DungeonModePickerFactory(corrs[i], this.pickStrategy));
+            var fact = this.pickerFactorySelector.forCorridor(this.isDungeonMode, corrs[i], this.pickStrategy);
+            fact.label = "corr" + i;
+            this.corrCellPickers.push(fact);
         }
     }
 
     this.priv_firstRoomCellPicker = function() {
-        //return this.roomCellPickers[0];
         return this.priv_cellPickerForRoom(0);
     };
     this.priv_lastRoomCellPicker = function() {
         roomSize = this.board.rooms().length;
-        //return this.roomCellPickers[roomSize-1];
         return this.priv_cellPickerForRoom(roomSize-1);
     };
     this.priv_cellPickerForRoom = function(index) {
@@ -315,14 +314,9 @@ function SpawningGenerator() {
         return this.corrCellPickers[index];
     };
 
-
-    this.priv_doorCellPicker = function() {
-        return this.doorCellPicker;
-    };
-
     this.priv_createSpawnPoint = function(id, cellRow, cellColumn) {
         return {"characterID": id, "location": {"x": cellRow, "y": cellColumn}}
     };
 } 
 
-module.exports = SpawningGenerator;
+module.exports = BaseSpawningAlgorithm;

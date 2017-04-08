@@ -1,6 +1,6 @@
 require("./lib/mscorlib.js");
 require("./lib/dungen.js");
-var SpawningGenerator = require("./src/SpawningGenerator.js");
+var SpawningGenerator = require("./src/DungSpawningGenerator.js");
 var SpawnGenUtil = require("./src/util/SpawnGenUtil.js");
 var CSharpUtil = require("./src/util/CSharpUtil.js");
 var PF = require('pathfinding');
