@@ -5,6 +5,7 @@ var Map = require('./Map');1
 var MySQLHandler = require('./mysqlHandler');
 var Finder = require('./Finder');
 var Event = require('./EventEnum');
+var CharacterManager = require('./CharacterManager');
 
 
 var Room = function (io, matchID, config) {
@@ -17,7 +18,7 @@ var Room = function (io, matchID, config) {
 	this.map = new Map(this);
 	this.chat = new Chat(this);
 	this.location = new Location(this);
-	this.characterManager = require('./CharacterManager');
+	this.characterManager = new CharacterManager();
 
 	// All players that exist in the current game
 	this.players = [];

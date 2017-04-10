@@ -66,7 +66,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 	console.log(this);
 
 	// Skip if already channelling same ability and weapon
-	if (character.channelling == {"ability": ability, "weapon": weapon}) return;
+	if (character.channelling == ability) return;
 
 	// Check if weapon matches the required weapon
 	if ((weapon.type == "melee" && !Melee.some(function (weaponElement) {
@@ -84,12 +84,12 @@ Ability.prototype.UseKnightAbility = function (data) {
 	console.log("Not on cooldown.");
 	// Emit the use of the ability
 	Ability.EmitKnightUse(character.id, ability.id, target, roomID, io);
-	character.channelling = {"ability": ability, "weapon": weapon};
+	character.channelling = ability;
 	// Wait until the cast time is up
 	setTimeout(function () {
 		// Return if stunned or overridden
 		if (character.stunned()) return;
-		if (character.channelling != {"ability": ability, "weapon": weapon}) return;
+		if (character.channelling != ability) return;
 
 		// For offence, target is a position
 		if (ability.type == Ability.AbilityType.OFFENSIVE) {

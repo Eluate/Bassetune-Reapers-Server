@@ -37,14 +37,14 @@ var Vector2 = {
 	},
 	wallCollision: function (v1, v2, wall) {
 		var rect2 = {
-			x: wall.x1 + ((wall.x1 - wall.x2) / 2),
-			y: wall.y1 + ((wall.y1 - wall.y2) / 2),
+			x: wall.x1, //+ Math.abs((wall.x1 - wall.x2) / 2),
+			y: wall.y1, //+ Math.abs((wall.y1 - wall.y2) / 2),
 			w: Math.abs(wall.x1 - wall.x2),
 			h: Math.abs(wall.y1 - wall.y2)
 		};
 		var rect1 = {
-			x: v1.x + (v1.x - v2.x / 2),
-			y: v1.x + (v1.x - v2.x / 2),
+			x: Math.min(v1.x, v2.x) + Math.abs((v1.x - v2.x) / 2),
+			y: Math.min(v1.y, v2.y) + Math.abs((v1.y - v2.y) / 2),
 			w: Math.abs(v1.x - v2.x),
 			h: Math.abs(v1.y - v2.y)
 		};

@@ -47,67 +47,72 @@ Location.prototype = {
 		for (var key in this.characters) {
 			var character = this.characters[key];
 			if (!this.characters.hasOwnProperty(key)) return;
-			var path = character.path;
-			if (path == null || path == undefined || path.length == 0) continue;
+			if (character.path == null || character.path == undefined || character.path.length == 0) continue;
 			// Disable pathfinding if character starts channelling
 			if (character.channelling != false || character.stunned()) {
 				character.path = null;
 				continue;
 			}
 
-			var prevLocation = character.position;
+			var prevPosition = character.position;
 			var speed = character.speed * (time - this.lastTime);
 			var distanceTravelled = 0.0;
 			var destination = {
-				x: Number(path[0][0]),
-				y: Number(path[0][1])
+				x: Number(character.path[0][0]),
+				y: Number(character.path[0][1])
 			};
 
-			while (distanceTravelled < speed && path.length > 0) {
+			while (distanceTravelled < speed && character.path && character.path.length > 0) {
 				// Change rotation prior to position
-				//console.log("A: " + character.rotation.x.toString() + " " + character.rotation.x.toString());
-				//console.log(destination);
-				//console.log(prevLocation);
-				//console.log(Vec2.normalise(Vec2.sub(destination, prevLocation)));
-				//console.log((time - this.lastTime) * 4);
-				character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevLocation)), (time - this.lastTime) * 16);
-				//console.log("B: " + character.rotation.x.toString() + " " + character.rotation.x.toString());
-
-				var prevLocation = character.position;
-				var distanceToPoint = Vec2.distanceTo(destination, prevLocation);
+				character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevPosition)), (time - this.lastTime) * 16);
+				var prevPosition = character.position;
+				var distanceToPoint = Vec2.distanceTo(destination, prevPosition);
 				// Handle speed Limits
 				if (distanceToPoint > speed) {
 					// If character is moving to fast, move it at maximum speed to destination
-					prevLocation = Vec2.add(prevLocation, Vec2.setLength(Vec2.sub(destination, prevLocation), speed - distanceTravelled));
-					//console.log("Character: " + this.characters[key].id + " going to fast. Reverting to location: " +
-					//	destination.x.toString() + " " + destination.y.toString());
-					// Finish loop
+					var newPosition = Vec2.add(prevPosition, Vec2.setLength(Vec2.sub(destination, prevPosition), speed - distanceTravelled));
+					if (this.CheckCollision(prevPosition, newPosition, speed)) {
+						character.path = null;
+						continue;
+					}
+					prevPosition = newPosition;
 					distanceTravelled += speed;
 				} else {
+					if (this.CheckCollision(prevPosition, destination, speed)) {
+						character.path = null;
+						continue;
+					}
 					// Change rotation prior to position
-					character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevLocation)), (time - this.lastTime) * 4);
+					character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevPosition)), (time - this.lastTime) * 4);
 
-					prevLocation = destination;
+					prevPosition = destination;
 					distanceTravelled += speed;
 					// Remove element from path
-					path.shift();
+					character.path.shift();
 				}
 			}
-			/*for (var i = 0; i < map.geometry.length; i++) {
-			 var p = map.geometry[i];
-			 // Broad Phase
-			 if (Vector2.distanceTo(destination, {x: p[0] , y : p[1]}) > speed) {
-			 continue;
-			 }
-			 // Narrow Phase
-			 if (Vector2.pointCollision(destination, prevLocation, {x: p[0] , y : p[1]})) {
-			 // Collision occurred, revert to prev position (generous, the bounds of model aren't tested)
-			 destination = Vector2.sub(destination, Vector2.setLength(Vector2.sub(destination, prevLocation), 0.2));
-			 console.log("Character: " + character + " collided with a wall at " + p.x1 + "," + p.y1);
-			 }
-			 }*/
 			// Update location
-			this.characters[key].position = prevLocation;
+			this.characters[key].position = prevPosition;
+		}
+	},
+
+	CheckCollision: function (prevPosition, destination, speed) {
+		for (var i = 0; i < this.map.grid.length; i++) {
+			for (var j = 0; j < this.map.grid[0].length; j++) {
+				if (this.map.grid[i][j] == 0) continue;
+				// Broad Phase
+				if (Vec2.distanceTo(prevPosition, {x: i, y: j}) > speed * 8) {
+					continue;
+				}
+				// Narrow Phase
+				var wall = {
+					x1: i - 0.5, x2: i + 0.5,
+					y1: j - 0.5, y2: j + 0.5
+				};
+				if (Vec2.wallCollision(prevPosition, destination, wall)) {
+					return true;
+				}
+			}
 		}
 	},
 
