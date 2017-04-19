@@ -99,8 +99,8 @@ Ability.prototype.UseKnightAbility = function (data) {
 			var prevPosition = character.position;
 			// Set target as direction
 			target = Vec2.sub(target, prevPosition);
-			// Multiple projectiles
-			if (ability.numProjectiles > 1) {
+			// Multiple projectiles (ranged = 999)
+			if (ability.range == 999) {
 				for (var i = 0; i < ability.numProjectiles; i++) {
 					if (i > ability.numProjectiles / 2) {
 						projectiles.push(Vec2.add(Vec2.setLength({
@@ -118,136 +118,182 @@ Ability.prototype.UseKnightAbility = function (data) {
 						projectiles.push(Vec2.add(Vec2.setLength(target, ability.range + character.rangeModifier), prevPosition));
 					}
 				}
+				// Check for target hits
+				projectiles.forEach(function (projectile) {
+					var hitTargets = [];
+					var collisionPoints = [];
+
+					for (var i = 0; i < location.map.grid.length; i++) {
+						for (var j = 0; j < location.map.grid[0].length; j++) {
+							if (location.map.grid[i][j] == 0) continue;
+							// Broad Phase
+							if (Vec2.distanceTo(prevPosition, {x: i, y: j}) > ability.range + character.rangeModifier) {
+								continue;
+							}
+							// Narrow Phase
+							var wall = {
+								x1: i - 0.5, x2: i + 0.5,
+								y1: j - 0.5, y2: j + 0.5
+							};
+							if (Vec2.wallCollision(prevPosition, projectile, wall)) {
+								// Collision occurred
+								collisionPoints.push(wall);
+							}
+						}
+					}
+
+					for (var j = 0; j < location.characters.length; j++) {
+						if (Vec2.pointCollision(prevPosition, projectile, location.characters[j].position)) {
+							// Collision occurred
+							hitTargets.push(location.characters[j]);
+						}
+					}
+
+					// Check if any targets have been hit
+					if (hitTargets.length < 1) {
+						return;
+					}
+
+					// Remove dead characters from selection
+					for (i = 0; i < hitTargets.length; i++) {
+						if (hitTargets[i].dead()) {
+							hitTargets.splice(i, 1);
+							i -= 1;
+						}
+					}
+
+					// Remove allied characters from selection
+					for (i = 0; i < hitTargets.length; i++) {
+						if (hitTargets[i].type == "knight") {
+							hitTargets.splice(i, 1);
+							i -= 1;
+						}
+					}
+
+					// Check whether target hit wall or target first
+					for (var j = 0; j < collisionPoints.length; j++) {
+						for (var i = 0; i < hitTargets.length; i++) {
+							if (Vec2.rawDistanceTo({x: collisionPoints[j].x1 + 0.5, y: collisionPoints[j].y1 + 0.5}, prevPosition) < Vec2.rawDistanceTo(hitTargets[i].position, prevPosition)) {
+								hitTargets.splice(i, 1);
+								i -= 1;
+							}
+						}
+					}
+
+					// Only use one hitTarget if its not piercing
+					if (!ability.piercing && hitTargets.length > 0) {
+						// TODO: Select the one closest to the character
+						// Only one target
+						hitTargets.splice(1, hitTargets.length);
+					}
+
+					Ability.AttackCharacter(character, hitTargets, ability, weapon);
+				});
 			}
 			else {
 				projectiles.push(Vec2.add(Vec2.setLength({
 					x: target.x,
 					y: target.y
 				}, ability.range + character.rangeModifier), prevPosition));
-			}
-			// Check for target hits
-			projectiles.forEach(function (projectile) {
-				var hitTargets = [];
-				// Check if the ability hits a wall (if its ranged)
-				var collisionPoints = [];
+				var angleLineCount = -1;
+				var angle = character.aoeSize / 2;
+				var targetsHitAlready = [];
 
-				for (var i = 0; i < location.map.grid.length; i++) {
-					for (var j = 0; j < location.map.grid[0].length; j++) {
-						var wall = {
-							x1: i - 0.5, x2: i + 0.5,
-							y1: j - 0.5, y2: j + 0.5
-						};
-						if (Vec2.wallCollision(prevPosition, projectile, wall)) {
-							// Collision occurred
-							collisionPoints.push(wall);
+				var interval = setInterval(function () {
+					// Return if stunned or overridden
+					if (character.stunned() || character.channelling != ability) {
+						clearInterval(interval);
+						return;
+					}
+					// Increase angle by 10 degrees each time until aoeSize reached
+					angleLineCount += 1;
+					var point = Vec2.circleArcProjection(prevPosition, target, ability.range + character.rangeModifier, angle - (angleLineCount * 10));
+					var hitTargets = [];
+					var collisionPoints = [];
+					// Find HitTargets
+					for (var j = 0; j < location.characters.length; j++) {
+						var newCharacter = location.characters[j];
+						// Broad Phase
+						if (Vec2.distanceTo(prevPosition, newCharacter.position) > ability.range + character.rangeModifier) {
+							continue;
+						}
+						// Narrow Phase
+						if (Vec2.lineToCircleCollision({x: newCharacter.x, y: newCharacter.y, r: 1}, prevPosition, point)) {
+							if (!targetsHitAlready.some(function (targetHitAlready) {
+									return targetHitAlready == newCharacter;
+								}))
+							{
+								hitTargets.push(character);
+								targetsHitAlready.push(character);
+							}
 						}
 					}
-				}
-
-				for (var j = 0; j < location.characters.length; j++) {
-					if (Vec2.pointCollision(prevPosition, projectile, location.characters[j].position)) {
-						// Collision occurred
-						hitTargets.push(location.characters[j]);
+					// Find CollisionPoints
+					for (var i = 0; i < location.map.grid.length; i++) {
+						for (var j = 0; j < location.map.grid[0].length; j++) {
+							if (location.map.grid[i][j] == 0) continue;
+							// Broad Phase
+							if (Vec2.distanceTo(prevPosition, {x: i, y: j}) > ability.range + character.rangeModifier) {
+								continue;
+							}
+							// Narrow Phase
+							var wall = {
+								x: i,
+								y: j,
+								r: 0.5
+							};
+							if (Vec2.lineToCircleCollision(wall, prevPosition, point)) {
+								// Collision occurred
+								collisionPoints.push(wall);
+							}
+						}
 					}
-				}
 
-				// Check if any targets have been hit
-				if (hitTargets.length < 1) {
-					return;
-				}
-
-				// Remove dead characters from selection
-				for (i = 0; i < hitTargets.length; i++) {
-					if (hitTargets[i].dead()) {
-						hitTargets.splice(i, 1);
-						i -= 1;
+					// Check if any targets have been hit
+					if (hitTargets.length < 1) {
+						return;
 					}
-				}
 
-				// Remove allied characters from selection
-				for (i = 0; i < hitTargets.length; i++) {
-					if (hitTargets[i].type == "knight") {
-						hitTargets.splice(i, 1);
-						i -= 1;
-					}
-				}
-
-				// Check whether target hit wall or target first
-				for (var j = 0; j < collisionPoints.length; j++) {
-					for (var i = 0; i < hitTargets.length; i++) {
-						if (Vec2.distanceTo({x: collisionPoints[j].x1 + 0.5, y: collisionPoints[j].y1 + 0.5}, prevPosition) < Vec2.distanceTo(hitTargets[i].position, prevPosition)) {
+					// Remove dead characters from selection
+					for (i = 0; i < hitTargets.length; i++) {
+						if (hitTargets[i].dead()) {
 							hitTargets.splice(i, 1);
 							i -= 1;
 						}
 					}
-				}
 
-				// Only use one hitTarget if its not piercing
-				if (!ability.piercing && hitTargets.length > 0) {
-					// TODO: Select the one closest to the character
-					// Only one target
-					hitTargets.splice(1, hitTargets.length);
-				}
+					// Remove allied characters from selection
+					for (i = 0; i < hitTargets.length; i++) {
+						if (hitTargets[i].type == "knight") {
+							hitTargets.splice(i, 1);
+							i -= 1;
+						}
+					}
 
-				// Apply offensive loop for hit targets
-				for (i = 0; i < hitTargets.length; i++) {
-					var hitCharacter = 0;
-					characters.forEach(function (character) {
-						if (character.id == hitTargets[i].id && character.type != "knight") {
-							hitCharacter = character;
-						}
-					});
-					// Continue if no characters are found
-					if (hitCharacter == 0) {
-						continue;
-					}
-					// Damage
-					if (ability.hasOwnProperty("damage")) {
-						// Calculate range for range damage modifier
-						var totalRange = Vec2.distanceTo(character.position, hitCharacter.position);
-						var totalDamage = ability.damage + weapon.damage * ability.damageModifier + (ability.rangeDamageModifier * totalRange);
-						console.log(totalDamage);
-						console.log(ability.damage);
-						console.log(weapon.damage);
-						console.log(ability.damageModifier);
-						console.log(ability.rangeDamageModifier);
-						console.log(totalRange);
-						// Check if ability should ignore armor
-						if (!ability.ignoreArmor) {
-							totalDamage -= hitCharacter.blockArmor;
-						}
-						// Damage taken by must be at least 1 and most 18000
-						console.log(totalDamage);
-						hitCharacter.hp -= Math.max(1, Math.min(totalDamage, 18000));
-						console.log(hitCharacter);
-					}
-					// Bleed
-					if (ability.hasOwnProperty("bleed") && ability.bleed > 1) {
-						var curDuration = ability.duration;
-						// Bleed every second for bleed amount
-						while (curDuration > 0) {
-							setTimeout(function () {
-								target.hp -= ability.bleed;
-							}, 1000);
-							curDuration -= 1;
+					// Check whether target hit wall or target first
+					for (var j = 0; j < collisionPoints.length; j++) {
+						for (var i = 0; i < hitTargets.length; i++) {
+							if (Vec2.rawDistanceTo({x: collisionPoints[j].x1 + 0.5, y: collisionPoints[j].y1 + 0.5}, prevPosition) < Vec2.rawDistanceTo(hitTargets[i].position, prevPosition)) {
+								hitTargets.splice(i, 1);
+								i -= 1;
+							}
 						}
 					}
-					// Stun
-					if (ability.hasOwnProperty("stun") && ability.stun > 0) {
-						hitCharacter.stunCount = hitCharacter.stunCount + 1;
-						setTimeout(function () {
-							hitCharacter.stunCount -= 1;
-						}, ability.stun * 1000);
+
+					// Only use one hitTarget if its not piercing
+					if (!ability.piercing && hitTargets.length > 0) {
+						// TODO: Select the one closest to the character
+						// Only one target
+						hitTargets.splice(1, hitTargets.length);
 					}
-					// Decrease Range
-					if (ability.hasOwnProperty("decreaseRange")) {
-						hitCharacter.rangeModifier -= ability.rangeModifier;
-						setTimeout(function () {
-							hitCharacter.rangeModifier += ability.rangeModifier;
-						}, ability.duration * 1000);
+
+					Ability.AttackCharacter(character, hitTargets, ability, weapon);
+					if (angleLineCount * 10 <= -angle) {
+						// Clear interval when finished
+						clearInterval(interval);
 					}
-				}
-			});
+				}, 100);
+			}
 		}
 		// For defence, target is the position and/or another knight
 		else if (ability.type == Ability.AbilityType.DEFENSIVE) {
@@ -284,6 +330,67 @@ Ability.prototype.UseKnightAbility = function (data) {
 		character.channelling = false;
 	}, ability.castTime * 1000);
 	Ability.EmitKnightFinish(character.id, ability.id, roomID, io);
+};
+
+Ability.AttackCharacter = function (character, hitTargets, ability, weapon) {
+	// Apply offensive loop for hit targets
+	for (var i = 0; i < hitTargets.length; i++) {
+		var hitCharacter = 0;
+		characters.forEach(function (character) {
+			if (character.id == hitTargets[i].id && character.type != "knight") {
+				hitCharacter = character;
+			}
+		});
+		// Continue if no characters are found
+		if (hitCharacter == 0) {
+			continue;
+		}
+		// Damage
+		if (ability.hasOwnProperty("damage")) {
+			// Calculate range for range damage modifier
+			var totalRange = Vec2.distanceTo(character.position, hitCharacter.position);
+			var totalDamage = ability.damage + weapon.damage * ability.damageModifier + (ability.rangeDamageModifier * totalRange);
+			console.log(totalDamage);
+			console.log(ability.damage);
+			console.log(weapon.damage);
+			console.log(ability.damageModifier);
+			console.log(ability.rangeDamageModifier);
+			console.log(totalRange);
+			// Check if ability should ignore armor
+			if (!ability.ignoreArmor) {
+				totalDamage -= hitCharacter.blockArmor;
+			}
+			// Damage taken by must be at least 1 and most 18000
+			console.log(totalDamage);
+			hitCharacter.hp -= Math.max(1, Math.min(totalDamage, 18000));
+			console.log(hitCharacter);
+		}
+		// Bleed
+		if (ability.hasOwnProperty("bleed") && ability.bleed > 1) {
+			var curDuration = ability.duration;
+			// Bleed every second for bleed amount
+			while (curDuration > 0) {
+				setTimeout(function () {
+					hitCharacter.hp -= ability.bleed;
+				}, 1000);
+				curDuration -= 1;
+			}
+		}
+		// Stun
+		if (ability.hasOwnProperty("stun") && ability.stun > 0) {
+			hitCharacter.stunCount = hitCharacter.stunCount + 1;
+			setTimeout(function () {
+				hitCharacter.stunCount -= 1;
+			}, ability.stun * 1000);
+		}
+		// Decrease Range
+		if (ability.hasOwnProperty("decreaseRange")) {
+			hitCharacter.rangeModifier -= ability.rangeModifier;
+			setTimeout(function () {
+				hitCharacter.rangeModifier += ability.rangeModifier;
+			}, ability.duration * 1000);
+		}
+	}
 };
 
 Ability.AbilityType = {

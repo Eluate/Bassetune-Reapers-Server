@@ -19,6 +19,19 @@ var Vector2 = {
 		var yd = v2.y - v1.y;
 		return Math.pow((xd * xd) + (yd * yd), 0.5);
 	},
+	rawDistanceTo: function(v1, v2) {
+		var xd = v2.x - v1.x;
+		var yd = v2.y - v1.y;
+		return (xd * xd) + (yd * yd);
+	},
+	distanceToSegment: function(circle, v1, v2) {
+		var l2 = Vector2.rawDistanceTo(v1, v2);
+		if (l2 == 0) return Vector2.distanceTo(circle, v1);
+		var t = ((circle.x - v1.x) * (v2.x - v1.x) + (circle.y - v1.y) * (v2.y - v1.y)) / l2;
+		t = Math.max(0, Math.min(1, t));
+		return Vector2.distanceTo(circle, { x: v1.x + t * (v2.x - v1.x),
+			y: v1.y + t * (v2.y - v1.y) });
+	},
 	length: function (v1) {
 		return this.distanceTo({x: 0, y: 0}, v1);
 	},
@@ -63,45 +76,21 @@ var Vector2 = {
 		return (v3.x >= Math.min(v1.x, v2.x) && v3.x <= Math.max(v1.x, v2.x) &&
 						v3.y >= Math.min(v1.y, v2.y) && v3.y <= Math.max(v1.y, v2.y))
 	},
-	collisionPointDistanced: function (v1, v2, v3) {
-		var x = v3.x;
-		var y = v3.y;
-		var minX = Math.min(v1.x, v2.x);
-		var minY = Math.min(v1.y, v2.y);
-		var maxX = Math.max(v1.x, v2.x);
-		var maxY = Math.max(v1.y, v2.y);
+	lineToCircleCollision: function (circle, v1, v2) {
+		return this.distanceToSegment(circle, v1, v2) <= circle.r;
+	},
+	circleArcProjection: function (origin, direction, radius, angle) {
+		var v1 = {x: direction.x, y: direction.y};
+		var angleRadians = angle * Math.PI / 180;
 
-		var midX = (minX + maxX) / 2;
-		var midY = (minY + maxY) / 2;
-		// if (midX - x == 0) -> m == �Inf -> minYx/maxYx == x (because value / �Inf = �0)
-		var m = (midY - y) / (midX - x);
+		var tempX = v1.x;
+		v1.x = (tempX * Math.cos(angleRadians)) - (v1.y * Math.sin(angleRadians));
+		v1.y = (tempX * Math.sin(angleRadians)) + (v1.y * Math.cos(angleRadians));
 
-		// Check left side
-		if (x <= midX) {
-			var minXy = m * (minX - x) + y;
-			if (minY < minXy && minXy < maxY)
-				return {x: minX - 0.5, y: minXy};
-		}
-		// Check right side
-		if (x >= midX) {
-			var maxXy = m * (maxX - x) + y;
-			if (minY < maxXy && maxXy < maxY)
-				return {x: maxX + 0.5, y: maxXy};
-		}
-		// Check bottom side
-		if (y <= midY) {
-			var minYx = (minY - y) / m + x;
-			if (minX < minYx && minYx < maxX)
-				return {x: minYx, y: minY - 0.5};
-		}
-		// Check top side
-		if (y >= midY) {
-			var maxYx = (maxY - y) / m + x;
-			if (minX < maxYx && maxYx < maxX)
-				return {x: maxYx, y: maxY + 0.5};
-		}
+		v1 = this.setLength(v1, radius);
+		v1 = this.add(v1, origin);
 
-		return {x: y, y: x};
+		return v1;
 	}
 };
 

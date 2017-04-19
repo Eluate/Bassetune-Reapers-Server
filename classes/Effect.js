@@ -9,13 +9,22 @@ var Effect = function (data) {
 	this.matchID = data.game_uuid;
 	// Damage effects are based off receivers level
 
-	this.Purge = function (character) {
+	this.Purge = function (character, item) {
 		// Stop all current effects
 		for (var i = 0; i < character.effects.length; i++) {
 			clearInterval(character.effects[i].Interval);
 		}
 		// Reset effect array to nothing
 		character.effects = [];
+
+		var data = {e: Effect.EffectTypes.Purge, i: item.id, c: character.id};
+		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
+	};
+
+	this.Heal = function (character, item) {
+		character.hp = Math.min(Math.min(character.maxhp, character.hp + item.value), character.maxhp);
+		var data = {e: Effect.EffectTypes.Heal, i: item.id, c: character.id};
+		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
 	};
 
 	this.Regeneration = function (character, item) {
@@ -27,8 +36,8 @@ var Effect = function (data) {
 			}, 1000 * i);
 			character.effects.push({Effect: Effect.EffectTypes.Regeneration, Interval: interval});
 		}
-		var data = {e: Effect.EffectTypes.Regeneration, d: item.duration, i: item.id};
-		this.io.to(this.matchID).emit(Event.output.Effect, data);
+		var data = {e: Effect.EffectTypes.Regeneration, d: item.duration, i: item.id, c: character.id};
+		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
 	};
 
 	this.Bleed = function (character) {
@@ -54,8 +63,8 @@ var Effect = function (data) {
 			character.effects.push({Effect: Effect.EffectTypes.Bleed, Timeout: interval});
 		}
 
-		var data = {e: Effect.EffectTypes.Bleed, d: 3000, s: stack};
-		this.io.to(this.matchID).emit(Event.output.Effect, {"d": data});
+		var data = {e: Effect.EffectTypes.Bleed, d: 3000, s: stack, c: character.id};
+		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
 	};
 
 	this.Burn = function (character) {
@@ -73,20 +82,20 @@ var Effect = function (data) {
 			character.effects.push({Effect: Effect.EffectTypes.Burn, Timeout: interval});
 		}
 
-		var data = {e: Effect.EffectTypes.Burn, d: 2000};
-		this.io.to(this.matchID).emit(Event.output.Effect, {"d": data});
+		var data = {e: Effect.EffectTypes.Burn, d: 2000, c: character.id};
+		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
 	};
 
 	this.Stun = function (character, seconds) {
-		var effect = {Effect: Effect.EffectTypes.Stun, Active: true}
+		var effect = {Effect: Effect.EffectTypes.Stun, Active: true};
 		var interval = setTimeout(function () {
 			effect.Active = false;
 		}, 1000 * seconds);
 		effect.Timeout = interval;
 		character.effects.push(effect);
 
-		var data = {e: Effect.EffectTypes.Stun, d: 1000 * seconds};
-		this.io.to(this.matchID).emit(Event.output.Effect, {"d": data});
+		var data = {e: Effect.EffectTypes.Stun, d: 1000 * seconds, c: character.id};
+		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
 	};
 };
 
@@ -94,9 +103,11 @@ Effect.EffectTypes = {
 	IncreasedRange: "I_Range",
 	DecreasedRange: "D_Range",
 	Regeneration: "Regen",
+	Heal: "Heal",
 	Burn: "Burn",
 	Bleed: "Bleed",
-	Stun: "Stun"
+	Stun: "Stun",
+	Purge: "Purge"
 };
 
 module.exports = Effect;

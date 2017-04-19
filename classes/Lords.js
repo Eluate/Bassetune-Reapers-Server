@@ -6,10 +6,10 @@ var Vector2 = require('./Vector2');
 
 var Bosses = [];
 
-var TheSavageTillBeast = function (level) {
-	this.hp = 620 * level;
-	this.base_damage = 18 * level;
-	this.armor = 5 * level;
+var TheSavageTillBeast = function () {
+	this.hp = 620;
+	this.base_damage = 18;
+	this.armor = 5;
 	this.busy = false;
 	this.base_range = 2;
 	this.curCoolDowns = [0, 0, 0, 0, 0];
@@ -126,15 +126,15 @@ var TheSavageTillBeast = function (level) {
 	this.abilities = [this.ability1, this.ability2];
 };
 
-var BeholderOfTheUniversalSun = function (level) {
+var BeholderOfTheUniversalSun = function () {
 
 };
 
-var BassetuneChampion = function (level) {
+var BassetuneChampion = function () {
 
 };
 
-var BreatherOfLife = function (level) {
+var BreatherOfLife = function () {
 
 };
 

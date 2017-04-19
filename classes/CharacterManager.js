@@ -9,17 +9,17 @@ var minions = require("./Minions").Minions;
 var CharacterManager = function () {
 	this.count = 0;
 
-	this.SpawnKnight = function (owner, level) {
-		var char = new character(this.count, owner, "knight", 0, level);
+	this.SpawnKnight = function (owner) {
+		var char = new character(this.count, owner, "knight", 0);
 		this.count++;
 		char.knight = new knight(char);
 		return char;
 	};
 
-	this.SpawnBoss = function (owner, level, entity) {
-		var char = new character(this.count, owner, "lord", entity, level);
+	this.SpawnBoss = function (owner, entity) {
+		var char = new character(this.count, owner, "lord", entity);
 		this.count++;
-		var boss = (new bosses[entity - 3000](level));
+		var boss = (new bosses[entity - 3000]());
 		// Set boss attributes
 		char.boss = boss;
 		char.hp = boss.hp;
@@ -29,15 +29,16 @@ var CharacterManager = function () {
 		return char;
 	};
 
-	this.SpawnMinion = function (owner, level, entity) {
-		var char = new character(this.count, owner, "minion", entity, level);
+	this.SpawnMinion = function (owner, entity) {
+		var char = new character(this.count, owner, "minion", entity);
 		this.count++;
-		var minion = (new minions[entity - 3400](level));
+		var minion = (new minions[entity - 3400]());
 		// Set minion attributes
 		char.minion = minion;
 		char.hp = minion.hp;
 		char.maxhp = minion.hp;
 		char.blockArmor = minion.armor;
+		char.blockArmorPercent = minion.armorPercent;
 		char.speed = minion.speed;
 		return char;
 	};

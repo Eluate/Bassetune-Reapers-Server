@@ -5,16 +5,15 @@
 var Effects = require('./Effect');
 
 // constructor
-var Character = function (id, owner, type, entity, level) {
+var Character = function (id, owner, type, entity) {
 	this.id = id;
 	this.owner = owner; // player
-	this.level = level;
 	this.type = type; // creature, miniboss, boss, trap or knight
 	this.entity = entity; // the characters entity (eg first trap is entity 1 if type trap is picked)
 	this.speed = 2; // the speed at which character moves at (2 by default)
 
 	if (entity == 0 || entity == 1) {
-		this.hp = 100 * level; // 100 base for knights
+		this.hp = 5000; // 5000 base for knights
 	}
 	else {
 		this.hp = 100; // 100 by default
@@ -23,6 +22,7 @@ var Character = function (id, owner, type, entity, level) {
 	this.maxhp = this.hp; // maximum hp
 
 	this.blockArmor = 0; // any extra armor given by a block
+	this.blockArmorPercent = 0; // multiplied by damage to give armor as percentage of damage
 	this.stunCount = 0; // number of stuns on character
 	this.position = {x: 0, y: 0};
 	this.rotation = {x: 0, y: 0};

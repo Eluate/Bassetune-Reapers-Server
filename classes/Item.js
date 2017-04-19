@@ -20,18 +20,18 @@ var Item = {
 		character.channelling = item;
 		data.io.to(data.game_uuid).emit(Event.output.knight.USE_ITEM_START, {"i": character.id, "t": item.id});
 		setTimeout(function () {
-			// Check if channelling has been cancelled
-			if (character.channelling != item) {
-				return;
-			}
 			var Effect = new Effects(data);
+			// Check if channelling has been cancelled
+			if (character.channelling != item) return;
+			if (item.purpose == "H_Status") {
+				Effect.Purge(character, item);
+			}
+			if (character.stunned()) return;
 			// Start effects of the item
 			if (item.purpose == "H_Heal") {
-				console.log("Health changed from " + character.hp + " to " + Math.min(Math.min(character.maxhp, character.hp + item.value), character.maxhp));
-				character.hp = Math.min(Math.min(character.maxhp, character.hp + item.value), character.maxhp);
+				Effect.Heal(character, item);
 			}
 			else if (item.purpose == "H_Regeneration") {
-				console.log(Effect);
 				Effect.Regeneration(character, item);
 			}
 			else if (item.purpose == "Resurrect") {
