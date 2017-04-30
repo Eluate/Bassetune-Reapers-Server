@@ -3,6 +3,7 @@
  */
 var Vec2 = require("./Vector2");
 var Event = require('./EventEnum');
+var SAT = require("sat");
 
 var Melee = ["axe, sword, dagger, knife, twohandedsword"]; // Add more later
 var Ranged = ["bow"]; // Add more later
@@ -93,65 +94,75 @@ Ability.prototype.UseKnightAbility = function (data) {
 
 		// For offence, target is a position
 		if (ability.type == Ability.AbilityType.OFFENSIVE) {
-			// Projectile array
-			var projectiles = [];
 			// The location of the character who cast
 			var prevPosition = character.position;
 			// Set target as direction
 			target = Vec2.sub(target, prevPosition);
+			var direction = Vec2.normalise(target);
 			// Multiple projectiles (ranged = 999)
 			if (ability.range == 999) {
+				// Projectile array
+				var projectiles = [];
 				for (var i = 0; i < ability.numProjectiles; i++) {
 					if (i > ability.numProjectiles / 2) {
 						projectiles.push(Vec2.add(Vec2.setLength({
-							x: target.x + i,
-							y: target.y + i
+							x: direction.x + (i / 5),
+							y: direction.y + (i / 5)
 						}, ability.range + character.rangeModifier), prevPosition));
 					}
 					else if (i < ability.numProjectiles / 2) {
 						projectiles.push(Vec2.add(Vec2.setLength({
-							x: target.x - i,
-							y: target.y - i
+							x: direction.x - (i / 5),
+							y: direction.y - (i / 5)
 						}, ability.range + character.rangeModifier), prevPosition));
 					}
 					else {
-						projectiles.push(Vec2.add(Vec2.setLength(target, ability.range + character.rangeModifier), prevPosition));
+						projectiles.push(Vec2.add(Vec2.setLength(direction, ability.range), prevPosition));
 					}
+				}
+				// If projectile number is not specified (or 0) create a single straight projectile
+				if (!ability.numProjectiles) {
+					projectiles.push(Vec2.add(Vec2.setLength(direction, ability.range), prevPosition));
 				}
 				// Check for target hits
 				projectiles.forEach(function (projectile) {
 					var hitTargets = [];
 					var collisionPoints = [];
 
+					var p1 = {x: projectile.x + (direction.x * 0.5), y: projectile.y + (direction.y * 0.5)};
+					var p2 = {x: projectile.x - (direction.x * 0.5), y: projectile.y - (direction.y * 0.5)};
+					var t1 = {x: prevPosition.x + (direction.x * 0.5), y: prevPosition.y + (direction.y * 0.5)};
+					var t2 = {x: prevPosition.x - (direction.x * 0.5), y: prevPosition.y - (direction.y * 0.5)};
+					console.log([p1, p2, t1, t2]);
+					var polygon = new SAT.Polygon(new SAT.Vector(), [new SAT.Vector(p1.x, p1.y), new SAT.Vector(p2.x, p2.y),
+						new SAT.Vector(t2.x, t2.y), new SAT.Vector(t1.x, t1.y)]);
+
 					for (var i = 0; i < location.map.grid.length; i++) {
 						for (var j = 0; j < location.map.grid[0].length; j++) {
 							if (location.map.grid[i][j] == 0) continue;
-							// Broad Phase
-							if (Vec2.distanceTo(prevPosition, {x: i, y: j}) > ability.range + character.rangeModifier) {
-								continue;
-							}
-							// Narrow Phase
+
 							var wall = {
-								x1: i - 0.5, x2: i + 0.5,
-								y1: j - 0.5, y2: j + 0.5
+								x: i,
+								y: j,
+								r: 0.7
 							};
-							if (Vec2.wallCollision(prevPosition, projectile, wall)) {
+
+							var circle = new SAT.Circle(new SAT.Vector(wall.x, wall.y), wall.r);
+
+							if (SAT.testPolygonCircle(polygon, circle)) {
 								// Collision occurred
 								collisionPoints.push(wall);
 							}
 						}
 					}
 
-					for (var j = 0; j < location.characters.length; j++) {
-						if (Vec2.pointCollision(prevPosition, projectile, location.characters[j].position)) {
+					for (var i = 0; i < location.characters.length; i++) {
+						var characterPosition = location.characters[i].position;
+						var circle = new SAT.Circle(new SAT.Vector(characterPosition.x, characterPosition.y), 0.7);
+						if (SAT.testPolygonCircle(polygon, circle)) {
 							// Collision occurred
-							hitTargets.push(location.characters[j]);
+							hitTargets.push(location.characters[i]);
 						}
-					}
-
-					// Check if any targets have been hit
-					if (hitTargets.length < 1) {
-						return;
 					}
 
 					// Remove dead characters from selection
@@ -173,7 +184,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 					// Check whether target hit wall or target first
 					for (var j = 0; j < collisionPoints.length; j++) {
 						for (var i = 0; i < hitTargets.length; i++) {
-							if (Vec2.rawDistanceTo({x: collisionPoints[j].x1 + 0.5, y: collisionPoints[j].y1 + 0.5}, prevPosition) < Vec2.rawDistanceTo(hitTargets[i].position, prevPosition)) {
+							if (Vec2.rawDistanceTo({x: collisionPoints[j].x1, y: collisionPoints[j].y1}, prevPosition) < Vec2.rawDistanceTo(hitTargets[i].position, prevPosition)) {
 								hitTargets.splice(i, 1);
 								i -= 1;
 							}
@@ -189,14 +200,12 @@ Ability.prototype.UseKnightAbility = function (data) {
 
 					Ability.AttackCharacter(character, hitTargets, ability, weapon);
 				});
+				// Reset channelled so that same ability/weapon combo can be used again
+				character.channelling = false;
 			}
 			else {
-				projectiles.push(Vec2.add(Vec2.setLength({
-					x: target.x,
-					y: target.y
-				}, ability.range + character.rangeModifier), prevPosition));
 				var angleLineCount = -1;
-				var angle = character.aoeSize / 2;
+				var angle = ability.aoeSize / 2;
 				var targetsHitAlready = [];
 
 				var interval = setInterval(function () {
@@ -214,17 +223,16 @@ Ability.prototype.UseKnightAbility = function (data) {
 					for (var j = 0; j < location.characters.length; j++) {
 						var newCharacter = location.characters[j];
 						// Broad Phase
-						if (Vec2.distanceTo(prevPosition, newCharacter.position) > ability.range + character.rangeModifier) {
+						if (character == newCharacter || Vec2.distanceTo(prevPosition, newCharacter.position) > ability.range + character.rangeModifier) {
 							continue;
 						}
 						// Narrow Phase
-						if (Vec2.lineToCircleCollision({x: newCharacter.x, y: newCharacter.y, r: 1}, prevPosition, point)) {
+						if (Vec2.lineToCircleCollision({x: newCharacter.position.x, y: newCharacter.position.y, r: 0.5}, prevPosition, point)) {
 							if (!targetsHitAlready.some(function (targetHitAlready) {
 									return targetHitAlready == newCharacter;
 								}))
 							{
-								hitTargets.push(character);
-								targetsHitAlready.push(character);
+								hitTargets.push(newCharacter);
 							}
 						}
 					}
@@ -249,13 +257,8 @@ Ability.prototype.UseKnightAbility = function (data) {
 						}
 					}
 
-					// Check if any targets have been hit
-					if (hitTargets.length < 1) {
-						return;
-					}
-
 					// Remove dead characters from selection
-					for (i = 0; i < hitTargets.length; i++) {
+					for (var i = 0; i < hitTargets.length; i++) {
 						if (hitTargets[i].dead()) {
 							hitTargets.splice(i, 1);
 							i -= 1;
@@ -263,7 +266,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 					}
 
 					// Remove allied characters from selection
-					for (i = 0; i < hitTargets.length; i++) {
+					for (var i = 0; i < hitTargets.length; i++) {
 						if (hitTargets[i].type == "knight") {
 							hitTargets.splice(i, 1);
 							i -= 1;
@@ -287,10 +290,19 @@ Ability.prototype.UseKnightAbility = function (data) {
 						hitTargets.splice(1, hitTargets.length);
 					}
 
+					for (var i = 0; i < hitTargets.length; i++) {
+						console.log("pushed: " + hitTargets[i].id);
+						targetsHitAlready.push(hitTargets[i]);
+					}
+
+					console.log(angleLineCount);
+					console.log(angle);
 					Ability.AttackCharacter(character, hitTargets, ability, weapon);
-					if (angleLineCount * 10 <= -angle) {
+					if (angleLineCount * 10 >= angle * 2) {
 						// Clear interval when finished
 						clearInterval(interval);
+						// Reset channelled so that same ability/weapon combo can be used again
+						character.channelling = false;
 					}
 				}, 100);
 			}
@@ -326,8 +338,6 @@ Ability.prototype.UseKnightAbility = function (data) {
 		}
 		// Set the new cooldown
 		ability.curCoolDown = new Date().getTime();
-		// Reset channelled so that same ability/weapon combo can be used again
-		character.channelling = false;
 	}, ability.castTime * 1000);
 	Ability.EmitKnightFinish(character.id, ability.id, roomID, io);
 };
@@ -335,16 +345,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 Ability.AttackCharacter = function (character, hitTargets, ability, weapon) {
 	// Apply offensive loop for hit targets
 	for (var i = 0; i < hitTargets.length; i++) {
-		var hitCharacter = 0;
-		characters.forEach(function (character) {
-			if (character.id == hitTargets[i].id && character.type != "knight") {
-				hitCharacter = character;
-			}
-		});
-		// Continue if no characters are found
-		if (hitCharacter == 0) {
-			continue;
-		}
+		var hitCharacter = hitTargets[i];
 		// Damage
 		if (ability.hasOwnProperty("damage")) {
 			// Calculate range for range damage modifier

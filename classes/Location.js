@@ -99,21 +99,16 @@ Location.prototype = {
 		}
 	},
 	CheckCollision: function (prevPosition, destination) {
-		var playerToDestinationRawDistance = Vec2.rawDistanceTo(prevPosition, destination) * 0.75;
+		var playerToDestinationRawDistance = Vec2.rawDistanceTo(prevPosition, destination) + 0.71;
 		var collisionCircle = new SAT.Circle(new SAT.Vector(destination.x, destination.y), 0.7);
 		for (var i = 0; i < this.map.grid.length; i++) {
 			for (var j = 0; j < this.map.grid[0].length; j++) {
 				if (this.map.grid[i][j] == 0) continue;
 				// Broad Phase
-				if (Vec2.rawDistanceTo(prevPosition, {x: i, y: j}) <= playerToDestinationRawDistance) {
+				if (Vec2.rawDistanceTo(prevPosition, {x: i, y: j}) >= playerToDestinationRawDistance) {
 					continue;
 				}
 				// Narrow Phase
-				var wall = {
-					x: i,
-					y: j,
-					r: 0.1
-				};
 				if (SAT.pointInCircle(new SAT.Vector(i, j), collisionCircle)) {
 					return true;
 				}

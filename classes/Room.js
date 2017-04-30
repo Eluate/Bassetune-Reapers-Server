@@ -32,7 +32,7 @@ var Room = function (io, matchID, config) {
 	this.currentFloor = 0;
 
 	// Options
-	this.tick = 12;
+	this.tick = 32;
 
 	/*
 	 Get player Data
@@ -188,7 +188,7 @@ var Room = function (io, matchID, config) {
 								var entity = self.dungeonCompositions[i][n][0];
 								// Lord
 								if (Item.ItemType.isLord(entity)) {
-									var character = self.characterManager.SpawnBoss(player.sID, player.boss_level, entity);
+									var character = self.characterManager.SpawnBoss(player.sID, entity);
 									self.characters.push(character);
 								}
 								// Lesser Lord
@@ -197,7 +197,7 @@ var Room = function (io, matchID, config) {
 								}
 								// Minion
 								else if (Item.ItemType.isMinion(entity)) {
-									var character = self.characterManager.SpawnMinion(player.sID, player.boss_level, entity);
+									var character = self.characterManager.SpawnMinion(player.sID, entity);
 									self.characters.push(character);
 								}
 								// Trap
@@ -388,29 +388,24 @@ Room.prototype.onKnightAbilityStart = function (socket, data) {
 	if (isNaN(slotID) || isNaN(characterID) || isNaN(weaponID)) {
 		return;
 	}
+	// Find knight belonging to player id
+	var playerID = Finder.GetPlayerSIDFromSocketID(this.players, socket.id);
 	for (var i = 0; i < this.characters.length; i++) {
 		var character = this.characters[i];
-		if (character.id != characterID) {
-			return;
-		}
-		for (var n = 0; n < this.players.length; n++) {
-			var player = this.players[n];
-			if (player.socketID == socket.id && Finder.GetPlayerSIDFromSocketID(this.players, socket.id) == character.owner) {
-				if (!character.stunned() && character.knight != null) {
-					data.slotID = slotID;
-					data.location = this.location;
-					data.character = character;
-					data.characters = this.characters;
-					data.game_uuid = this.matchID;
-					data.io = this.io;
-					character.knight.UseAbility(data);
+		if (this.characters[i].owner == playerID && this.characters[i].knight) {
+			if (!character.stunned()) {
+				data.slotID = slotID;
+				data.location = this.location;
+				data.character = character;
+				data.characters = this.characters;
+				data.game_uuid = this.matchID;
+				data.io = this.io;
+				character.knight.UseAbility(data);
 
-					//console.log("Player " + player.sID + " used ability " + data.slotID + ".");
-				}
-				break;
+				//console.log("Player " + player.sID + " used ability " + data.slotID + ".");
 			}
+			break;
 		}
-		break;
 	}
 };
 // Knight using item
