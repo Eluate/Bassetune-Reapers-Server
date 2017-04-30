@@ -4,6 +4,7 @@
 var Event = require('./EventEnum');
 var Item = require('./Item');
 var Vec2 = require("./Vector2");
+var SAT = require("sat");
 
 var Location = function (self) {
 	this.PF = require("pathfinding");
@@ -99,6 +100,7 @@ Location.prototype = {
 	},
 	CheckCollision: function (prevPosition, destination) {
 		var playerToDestinationRawDistance = Vec2.rawDistanceTo(prevPosition, destination) * 0.75;
+		var collisionCircle = new SAT.Circle(new SAT.Vector(destination.x, destination.y), 0.7);
 		for (var i = 0; i < this.map.grid.length; i++) {
 			for (var j = 0; j < this.map.grid[0].length; j++) {
 				if (this.map.grid[i][j] == 0) continue;
@@ -112,7 +114,7 @@ Location.prototype = {
 					y: j,
 					r: 0.1
 				};
-				if (Vec2.circleToCircleProjectionCollision({x: prevPosition.x, y: prevPosition.y, r: 0.5}, wall, destination, prevPosition)) {
+				if (SAT.pointInCircle(new SAT.Vector(i, j), collisionCircle)) {
 					return true;
 				}
 			}

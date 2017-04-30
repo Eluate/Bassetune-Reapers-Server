@@ -73,9 +73,6 @@ var Vector2 = {
 			return false;
 		}
 	},
-	dotProduct: function (v1, v2) {
-		return Math.abs(v1.x * v2.x) + Math.abs(v1.y * v2.y);
-	},
 	pointCollision: function (v1, v2, v3) {
 		return (v3.x >= Math.min(v1.x, v2.x) && v3.x <= Math.max(v1.x, v2.x) &&
 		v3.y >= Math.min(v1.y, v2.y) && v3.y <= Math.max(v1.y, v2.y))
@@ -102,80 +99,6 @@ var Vector2 = {
 		var distance = Math.sqrt(dx * dx + dy * dy);
 
 		return distance < c1.r + c2.r;
-	},
-	circleToCircleProjectionCollision: function (c1, c2, newPosition, origin) {
-		// Early Escape test: if the length of the movevec is less
-		// than distance between the centers of these circles minus
-		// their radii, there's no way they can hit.
-		var dist = Vector2.distanceTo(c2, c1);
-		var sumRadii = (c2.r + c1.r);
-		var movevec = Vector2.sub(newPosition, origin);
-		c1 = Vector2.sub(c1, origin);
-		c2 = Vector2.sub(c2, origin);
-
-		dist -= sumRadii;
-		if (Vector2.length(movevec) < dist) {
-			return false;
-		}
-
-		// Normalize the movevec
-		var N = Vector2.normalise(movevec);
-
-		// Find C, the vector from the center of the moving
-		// circle A to the center of B
-		var C = Vector2.sub(c2, c1);
-
-    // D = N . C = ||C|| * cos(angle between N and C)
-		var D = Vector2.dotProduct(N, C);
-
-    // Another early escape: Make sure that A is moving
-    // towards B! If the dot product between the movevec and
-    // B.center - A.center is less that or equal to 0,
-    // A isn't isn't moving towards B
-		if (D <= 0) {
-			return false;
-		}
-    // Find the length of the vector C
-		var lengthC = Vector2.length(C);
-
-		var F = (lengthC * lengthC) - (D * D);
-
-    // Escape test: if the closest that A will get to B
-    // is more than the sum of their radii, there's no
-    // way they are going collide
-		var sumRadiiSquared = sumRadii * sumRadii;
-		if (F >= sumRadiiSquared) {
-			return false;
-		}
-
-    // We now have F and sumRadii, two sides of a right triangle.
-    // Use these to find the third side, sqrt(T)
-		var T = sumRadiiSquared - F;
-
-    // If there is no such right triangle with sides length of
-    // sumRadii and sqrt(f), T will probably be less than 0.
-    // Better to check now than perform a square root of a
-    // negative number.
-		if (T < 0) {
-			return false;
-		}
-
-    // Therefore the distance the circle has to travel along
-    // movevec is D - sqrt(T)
-		var distance = D - Math.sqrt(T);
-
-    // Get the magnitude of the movement vector
-		var mag = Vector2.length(movevec);
-
-    // Finally, make sure that the distance A has to move
-    // to touch B is not greater than the magnitude of the
-    // movement vector.
-		if (mag < distance) {
-			return false;
-		}
-
-		return true;
-
 	}
 };
 
