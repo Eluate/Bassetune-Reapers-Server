@@ -19,29 +19,30 @@ var Vector2 = {
 		var yd = v2.y - v1.y;
 		return Math.pow((xd * xd) + (yd * yd), 0.5);
 	},
-	rawDistanceTo: function(v1, v2) {
+	rawDistanceTo: function (v1, v2) {
 		var xd = v2.x - v1.x;
 		var yd = v2.y - v1.y;
 		return (xd * xd) + (yd * yd);
 	},
-	distanceToSegment: function(circle, v1, v2) {
+	distanceToSegment: function (circle, v1, v2) {
 		var l2 = Vector2.rawDistanceTo(v1, v2);
 		if (l2 == 0) return Vector2.distanceTo(circle, v1);
 		var t = ((circle.x - v1.x) * (v2.x - v1.x) + (circle.y - v1.y) * (v2.y - v1.y)) / l2;
 		t = Math.max(0, Math.min(1, t));
-		return Vector2.distanceTo(circle, { x: v1.x + t * (v2.x - v1.x),
-			y: v1.y + t * (v2.y - v1.y) });
+		return Vector2.distanceTo(circle, {
+			x: v1.x + t * (v2.x - v1.x),
+			y: v1.y + t * (v2.y - v1.y)
+		});
 	},
 	length: function (v1) {
 		return this.distanceTo({x: 0, y: 0}, v1);
 	},
-	lerp: function(v1, v2, amount)
-  {
+	lerp: function (v1, v2, amount) {
 		return {
 			x: MathHelper.lerp(v1.x, v2.x, amount),
 			y: MathHelper.lerp(v1.y, v2.y, amount)
 		};
-  },
+	},
 	normalise: function (v1) {
 		return this.divideScalar(v1, this.length(v1) || 1);
 	},
@@ -72,9 +73,12 @@ var Vector2 = {
 			return false;
 		}
 	},
+	dotProduct: function (v1, v2) {
+		return Math.abs(v1.x * v2.x) + Math.abs(v1.y * v2.y);
+	},
 	pointCollision: function (v1, v2, v3) {
 		return (v3.x >= Math.min(v1.x, v2.x) && v3.x <= Math.max(v1.x, v2.x) &&
-						v3.y >= Math.min(v1.y, v2.y) && v3.y <= Math.max(v1.y, v2.y))
+		v3.y >= Math.min(v1.y, v2.y) && v3.y <= Math.max(v1.y, v2.y))
 	},
 	lineToCircleCollision: function (circle, v1, v2) {
 		return this.distanceToSegment(circle, v1, v2) <= circle.r;
@@ -91,6 +95,87 @@ var Vector2 = {
 		v1 = this.add(v1, origin);
 
 		return v1;
+	},
+	circleToCircleCollision: function (c1, c2) {
+		var dx = (c1.x + c1.r) - (c1.x + c2.r);
+		var dy = (c1.y + c1.r) - (c2.y + c2.r);
+		var distance = Math.sqrt(dx * dx + dy * dy);
+
+		return distance < c1.r + c2.r;
+	},
+	circleToCircleProjectionCollision: function (c1, c2, newPosition, origin) {
+		// Early Escape test: if the length of the movevec is less
+		// than distance between the centers of these circles minus
+		// their radii, there's no way they can hit.
+		var dist = Vector2.distanceTo(c2, c1);
+		var sumRadii = (c2.r + c1.r);
+		var movevec = Vector2.sub(newPosition, origin);
+		c1 = Vector2.sub(c1, origin);
+		c2 = Vector2.sub(c2, origin);
+
+		dist -= sumRadii;
+		if (Vector2.length(movevec) < dist) {
+			return false;
+		}
+
+		// Normalize the movevec
+		var N = Vector2.normalise(movevec);
+
+		// Find C, the vector from the center of the moving
+		// circle A to the center of B
+		var C = Vector2.sub(c2, c1);
+
+    // D = N . C = ||C|| * cos(angle between N and C)
+		var D = Vector2.dotProduct(N, C);
+
+    // Another early escape: Make sure that A is moving
+    // towards B! If the dot product between the movevec and
+    // B.center - A.center is less that or equal to 0,
+    // A isn't isn't moving towards B
+		if (D <= 0) {
+			return false;
+		}
+    // Find the length of the vector C
+		var lengthC = Vector2.length(C);
+
+		var F = (lengthC * lengthC) - (D * D);
+
+    // Escape test: if the closest that A will get to B
+    // is more than the sum of their radii, there's no
+    // way they are going collide
+		var sumRadiiSquared = sumRadii * sumRadii;
+		if (F >= sumRadiiSquared) {
+			return false;
+		}
+
+    // We now have F and sumRadii, two sides of a right triangle.
+    // Use these to find the third side, sqrt(T)
+		var T = sumRadiiSquared - F;
+
+    // If there is no such right triangle with sides length of
+    // sumRadii and sqrt(f), T will probably be less than 0.
+    // Better to check now than perform a square root of a
+    // negative number.
+		if (T < 0) {
+			return false;
+		}
+
+    // Therefore the distance the circle has to travel along
+    // movevec is D - sqrt(T)
+		var distance = D - Math.sqrt(T);
+
+    // Get the magnitude of the movement vector
+		var mag = Vector2.length(movevec);
+
+    // Finally, make sure that the distance A has to move
+    // to touch B is not greater than the magnitude of the
+    // movement vector.
+		if (mag < distance) {
+			return false;
+		}
+
+		return true;
+
 	}
 };
 

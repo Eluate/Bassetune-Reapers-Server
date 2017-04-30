@@ -74,42 +74,45 @@ Location.prototype = {
 					if (this.CheckCollision(prevPosition, newPosition, speed)) {
 						character.path = null;
 						continue;
+					} else {
+						prevPosition = newPosition;
+						distanceTravelled += speed;
 					}
-					prevPosition = newPosition;
-					distanceTravelled += speed;
 				} else {
 					if (this.CheckCollision(prevPosition, destination, speed)) {
 						character.path = null;
 						continue;
-					}
-					// Change rotation prior to position
-					character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevPosition)), (time - this.lastTime) * 4);
+					} else {
+						// Change rotation prior to position
+						character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevPosition)), (time - this.lastTime) * 4);
 
-					prevPosition = destination;
-					distanceTravelled += speed;
-					// Remove element from path
-					character.path.shift();
+						prevPosition = destination;
+						distanceTravelled += speed;
+						// Remove element from path
+						character.path.shift();
+					}
 				}
 			}
 			// Update location
 			this.characters[key].position = prevPosition;
 		}
 	},
-
-	CheckCollision: function (prevPosition, destination, speed) {
+	CheckCollision: function (prevPosition, destination) {
+		var playerToDestinationRawDistance = Vec2.rawDistanceTo(prevPosition, destination) * 0.75;
 		for (var i = 0; i < this.map.grid.length; i++) {
 			for (var j = 0; j < this.map.grid[0].length; j++) {
 				if (this.map.grid[i][j] == 0) continue;
 				// Broad Phase
-				if (Vec2.distanceTo(prevPosition, {x: i, y: j}) > speed * 8) {
+				if (Vec2.rawDistanceTo(prevPosition, {x: i, y: j}) <= playerToDestinationRawDistance) {
 					continue;
 				}
 				// Narrow Phase
 				var wall = {
-					x1: i - 0.5, x2: i + 0.5,
-					y1: j - 0.5, y2: j + 0.5
+					x: i,
+					y: j,
+					r: 0.1
 				};
-				if (Vec2.wallCollision(prevPosition, destination, wall)) {
+				if (Vec2.circleToCircleProjectionCollision({x: prevPosition.x, y: prevPosition.y, r: 0.5}, wall, destination, prevPosition)) {
 					return true;
 				}
 			}
