@@ -81,11 +81,16 @@ var Effect = function (data) {
 	};
 
 	this.Burn = function (character) {
-		// Purge existing bleeds in order to refresh duration
+		var damageModifier = 1;
+		// Purge existing burns in order to refresh duration
 		for (var n = 0; n < character.effects.length; n++) {
 			if (character.effects[n].Effect == Effect.EffectTypes.Burn && character.effects[n].Active) {
 				character.effects[n].Active = false;
 				clearTimeout(character.effects[n].Timeout);
+			}
+			// Check if Wrath of Fire Miasma is active
+			if (character.effects[n].Effect == Effect.EffectTypes.Wrath_Of_Fire_Miasma && character.effects[n].Active) {
+				damageModifier *= 2;
 			}
 		}
 
@@ -93,7 +98,7 @@ var Effect = function (data) {
 			var effect = {Effect: Effect.EffectTypes.Burn, Active: true, Timeout: null};
 			character.effects.push(effect);
 			var interval = setTimeout(function (effect) {
-				character.hp -= 20;
+				character.hp -= 20 * damageModifier;
 				effect.Active = false;
 			}, 1000 * i, effect);
 			effect.Timeout = interval;
@@ -101,6 +106,23 @@ var Effect = function (data) {
 
 		var data = {e: Effect.EffectTypes.Burn, c: character.id};
 		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
+	};
+
+	this.WrathOfFireMiasma = function (character) {
+		// Purge existing wraths in order to refresh duration
+		for (var n = 0; n < character.effects.length; n++) {
+			if (character.effects[n].Effect == Effect.EffectTypes.Burn && character.effects[n].Active) {
+				character.effects[n].Active = false;
+				clearTimeout(character.effects[n].Timeout);
+			}
+		}
+
+		var effect = {Effect: Effect.EffectTypes.Wrath_Of_Fire_Miasma, Active: true, Timeout: null};
+		character.effects.push(effect);
+		var interval = setTimeout(function (effect) {
+			effect.Active = false;
+		}, 5000, effect);
+		effect.Timeout = interval;
 	};
 
 	this.Stun = function (character, seconds) {
@@ -117,15 +139,14 @@ var Effect = function (data) {
 };
 
 Effect.EffectTypes = {
-	IncreasedRange: "I_Range",
-	DecreasedRange: "D_Range",
 	Regeneration: "Regen",
 	Heal: "Heal",
 	Burn: "Burn",
 	Bleed: "Bleed",
 	Bleed_Instance: "I_Bleed",
 	Stun: "Stun",
-	Purge: "Purge"
+	Purge: "Purge",
+	Wrath_Of_Fire_Miasma: "WrathOfFireMiasma"
 };
 
 module.exports = Effect;

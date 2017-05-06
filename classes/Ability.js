@@ -46,8 +46,6 @@ Ability.prototype.UseKnightAbility = function (data) {
 		target = data.target,
 		io = data.io;
 
-	console.log(target);
-
 	// Select mainhand or offhand weapon
 	var weapon = null;
 	if (data.weapon == 1) {
@@ -62,8 +60,6 @@ Ability.prototype.UseKnightAbility = function (data) {
 	// Retrieve weapon data
 	weapon = Ability.GetWeaponInfo(weapon[0]);
 	if (!weapon) return;
-	console.log(weapon);
-	console.log(this);
 
 	// Skip if already channelling same ability and weapon
 	if (character.channelling == ability) return;
@@ -76,12 +72,10 @@ Ability.prototype.UseKnightAbility = function (data) {
 		})) && ability.reqType != weapon.type && ability.reqType != null) {
 		return;
 	}
-	console.log("Meets required type");
 	// Check is cooldown has finished
 	if (new Date().getTime() - ability.curCoolDown < ability.coolDown * 1000) {
 		return;
 	}
-	console.log("Not on cooldown.");
 	// Emit the use of the ability
 	Ability.EmitKnightUse(character.id, ability.id, target, roomID, io);
 	character.channelling = ability;
@@ -132,7 +126,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 					var p2 = {x: projectile.x - (direction.x * 0.5), y: projectile.y - (direction.y * 0.5)};
 					var t1 = {x: prevPosition.x + (direction.x * 0.5), y: prevPosition.y + (direction.y * 0.5)};
 					var t2 = {x: prevPosition.x - (direction.x * 0.5), y: prevPosition.y - (direction.y * 0.5)};
-					console.log([p1, p2, t1, t2]);
+
 					var polygon = new SAT.Polygon(new SAT.Vector(), [new SAT.Vector(p1.x, p1.y), new SAT.Vector(p2.x, p2.y),
 						new SAT.Vector(t2.x, t2.y), new SAT.Vector(t1.x, t1.y)]);
 
@@ -296,8 +290,6 @@ Ability.prototype.UseKnightAbility = function (data) {
 						targetsHitAlready.push(hitTargets[i]);
 					}
 
-					console.log(angleLineCount);
-					console.log(angle);
 					Ability.AttackCharacter(character, hitTargets, ability, weapon, Effect);
 					if (angleLineCount * 10 >= angle * 2) {
 						// Clear interval when finished
@@ -344,23 +336,13 @@ Ability.AttackCharacter = function (character, hitTargets, ability, weapon, Effe
 		var hitCharacter = hitTargets[i];
 		// Damage
 		if (ability.hasOwnProperty("damage")) {
-			// Calculate range for range damage modifier
-			var totalRange = Vec2.distanceTo(character.position, hitCharacter.position);
 			var totalDamage = ability.damage + weapon.damage * ability.damageModifier;
-			console.log(totalDamage);
-			console.log(ability.damage);
-			console.log(weapon.damage);
-			console.log(ability.damageModifier);
-			console.log(ability.rangeDamageModifier);
-			console.log(totalRange);
 			// Check if ability should ignore armor
 			if (!ability.ignoreArmor) {
 				totalDamage -= hitCharacter.blockArmor;
 			}
 			// Damage taken by must be at least 1 and most 18000
-			console.log(totalDamage);
-			//hitCharacter.hp -= Math.max(1, Math.min(totalDamage, 18000));
-			console.log(hitCharacter);
+			hitCharacter.hp -= Math.max(1, Math.min(totalDamage, 18000));
 		}
 		// Bleed
 		if (ability.hasOwnProperty("bleed") && ability.bleed > 0) {
