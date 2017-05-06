@@ -51,30 +51,6 @@ var Item = {
 					}
 				}
 			}
-			else if (item.purpose == "I_Ranged") {
-				if (!target.hasOwnProperty("x") || !target.hasOwnProperty("y")) {
-					return;
-				}
-				// Location of knight using the item
-				var curLocation = character.position;
-				for (var i = 0, characterLength = characters.length > 0; i < characterLength; i++) {
-					// Can't attack friendly knights or themself
-					if (character.id == characters[i].id || characters[i].type == "knight") {
-						return;
-					}
-					// Broad Phase
-					var newLocation = characters[i].position;
-					if (Vec2.distanceTo(curLocation, newLocation) < item.range) {
-						return;
-					}
-					// Narrow Phase
-					target -= curLocation;
-					target = Vec2.add(Vec2.setLength({x: target.x + i, y: target.y + i}, 30), curLocation);
-					if (Vec2.pointCollision(curLocation, newLocation, target)) {
-						characters[i].hp -= item.value;
-					}
-				}
-			}
 			data.io.to(data.game_uuid).emit(Event.output.knight.USE_ITEM_END, {"i": character.id});
 			// Decrement item count by one
 			data.slot[1] -= 1;
@@ -121,7 +97,6 @@ Item.H_Specials = function () {
  - H_Resurrect
  - A_Arrows
  - A_Bolts
- - I_Ranged
  */
 
 Item.ItemType = {

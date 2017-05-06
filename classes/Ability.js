@@ -4,6 +4,7 @@
 var Vec2 = require("./Vector2");
 var Event = require('./EventEnum');
 var SAT = require("sat");
+var Effects = require('./Effect');
 
 var Melee = ["axe, sword, dagger, knife, twohandedsword"]; // Add more later
 var Ranged = ["bow"]; // Add more later
@@ -17,7 +18,6 @@ var Ability = function (abilityInfo) {
 	this.coolDown = abilityInfo.cool_down;
 	this.castTime = abilityInfo.cast_time;
 	this.type = abilityInfo.type;
-	this.duration = abilityInfo.duration;
 	this.numProjectiles = abilityInfo.projectiles;
 	this.skewer = abilityInfo.skewer;
 	this.damage = abilityInfo.damage;
@@ -25,13 +25,12 @@ var Ability = function (abilityInfo) {
 	this.damageModifier = abilityInfo.damage_modifier;
 	this.projSpeed = abilityInfo.projectile_speed;
 	this.piercing = abilityInfo.piercing;
-	this.rangeDamageModifier = abilityInfo.range_damage_modifier;
 	this.moveDistance = abilityInfo.move_distance;
 	this.numAttacks = abilityInfo.multiple_attacks;
 	this.ignoreArmor = abilityInfo.ignore_armor;
 	this.bleed = abilityInfo.bleed;
+	this.burn = abilityInfo.burn;
 	this.stun = abilityInfo.stun;
-	this.rangeModifier = abilityInfo.range_modifier;
 
 	// The current cooldown
 	this.curCoolDown = 0;
@@ -91,7 +90,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 		// Return if stunned or overridden
 		if (character.stunned()) return;
 		if (character.channelling != ability) return;
-
+		var Effect = new Effects(data);
 		// For offence, target is a position
 		if (ability.type == Ability.AbilityType.OFFENSIVE) {
 			// The location of the character who cast
@@ -144,7 +143,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 							var wall = {
 								x: i,
 								y: j,
-								r: 0.7
+								r: 0.5
 							};
 
 							var circle = new SAT.Circle(new SAT.Vector(wall.x, wall.y), wall.r);
@@ -184,7 +183,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 					// Check whether target hit wall or target first
 					for (var j = 0; j < collisionPoints.length; j++) {
 						for (var i = 0; i < hitTargets.length; i++) {
-							if (Vec2.rawDistanceTo({x: collisionPoints[j].x1, y: collisionPoints[j].y1}, prevPosition) < Vec2.rawDistanceTo(hitTargets[i].position, prevPosition)) {
+							if (Vec2.rawDistanceTo({x: collisionPoints[j].x, y: collisionPoints[j].y}, prevPosition) < Vec2.rawDistanceTo(hitTargets[i].position, prevPosition)) {
 								hitTargets.splice(i, 1);
 								i -= 1;
 							}
@@ -193,12 +192,21 @@ Ability.prototype.UseKnightAbility = function (data) {
 
 					// Only use one hitTarget if its not piercing
 					if (!ability.piercing && hitTargets.length > 0) {
-						// TODO: Select the one closest to the character
+						var closestCharacter = null;
+						var closestDistance = Infinity;
+						// Linear search for closest enemy
+						for (i = 0; i < hitTargets.length; i++) {
+							var distance = Vec2.rawDistanceTo(prevPosition, hitTargets[i].position);
+							if (distance < closestDistance) {
+								closestDistance = distance;
+								closestCharacter = hitTargets[i];
+							}
+						}
 						// Only one target
-						hitTargets.splice(1, hitTargets.length);
+						hitTargets = [closestCharacter];
 					}
 
-					Ability.AttackCharacter(character, hitTargets, ability, weapon);
+					Ability.AttackCharacter(character, hitTargets, ability, weapon, Effect);
 				});
 				// Reset channelled so that same ability/weapon combo can be used again
 				character.channelling = false;
@@ -283,21 +291,14 @@ Ability.prototype.UseKnightAbility = function (data) {
 						}
 					}
 
-					// Only use one hitTarget if its not piercing
-					if (!ability.piercing && hitTargets.length > 0) {
-						// TODO: Select the one closest to the character
-						// Only one target
-						hitTargets.splice(1, hitTargets.length);
-					}
-
+					// Push any characters which have been attacked to the already attacked array
 					for (var i = 0; i < hitTargets.length; i++) {
-						console.log("pushed: " + hitTargets[i].id);
 						targetsHitAlready.push(hitTargets[i]);
 					}
 
 					console.log(angleLineCount);
 					console.log(angle);
-					Ability.AttackCharacter(character, hitTargets, ability, weapon);
+					Ability.AttackCharacter(character, hitTargets, ability, weapon, Effect);
 					if (angleLineCount * 10 >= angle * 2) {
 						// Clear interval when finished
 						clearInterval(interval);
@@ -309,6 +310,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 		}
 		// For defence, target is the position and/or another knight
 		else if (ability.type == Ability.AbilityType.DEFENSIVE) {
+			/*
 			// Increase armor
 			if (ability.hasOwnProperty("armor")) {
 				// Add to blocking power
@@ -328,13 +330,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 				// Update new location
 				character.position = newLocation;
 			}
-			// Increase Range
-			if (ability.hasOwnProperty("increaseRange")) {
-				target.rangeModifier -= ability.rangeModifier;
-				setTimeout(function () {
-					target.rangeModifier += ability.rangeModifier;
-				}, ability.duration * 1000);
-			}
+			*/
 		}
 		// Set the new cooldown
 		ability.curCoolDown = new Date().getTime();
@@ -342,7 +338,7 @@ Ability.prototype.UseKnightAbility = function (data) {
 	Ability.EmitKnightFinish(character.id, ability.id, roomID, io);
 };
 
-Ability.AttackCharacter = function (character, hitTargets, ability, weapon) {
+Ability.AttackCharacter = function (character, hitTargets, ability, weapon, Effect) {
 	// Apply offensive loop for hit targets
 	for (var i = 0; i < hitTargets.length; i++) {
 		var hitCharacter = hitTargets[i];
@@ -350,7 +346,7 @@ Ability.AttackCharacter = function (character, hitTargets, ability, weapon) {
 		if (ability.hasOwnProperty("damage")) {
 			// Calculate range for range damage modifier
 			var totalRange = Vec2.distanceTo(character.position, hitCharacter.position);
-			var totalDamage = ability.damage + weapon.damage * ability.damageModifier + (ability.rangeDamageModifier * totalRange);
+			var totalDamage = ability.damage + weapon.damage * ability.damageModifier;
 			console.log(totalDamage);
 			console.log(ability.damage);
 			console.log(weapon.damage);
@@ -363,33 +359,19 @@ Ability.AttackCharacter = function (character, hitTargets, ability, weapon) {
 			}
 			// Damage taken by must be at least 1 and most 18000
 			console.log(totalDamage);
-			hitCharacter.hp -= Math.max(1, Math.min(totalDamage, 18000));
+			//hitCharacter.hp -= Math.max(1, Math.min(totalDamage, 18000));
 			console.log(hitCharacter);
 		}
 		// Bleed
-		if (ability.hasOwnProperty("bleed") && ability.bleed > 1) {
-			var curDuration = ability.duration;
-			// Bleed every second for bleed amount
-			while (curDuration > 0) {
-				setTimeout(function () {
-					hitCharacter.hp -= ability.bleed;
-				}, 1000);
-				curDuration -= 1;
-			}
+		if (ability.hasOwnProperty("bleed") && ability.bleed > 0) {
+			Effect.Bleed(hitCharacter);
 		}
 		// Stun
 		if (ability.hasOwnProperty("stun") && ability.stun > 0) {
-			hitCharacter.stunCount = hitCharacter.stunCount + 1;
-			setTimeout(function () {
-				hitCharacter.stunCount -= 1;
-			}, ability.stun * 1000);
+			Effect.Stun(hitCharacter, ability.stun);
 		}
-		// Decrease Range
-		if (ability.hasOwnProperty("decreaseRange")) {
-			hitCharacter.rangeModifier -= ability.rangeModifier;
-			setTimeout(function () {
-				hitCharacter.rangeModifier += ability.rangeModifier;
-			}, ability.duration * 1000);
+		if (ability.hasOwnProperty("burn") && ability.burn > 0) {
+			Effect.Burn(hitCharacter);
 		}
 	}
 };

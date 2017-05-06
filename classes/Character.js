@@ -23,7 +23,6 @@ var Character = function (id, owner, type, entity) {
 
 	this.blockArmor = 0; // any extra armor given by a block
 	this.blockArmorPercent = 0; // multiplied by damage to give armor as percentage of damage
-	this.stunCount = 0; // number of stuns on character
 	this.position = {x: 0, y: 0};
 	this.rotation = {x: 0, y: 0};
 	this.prevPosition = null;

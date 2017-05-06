@@ -44,23 +44,36 @@ var Effect = function (data) {
 		// Purge existing bleeds in order to refresh duration and stack damage
 		var stack = 1;
 		for (var n = 0; n < character.effects.length; n++) {
-			if (character.effects[n].Effect == Effect.EffectTypes.Bleed) {
+			if (character.effects[n].Effect == Effect.EffectTypes.Bleed && character.effects[n].Active) {
 				stack = stack + 1;
-				clearTimeout(character.effects[n]);
-				for (var i = 1; i <= 3; i++) {
-					var interval = setTimeout(function () {
-						character.hp -= 1 * character.level;
-					}, 1000 * i);
-					character.effects.push({Effect: Effect.EffectTypes.Bleed, Timeout: interval});
-				}
+				character.effects[n].Active = false;
+				clearTimeout(character.effects[n].Timeout);
+			}
+			else if (character.effects[n].Effect == Effect.EffectTypes.Bleed_Instance && character.effects[n].Active) {
+				character.effects[n].Active = false;
+				clearTimeout(character.effects[n].Timeout);
 			}
 		}
 
-		for (var i = 1; i <= 3; i++) {
-			var interval = setTimeout(function () {
-				character.hp -= 1 * character.level;
-			}, 1000 * i);
-			character.effects.push({Effect: Effect.EffectTypes.Bleed, Timeout: interval});
+		for (var n = 1; n <= stack; n++) {
+			for (var i = 1; i <= 3; i++) {
+				var effect = {Effect: Effect.EffectTypes.Bleed_Instance, Active: true, Timeout: null};
+				character.effects.push(effect);
+				var interval = setTimeout(function (effect) {
+					character.hp -= 1;
+					effect.Active = false;
+				}, 1000 * i, effect);
+				effect.Timeout = interval;
+
+				if (i == 3) {
+					var effect = {Effect: Effect.EffectTypes.Bleed, Active: true, Timeout: null};
+					character.effects.push(effect);
+					var interval = setTimeout(function (effect) {
+						effect.Active = false;
+					}, 3000, effect);
+					effect.Timeout = interval;
+				}
+			}
 		}
 
 		var data = {e: Effect.EffectTypes.Bleed, d: 3000, s: stack, c: character.id};
@@ -70,27 +83,31 @@ var Effect = function (data) {
 	this.Burn = function (character) {
 		// Purge existing bleeds in order to refresh duration
 		for (var n = 0; n < character.effects.length; n++) {
-			if (character.effects[n].Effect == Effect.EffectTypes.Burn) {
-				clearTimeout(character.effects[n]);
+			if (character.effects[n].Effect == Effect.EffectTypes.Burn && character.effects[n].Active) {
+				character.effects[n].Active = false;
+				clearTimeout(character.effects[n].Timeout);
 			}
 		}
 
 		for (var i = 1; i <= 2; i++) {
-			var interval = setTimeout(function () {
-				character.hp -= 5 * character.level;
-			}, 1000 * i);
-			character.effects.push({Effect: Effect.EffectTypes.Burn, Timeout: interval});
+			var effect = {Effect: Effect.EffectTypes.Burn, Active: true, Timeout: null};
+			character.effects.push(effect);
+			var interval = setTimeout(function (effect) {
+				character.hp -= 20;
+				effect.Active = false;
+			}, 1000 * i, effect);
+			effect.Timeout = interval;
 		}
 
-		var data = {e: Effect.EffectTypes.Burn, d: 2000, c: character.id};
+		var data = {e: Effect.EffectTypes.Burn, c: character.id};
 		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
 	};
 
 	this.Stun = function (character, seconds) {
-		var effect = {Effect: Effect.EffectTypes.Stun, Active: true};
-		var interval = setTimeout(function () {
+		var effect = {Effect: Effect.EffectTypes.Stun, Active: true, Timeout: null};
+		var interval = setTimeout(function (effect) {
 			effect.Active = false;
-		}, 1000 * seconds);
+		}, 1000 * seconds, effect);
 		effect.Timeout = interval;
 		character.effects.push(effect);
 
@@ -106,6 +123,7 @@ Effect.EffectTypes = {
 	Heal: "Heal",
 	Burn: "Burn",
 	Bleed: "Bleed",
+	Bleed_Instance: "I_Bleed",
 	Stun: "Stun",
 	Purge: "Purge"
 };
