@@ -34,7 +34,8 @@ var Character = function (id, owner, type, entity) {
 Character.prototype = {
 	stunned: function () {
 		this.dead() || this.effects.some(function (effect) {
-			if (effect.Effect == Effects.EffectTypes.Stun) {
+			if (effect.Effect == Effects.EffectTypes.Stun || effect.Effect == Effects.EffectTypes.Freeze ||
+				effect.Effect == Effects.EffectTypes.Stagger || effect.Effect == Effects.EffectTypes.Half_Stagger) {
 				if (effect.Active) {
 					return true;
 				}

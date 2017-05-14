@@ -31,6 +31,10 @@ var Ability = function (abilityInfo) {
 	this.bleed = abilityInfo.bleed;
 	this.burn = abilityInfo.burn;
 	this.stun = abilityInfo.stun;
+	this.stagger = abilityInfo.stagger;
+	this.halfStagger = abilityInfo.half_stagger;
+	this.acid = abilityInfo.acid;
+	this.freeze = abilityInfo.freeze;
 
 	// The current cooldown
 	this.curCoolDown = 0;
@@ -336,7 +340,7 @@ Ability.AttackCharacter = function (character, hitTargets, ability, weapon, Effe
 		var hitCharacter = hitTargets[i];
 		// Damage
 		if (ability.hasOwnProperty("damage")) {
-			var totalDamage = ability.damage + weapon.damage * ability.damageModifier;
+			var totalDamage = ability.damage + (weapon.damage * ability.damageModifier);
 			// Check if ability should ignore armor
 			if (!ability.ignoreArmor) {
 				totalDamage -= hitCharacter.blockArmor;
@@ -350,10 +354,27 @@ Ability.AttackCharacter = function (character, hitTargets, ability, weapon, Effe
 		}
 		// Stun
 		if (ability.hasOwnProperty("stun") && ability.stun > 0) {
-			Effect.Stun(hitCharacter, ability.stun);
+			Effect.Stun(hitCharacter);
 		}
+		// Stagger
+		if (ability.hasOwnProperty("stagger") && ability.stagger > 0) {
+			Effect.Stagger(hitCharacter);
+		}
+		// Half-Stagger
+		if (ability.hasOwnProperty("halfStagger") && ability.halfStagger > 0) {
+			Effect.Half_Stagger(hitCharacter);
+		}
+		// Burn
 		if (ability.hasOwnProperty("burn") && ability.burn > 0) {
 			Effect.Burn(hitCharacter);
+		}
+		// Acid
+		if (ability.hasOwnProperty("acid") && ability.acid > 0) {
+			Effect.Acid(hitCharacter);
+		}
+		// Freeze
+		if (ability.hasOwnProperty("freeze") && ability.freeze > 0) {
+			Effect.Freeze(hitCharacter);
 		}
 	}
 };

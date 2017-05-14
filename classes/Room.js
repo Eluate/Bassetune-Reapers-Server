@@ -159,7 +159,7 @@ var Room = function (io, matchID, config) {
 						self.characters.push(character);
 						self.knights.push(character);
 
-						character.hp = 30;
+						character.hp = 4000;
 
 						// Increment finished count
 						finishedCount = finishedCount + 1;
