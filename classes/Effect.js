@@ -80,6 +80,46 @@ var Effect = function (data) {
 		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
 	};
 
+	this.Poison = function (character) {
+		// Purge existing poisons in order to refresh duration and stack damage
+		var stack = 1;
+		for (var n = 0; n < character.effects.length; n++) {
+			if (character.effects[n].Effect == Effect.EffectTypes.Poison && character.effects[n].Active) {
+				stack = stack + 1;
+				character.effects[n].Active = false;
+				clearTimeout(character.effects[n].Timeout);
+			}
+			else if (character.effects[n].Effect == Effect.EffectTypes.Poison_Instance && character.effects[n].Active) {
+				character.effects[n].Active = false;
+				clearTimeout(character.effects[n].Timeout);
+			}
+		}
+
+		for (var n = 1; n <= stack; n++) {
+			for (var i = 1; i <= 5; i++) {
+				var effect = {Effect: Effect.EffectTypes.Poison_Instance, Active: true, Timeout: null};
+				character.effects.push(effect);
+				var interval = setTimeout(function (effect) {
+					character.hp -= 150;
+					effect.Active = false;
+				}, 1000 * i, effect);
+				effect.Timeout = interval;
+
+				if (i == 5) {
+					var effect = {Effect: Effect.EffectTypes.Poison, Active: true, Timeout: null};
+					character.effects.push(effect);
+					var interval = setTimeout(function (effect) {
+						effect.Active = false;
+					}, 5000, effect);
+					effect.Timeout = interval;
+				}
+			}
+		}
+
+		var data = {e: Effect.EffectTypes.Poison, s: stack, c: character.id};
+		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
+	};
+
 	this.Burn = function (character) {
 		var damageModifier = 1;
 		// Purge existing burns in order to refresh duration
@@ -167,7 +207,7 @@ var Effect = function (data) {
 		var effect = {Effect: Effect.EffectTypes.Freeze, Active: true, Timeout: null};
 		var interval = setTimeout(function (effect) {
 			effect.Active = false;
-		}, 1000, effect);
+		}, 3000, effect);
 		effect.Timeout = interval;
 		character.effects.push(effect);
 
@@ -252,7 +292,9 @@ Effect.EffectTypes = {
 	Half_Stagger: "H_Stagger",
 	Purge: "Purge",
 	Wrath_Of_Fire_Miasma: "WrathOfFireMiasma",
-	Movement_Negator_Immunity: "MNI"
+	Movement_Negator_Immunity: "MNI",
+	Poison: "Poison",
+	Poison_Instance: "I_Poison"
 };
 
 module.exports = Effect;

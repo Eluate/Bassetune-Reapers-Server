@@ -35,6 +35,7 @@ var Ability = function (abilityInfo) {
 	this.halfStagger = abilityInfo.half_stagger;
 	this.acid = abilityInfo.acid;
 	this.freeze = abilityInfo.freeze;
+	this.poison = abilityInfo.poison;
 
 	// The current cooldown
 	this.curCoolDown = 0;
@@ -375,6 +376,10 @@ Ability.AttackCharacter = function (character, hitTargets, ability, weapon, Effe
 		// Freeze
 		if (ability.hasOwnProperty("freeze") && ability.freeze > 0) {
 			Effect.Freeze(hitCharacter);
+		}
+		// Poison
+		if (ability.hasOwnProperty("poison") && ability.poison > 0) {
+			Effect.Poison(hitCharacter);
 		}
 	}
 };
