@@ -1,5 +1,5 @@
 var DungPickerFactorySelector = require("./picker/selector/DungPickerFactorySelector.js");
-var BaseSpawningAlgorithm = require("./BaseSpawningAlgorithm.js");
+var BaseSpawningAlgorithm = require("./spawner/BaseSpawningAlgorithm.js");
 
 function DungSpawningGenerator() {
     this.algo = new BaseSpawningAlgorithm(new DungPickerFactorySelector());

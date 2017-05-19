@@ -23,9 +23,6 @@ DungeonGeneration.Generator.Plotters = DungeonGeneration.Generator.Plotters || {
 DungeonGeneration.Logging = DungeonGeneration.Logging || {};
 var $d = DuoCode.Runtime;
 $d.$assemblies["dungen"] = $asm;
-var CaveGenUtil = $g.CaveGenUtil = $d.declare("CaveGenUtil", 0, $asm);
-CaveGenUtil.PrepareForTestShapeVisitor = $d.declare("PrepareForTestShapeVisitor", 0, CaveGenUtil);
-var DunGenUtil = $g.DunGenUtil = $d.declare("DunGenUtil", 0, $asm);
 CaveGeneration.Generator.CaveGenerator = $d.declare("CaveGeneration.Generator.CaveGenerator", 0, $asm);
 var APolyShape = $g.APolyShape = $d.declare("APolyShape", 0, $asm);
 var AShapeVisitor = $g.AShapeVisitor = $d.declare("AShapeVisitor", 0, $asm);
@@ -52,11 +49,15 @@ DungeonGeneration.Generator.Domain.Grid = $d.declare("DungeonGeneration.Generato
 var Room = $g.Room = $d.declare("Room", 0, $asm);
 DungeonGeneration.Generator.DungeonGenerator = $d.declare("DungeonGeneration.Generator.DungeonGenerator", 
     0, $asm);
+DungeonGeneration.Generator.ForcedDungeonGenerator = $d.declare("DungeonGeneration.Generator.ForcedDungeonGenerator", 
+    0, $asm);
 DungeonGeneration.Generator.Pickers.CardinalPointPicker = $d.declare("DungeonGeneration.Generator.Pickers.CardinalPointPicker", 
     0, $asm);
 DungeonGeneration.Generator.Pickers.CellInRangePicker = $d.declare("DungeonGeneration.Generator.Pickers.CellInRangePicker", 
     0, $asm);
 DungeonGeneration.Generator.Pickers.CustomSeededPickerStrategy = $d.declare("DungeonGeneration.Generator.Pickers.CustomSeededPickerStrategy", 
+    0, $asm);
+DungeonGeneration.Generator.Pickers.FloatInRangePicker = $d.declare("DungeonGeneration.Generator.Pickers.FloatInRangePicker", 
     0, $asm);
 DungeonGeneration.Generator.Pickers.IntInRangePicker = $d.declare("DungeonGeneration.Generator.Pickers.IntInRangePicker", 
     0, $asm);
@@ -68,316 +69,13 @@ DungeonGeneration.Generator.Plotters.ZeroOneTilesPlotter = $d.declare("DungeonGe
     0, $asm);
 DungeonGeneration.Logging.ConsoleLogger = $d.declare("DungeonGeneration.Logging.ConsoleLogger", 0, $asm);
 DungeonGeneration.Logging.NullLogger = $d.declare("DungeonGeneration.Logging.NullLogger", 0, $asm);
-var IShapeVisitor = $g.IShapeVisitor = $d.type("IShapeVisitor", 66, $asm, function($t, $p) {
-});
-$d.define(AShapeVisitor, null, function($t, $p) {
-    $t.$intfs = [IShapeVisitor];
-    $t.ctor = function AShapeVisitor() {
-        $t.$baseType.ctor.call(this);
-    };
-    $p.visit$4 = function AShapeVisitor_visit(aShape) {
-        this._visit$4($d.as(aShape, RectShape));
-        this._visit($d.as(aShape, APolyShape));
-        this._visit$3($d.as(aShape, IXShape));
-    };
-    $p.visit = function AShapeVisitor_visit(aShape) {
-        if ($d.is(aShape, RectShape))
-            this.visit$4($d.as(aShape, RectShape));
-        else if ($d.is(aShape, ElliShape))
-            this.visit$1($d.as(aShape, ElliShape));
-        else
-            throw new System.NotImplementedException.ctor$1("Missing case for: " + $d.toString($d.getTypeFromInst(aShape)));
-    };
-    $p.visit$3 = function AShapeVisitor_visit(aShape) {
-        if ($d.is(aShape, APolyShape))
-            this.visit($d.as(aShape, APolyShape));
-        else if ($d.is(aShape, FreeShape))
-            this.visit$2($d.as(aShape, FreeShape));
-        else
-            throw new System.NotImplementedException.ctor$1("Missing case for: " + $d.toString($d.getTypeFromInst(aShape)));
-    };
-    $p.visit$1 = function AShapeVisitor_visit(aShape) {
-        this._visit$1($d.as(aShape, ElliShape));
-        this._visit($d.as(aShape, APolyShape));
-        this._visit$3($d.as(aShape, IXShape));
-    };
-    $p.visit$2 = function AShapeVisitor_visit(aShape) {
-        this._visit$2($d.as(aShape, FreeShape));
-        this._visit$3($d.as(aShape, IXShape));
-    };
-    $p._visit$3 = function AShapeVisitor__visit(aShape) {
-    };
-    $p._visit = function AShapeVisitor__visit(aShape) {
-    };
-    $p._visit$4 = function AShapeVisitor__visit(aShape) {
-    };
-    $p._visit$1 = function AShapeVisitor__visit(aShape) {
-    };
-    $p._visit$2 = function AShapeVisitor__visit(aShape) {
-    };
-    $p.IShapeVisitor$visit$3 = $p.visit$3;
-    $p.IShapeVisitor$visit = $p.visit;
-    $p.IShapeVisitor$visit$4 = $p.visit$4;
-    $p.IShapeVisitor$visit$1 = $p.visit$1;
-    $p.IShapeVisitor$visit$2 = $p.visit$2;
-});
-$d.define(CaveGenUtil, null, function($t, $p) {
-    $t.ctor = function CaveGenUtil() {
-        $t.$baseType.ctor.call(this);
-    };
-    $t.createServerGen = function CaveGenUtil_createServerGen() {
-        var gen = new CaveGeneration.Generator.CaveGenerator.ctor();
-        gen.setPlotter(new ZeroOneCavePlotter.ctor());
-        return gen;
-    };
-    $t.createServerGen2 = function CaveGenUtil_createServerGen2() {
-        var gen = new CaveGeneration.Generator.CaveGenerator.ctor();
-        gen.setPlotter(new ZeroOneTwoFillerCavePlotter.ctor());
-        return gen;
-    };
-    $t.createServerGenWithLog = function CaveGenUtil_createServerGenWithLog() {
-        var gen = $t.createServerGen();
-        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
-        return gen;
-    };
-    $t.createClientGen = function CaveGenUtil_createClientGen() {
-        var gen = new CaveGeneration.Generator.CaveGenerator.ctor();
-        gen.setPlotter(new ZeroOneFillerCavePlotter.ctor());
-        return gen;
-    };
-    $t.createClientGenWithLog = function CaveGenUtil_createClientGenWithLog() {
-        var gen = $t.createClientGen();
-        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
-        return gen;
-    };
-    $t.printMatrix = function CaveGenUtil_printMatrix(matrix) {
-        var rows = matrix.GetLength(0);
-        var cols = matrix.GetLength(1);
-
-        var result = $d.toString(rows) + " x " + $d.toString(cols) + "\n";
-        for (var i = 0; i < rows; i++) {
-            for (var j = 0; j < cols; j++) {
-                result += $d.toString(matrix[i * matrix.$ranks[1] + j]);
-                if (j != cols - 1)
-                    result += " ";
-            }
-            if (i != rows - 1)
-                result += "\n";
-        }
-        System.Console.WriteLine$10(result);
-    };
-    $t.boardAsMatrix = function CaveGenUtil_boardAsMatrix(board) {
-        var plotter = new ZeroOneFillerCavePlotter.ctor();
-        plotter.applyOn(board);
-        return plotter.result();
-    };
-    $t.boardAsMatrix2 = function CaveGenUtil_boardAsMatrix2(board) {
-        var plotter = new ZeroOneTwoFillerCavePlotter.ctor();
-        plotter.applyOn(board);
-        return plotter.result();
-    };
-    $t.printBoard = function CaveGenUtil_printBoard(board) {
-        var plotter = new ZeroOneFillerCavePlotter.ctor();
-        plotter.applyOn(board);
-        $t.printMatrix(plotter.result());
-    };
-    $t.printForTest = function CaveGenUtil_printForTest(board) {
-        var plotter = new ZeroOneTwoFillerCavePlotter.ctor();
-        plotter.applyOn(board);
-        $t.printMatrixWithIndexes(plotter.result());
-
-        System.Console.WriteLine$10("var board = new _CaveBoard(" + $d.toString(board.rows()) + ", " + $d.toString(board.cols()) + ");");
-
-        var currName = null;
-        var prevName = null;
-        for (var i = 0; i < board.all().length; i++) {
-            var current = board.all()[i];
-            prevName = currName;
-            if (i % 2 == 0) {
-                var roomIndex = (i / 2 | 0) + 1;
-                currName = "room" + $d.toString(roomIndex);
-                current.IXShape$accept(new CaveGenUtil.PrepareForTestShapeVisitor.ctor(currName));
-                System.Console.WriteLine$10("board.addRoom(" + currName + ");");
-            }
-            else {
-                currName = "corr" + $d.toString(i) + "" + $d.toString((i + 1));
-                current.IXShape$accept(new CaveGenUtil.PrepareForTestShapeVisitor.ctor(currName));
-                System.Console.WriteLine$10("board.addCorridor(" + currName + ");");
-            }
-        }
-    };
-    $t.printMatrixWithIndexes = function CaveGenUtil_printMatrixWithIndexes(matrix) {
-        var showIndexes = true;
-        var rows = matrix.GetLength(0);
-        var cols = matrix.GetLength(1);
-
-        var result = $d.toString(rows) + " x " + $d.toString(cols) + "\n";
-        if (showIndexes) {
-            result += "\n";
-            for (var n = 0; n < cols; n++) {
-                if (n == 0)
-                    result += "     ";
-                result += $d.toString(n) + ",";
-                if (n < 9)
-                    result += " ";
-            }
-        }
-        result += "\n";
-        for (var i = 0; i < rows; i++) {
-            if (showIndexes && i < 10)
-                result += " " + $d.toString(i) + " ";
-            if (showIndexes && i >= 10)
-                result += $d.toString(i) + " ";
-
-            for (var j = 0; j < cols; j++) {
-                if (j == 0)
-                    result += " {";
-                result += $d.toString(matrix[i * matrix.$ranks[1] + j]);
-                if (j != cols - 1)
-                    result += ", ";
-            }
-            result += "}";
-            if (showIndexes)
-                result += " " + $d.toString(i);
-            if (i != rows - 1)
-                result += ",\n";
-        }
-        if (showIndexes) {
-            result += "\n";
-            for (var m = 0; m < cols; m++) {
-                if (m == 0)
-                    result += "     ";
-                result += $d.toString(m) + ",";
-                if (m < 9)
-                    result += " ";
-            }
-        }
-        System.Console.WriteLine$10(result);
-    };
-    $t.printArray = function CaveGenUtil_printArray(list) {
-        var size = list.GetLength(0);
-
-        var result = "[" + $d.toString(size) + "] ";
-
-        for (var i = 0; i < size; i++) {
-            if (i == 0)
-                result += " {";
-            result += list[i].toString();
-            if (i != size - 1)
-                result += ", ";
-        }
-        result += "}";
-        System.Console.WriteLine$10(result);
-    };
-    $t.newBoard = function CaveGenUtil_newBoard(rowSize, colSize) {
-        return new CaveBoard.ctor(new OIGrid.ctor$1(rowSize, colSize));
-    };
-    $t.newRoom = function CaveGenUtil_newRoom(topLeftVertexRow, topLeftVertexCol, rowSize, colSize) {
-        var filler = new ShapeCellularAutomaton.ctor(48, 60, 5);
-        var result = new RectShape.ctor(new DungeonGeneration.Generator.Domain.Cell.ctor(topLeftVertexRow, 
-            topLeftVertexCol), new OIGrid.ctor$1(rowSize, colSize));
-        filler.applyOn(result);
-        result.deleteRegionsButTheBiggest();
-        return result;
-    };
-    $t.newCorridor = function CaveGenUtil_newCorridor(fromRoom, toRoom, width) {
-        return CaveCorridorFactory.createCorrShape(fromRoom, toRoom, width);
-    };
-});
-$d.define(CaveGenUtil.PrepareForTestShapeVisitor, AShapeVisitor, function($t, $p) {
-    $t.$intfs = [IShapeVisitor];
-    $t.$ator = function() {
-        this._varName = null;
-    };
-    $t.ctor = function PrepareForTestShapeVisitor(varName) {
-        $t.$baseType.ctor.call(this);
-        this._varName = varName;
-    };
-    $p._visit$1 = function PrepareForTestShapeVisitor__visit(aShape) {
-        this.printInstance(aShape, "ElliShape");
-        this.printSetMethod(aShape);
-    };
-    $p._visit$4 = function PrepareForTestShapeVisitor__visit(aShape) {
-        this.printInstance(aShape, "RectShape");
-        this.printSetMethod(aShape);
-    };
-    $p._visit$2 = function PrepareForTestShapeVisitor__visit(aShape) {
-        System.Console.WriteLine$10("var " + this._varName + " = new FreeShape();");
-        this.printSetMethod(aShape);
-    };
-    $p.printInstance = function PrepareForTestShapeVisitor_printInstance(aShape, className) {
-        var row = aShape.topLeftVertex().row();
-        var col = aShape.topLeftVertex().col();
-        var rows = aShape.grid().rows();
-        var cols = aShape.grid().columns();
-        System.Console.WriteLine$10("var " + this._varName + " = new " + className + "(new _Cell(" + $d.toString(row) + ", " + $d.toString(col) + "), new _OIGrid(" + $d.toString(rows) + ", " + $d.toString(cols) + "));");
-    };
-    $p.printSetMethod = function PrepareForTestShapeVisitor_printSetMethod(aShape) {
-        aShape.IXShape$forEachCell2($d.delegate(function(row, col, value) {
-            if (value == 1) {
-                var result = this._varName + ".setCellValue(" + $d.toString(row) + ", " + $d.toString(col) + ", 1);";
-                System.Console.WriteLine$10(result);
-            }
-        }, this));
-    };
-});
-$d.define(DunGenUtil, null, function($t, $p) {
-    $t.ctor = function DunGenUtil() {
-        $t.$baseType.ctor.call(this);
-    };
-    $t.createServerGen = function DunGenUtil_createServerGen() {
-        var gen = new DungeonGeneration.Generator.DungeonGenerator.ctor();
-        gen.setPlotter(new DungeonGeneration.Generator.Plotters.ZeroOneTilesPlotter.ctor());
-        return gen;
-    };
-    $t.createServerGenWithLog = function DunGenUtil_createServerGenWithLog() {
-        var gen = $t.createServerGen();
-        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
-        return gen;
-    };
-    $t.createClientGen = function DunGenUtil_createClientGen() {
-        var gen = new DungeonGeneration.Generator.DungeonGenerator.ctor();
-        gen.setPlotter(new DungeonGeneration.Generator.Plotters.DetailedTilesPlotter.ctor());
-        return gen;
-    };
-    $t.createClientGenWithLog = function DunGenUtil_createClientGenWithLog() {
-        var gen = $t.createClientGen();
-        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
-        return gen;
-    };
-    $t.printMatrix = function DunGenUtil_printMatrix(matrix) {
-        var rows = matrix.GetLength(0);
-        var cols = matrix.GetLength(1);
-
-        var result = $d.toString(rows) + " x " + $d.toString(cols) + "\n";
-        for (var i = 0; i < rows; i++) {
-            for (var j = 0; j < cols; j++) {
-                if (j == 0)
-                    result += " {";
-                result += $d.toString(matrix[i * matrix.$ranks[1] + j]);
-                if (j != cols - 1)
-                    result += ", ";
-            }
-            result += "}";
-            if (i != rows - 1)
-                result += ",\n";
-        }
-        System.Console.WriteLine$10(result);
-    };
-    $t.newBoard = function DunGenUtil_newBoard(rowSize, colSize) {
-        return new DungeonGeneration.Generator.Domain.Board.ctor(new DungeonGeneration.Generator.Domain.Grid.ctor(rowSize, 
-            colSize));
-    };
-    $t.newRoom = function DunGenUtil_newRoom(topLeftVertexRow, topLeftVertexCol, rowSize, colSize) {
-        return new Room.ctor(new DungeonGeneration.Generator.Domain.Cell.ctor(topLeftVertexRow, topLeftVertexCol), 
-            new DungeonGeneration.Generator.Domain.Grid.ctor(rowSize, colSize));
-    };
-    $t.newCorridor = function DunGenUtil_newCorridor(topLeftVertexRow, topLeftVertexCol, rowSize, colSize, orientation) {
-        var versus = orientation.Equals$1("horizontal") ? 0 : 1;
-        return new Corridor.ctor(new DungeonGeneration.Generator.Domain.Cell.ctor(topLeftVertexRow, topLeftVertexCol), 
-            new DungeonGeneration.Generator.Domain.Grid.ctor(rowSize, colSize), versus);
-    };
-});
+var Forest012Plotter = $g.Forest012Plotter = $d.declare("Forest012Plotter", 0, $asm);
+var Forest01Plotter = $g.Forest01Plotter = $d.declare("Forest01Plotter", 0, $asm);
+var ForestGenUtil = $g.ForestGenUtil = $d.declare("ForestGenUtil", 0, $asm);
+ForestGenUtil.PrepareForTestShapeVisitor = $d.declare("PrepareForTestShapeVisitor", 0, ForestGenUtil);
+var CaveGenUtil = $g.CaveGenUtil = $d.declare("CaveGenUtil", 0, $asm);
+CaveGenUtil.PrepareForTestShapeVisitor = $d.declare("PrepareForTestShapeVisitor", 0, CaveGenUtil);
+var DunGenUtil = $g.DunGenUtil = $d.declare("DunGenUtil", 0, $asm);
 $d.define(CaveGeneration.Generator.CaveGenerator, null, function($t, $p) {
     $t.$ator = function() {
         this._dunGen = null;
@@ -390,7 +88,7 @@ $d.define(CaveGeneration.Generator.CaveGenerator, null, function($t, $p) {
     };
     $t.ctor = function CaveGenerator() {
         $t.$baseType.ctor.call(this);
-        this._dunGen = new DungeonGeneration.Generator.DungeonGenerator.ctor();
+        this._dunGen = new DungeonGeneration.Generator.ForcedDungeonGenerator.ctor(10);
         this._seed = 0;
         this._logger = new DungeonGeneration.Logging.NullLogger.ctor();
         this._cellularFillChance = 50;
@@ -842,6 +540,59 @@ $d.define(APolyShape, null, function($t, $p) {
     $p.IXShape$walkableCells = $p.walkableCells;
     $p.IXShape$absCellFacing = $p.absCellFacing;
     $p.IXShape$hasAbsCellFacing = $p.hasAbsCellFacing;
+});
+var IShapeVisitor = $g.IShapeVisitor = $d.type("IShapeVisitor", 66, $asm, function($t, $p) {
+});
+$d.define(AShapeVisitor, null, function($t, $p) {
+    $t.$intfs = [IShapeVisitor];
+    $t.ctor = function AShapeVisitor() {
+        $t.$baseType.ctor.call(this);
+    };
+    $p.visit$4 = function AShapeVisitor_visit(aShape) {
+        this._visit$4($d.as(aShape, RectShape));
+        this._visit($d.as(aShape, APolyShape));
+        this._visit$3($d.as(aShape, IXShape));
+    };
+    $p.visit = function AShapeVisitor_visit(aShape) {
+        if ($d.is(aShape, RectShape))
+            this.visit$4($d.as(aShape, RectShape));
+        else if ($d.is(aShape, ElliShape))
+            this.visit$1($d.as(aShape, ElliShape));
+        else
+            throw new System.NotImplementedException.ctor$1("Missing case for: " + $d.toString($d.getTypeFromInst(aShape)));
+    };
+    $p.visit$3 = function AShapeVisitor_visit(aShape) {
+        if ($d.is(aShape, APolyShape))
+            this.visit($d.as(aShape, APolyShape));
+        else if ($d.is(aShape, FreeShape))
+            this.visit$2($d.as(aShape, FreeShape));
+        else
+            throw new System.NotImplementedException.ctor$1("Missing case for: " + $d.toString($d.getTypeFromInst(aShape)));
+    };
+    $p.visit$1 = function AShapeVisitor_visit(aShape) {
+        this._visit$1($d.as(aShape, ElliShape));
+        this._visit($d.as(aShape, APolyShape));
+        this._visit$3($d.as(aShape, IXShape));
+    };
+    $p.visit$2 = function AShapeVisitor_visit(aShape) {
+        this._visit$2($d.as(aShape, FreeShape));
+        this._visit$3($d.as(aShape, IXShape));
+    };
+    $p._visit$3 = function AShapeVisitor__visit(aShape) {
+    };
+    $p._visit = function AShapeVisitor__visit(aShape) {
+    };
+    $p._visit$4 = function AShapeVisitor__visit(aShape) {
+    };
+    $p._visit$1 = function AShapeVisitor__visit(aShape) {
+    };
+    $p._visit$2 = function AShapeVisitor__visit(aShape) {
+    };
+    $p.IShapeVisitor$visit$3 = $p.visit$3;
+    $p.IShapeVisitor$visit = $p.visit;
+    $p.IShapeVisitor$visit$4 = $p.visit$4;
+    $p.IShapeVisitor$visit$1 = $p.visit$1;
+    $p.IShapeVisitor$visit$2 = $p.visit$2;
 });
 $d.define(CaveBoard, null, function($t, $p) {
     $t.$ator = function() {
@@ -1316,12 +1067,32 @@ $d.define(OIGrid, DungeonGeneration.Generator.Domain.Grid, function($t, $p) {
     $p.toIntMatrix = function OIGrid_toIntMatrix() {
         return $d.cast(this._cells.Clone(), $d.arrayType(System.Int32, 2));
     };
-    $p.mirror = function OIGrid_mirror() {
+    $p.mirrorOnColumns = function OIGrid_mirrorOnColumns() {
         var result = new OIGrid.ctor$1(this.rows(), this.columns());
         for (var x = 0; x < this.rows(); x++) {
             for (var y = 0; y < this.columns(); y++) {
                 var invertedY = this.columns() - 1 - y;
                 result.set_Item(x, invertedY, this._cells[x * this._cells.$ranks[1] + y]);
+            }
+        }
+        return result;
+    };
+    $p.replace = function OIGrid_replace(toBeReplace, newValue) {
+        var result = new OIGrid.ctor$1(this.rows(), this.columns());
+        this.forEach2($d.delegate(function(row, col, value) {
+            if (value == toBeReplace)
+                result.setCellValue(row, col, newValue);
+            else
+                result.setCellValue(row, col, value);
+        }, this));
+        return result;
+    };
+    $p.mirrorOnRows = function OIGrid_mirrorOnRows() {
+        var result = new OIGrid.ctor$1(this.rows(), this.columns());
+        for (var x = 0; x < this.rows(); x++) {
+            for (var y = 0; y < this.columns(); y++) {
+                var inverted = this.rows() - 1 - x;
+                result.set_Item(inverted, y, this._cells[x * this._cells.$ranks[1] + y]);
             }
         }
         return result;
@@ -1351,6 +1122,13 @@ $d.define(OIGrid, DungeonGeneration.Generator.Domain.Grid, function($t, $p) {
             return true;
         }
         return false;
+    };
+    $p.clone = function OIGrid_clone() {
+        var result = new OIGrid.ctor$1(this.rows(), this.columns());
+        this.forEach2($d.delegate(function(x, y, value) {
+            result.set_Item(x, y, value);
+        }, this));
+        return result;
     };
     $p.invert = function OIGrid_invert() {
         var result = new OIGrid.ctor$1(this.rows(), this.columns());
@@ -1418,14 +1196,13 @@ $d.define(OIGrid, DungeonGeneration.Generator.Domain.Grid, function($t, $p) {
     $p.printOnConsole = function OIGrid_printOnConsole() {
         System.Console.WriteLine$10("Size: [" + $d.toString(this.rows()) + ", " + $d.toString(this.columns()) + "]");
         var row = "";
-        for (var x = 0; x < this.rows(); x++) {
+        for (var eachRow = 0; eachRow < this.rows(); eachRow++) {
             row = "";
-            for (var y = 0; y < this.columns(); y++) {
-                row += $d.toString(this._cells[x * this._cells.$ranks[1] + y]);
+            for (var eachCol = 0; eachCol < this.columns(); eachCol++) {
+                row += $d.toString(this._cells[eachRow * this._cells.$ranks[1] + eachCol]);
             }
             System.Console.WriteLine$10(row);
         }
-
     };
     $p.asMatrix = function OIGrid_asMatrix() {
         return this._cells;
@@ -1564,9 +1341,7 @@ $d.define(ZeroOneCavePlotter, null, function($t, $p) {
                 }, this));
             }).call(this);
 
-
         var inverted = populated.invert();
-
         inverted.forEach2($d.delegate(function(row, col, value) {
             if (value == 1 && inverted.existsCellNeighborValue(row, col, 0)) {
                 this._grid.setCellValue(row, col, 1);
@@ -1575,7 +1350,6 @@ $d.define(ZeroOneCavePlotter, null, function($t, $p) {
                 this._grid.setCellValue(row, col, 0);
             }
         }, this));
-
     };
     $p.result = function ZeroOneCavePlotter_result() {
         return this._grid.asMatrix();
@@ -1851,6 +1625,9 @@ $d.define(DungeonGeneration.Generator.Domain.Board, null, function($t, $p) {
                 result.Add($d.cast(each, Corridor));
         }
         return result.ToArray();
+    };
+    $p.roomSize = function Board_roomSize() {
+        return this.rooms().length;
     };
 });
 $d.define(DungeonGeneration.Generator.Domain.Cell, null, function($t, $p) {
@@ -2366,6 +2143,18 @@ $d.define(DungeonGeneration.Generator.DungeonGenerator, null, function($t, $p) {
         this._mapCropEnabled = false;
         this.clearBoard();
     };
+    $p.getMinRoomSize = function DungeonGenerator_getMinRoomSize() {
+        return this._roomsNumberMin;
+    };
+    $p.getSeed = function DungeonGenerator_getSeed() {
+        return this._seed;
+    };
+    $p.getLogger = function DungeonGenerator_getLogger() {
+        return this._logger;
+    };
+    $p.setBoard = function DungeonGenerator_setBoard(board) {
+        this._board = board;
+    };
     $p.clearBoard = function DungeonGenerator_clearBoard() {
         this._board = null;
     };
@@ -2631,6 +2420,46 @@ $d.define(DungeonGeneration.Generator.DungeonGenerator, null, function($t, $p) {
         return new Corridor.ctor(topLeftCell, grid, corrOrient);
     };
 });
+$d.define(DungeonGeneration.Generator.ForcedDungeonGenerator, DungeonGeneration.Generator.DungeonGenerator, function($t, $p) {
+    $t.$ator = function() {
+        this._maxAttempts = 0;
+    };
+    $t.ctor = function ForcedDungeonGenerator(maxAttempts) {
+        $t.$baseType.ctor.call(this);
+        this._maxAttempts = maxAttempts;
+    };
+    $p.asBoard = function ForcedDungeonGenerator_asBoard() {
+        if (!$t.$baseType.prototype.isBoardCleared.call(this))
+            return $t.$baseType.prototype.asBoard.call(this);
+
+        var bestBoard = null;
+        var count = 1;
+        while (count < this._maxAttempts) {
+            $t.$baseType.prototype.getLogger.call(this).DungeonGeneration$Logging$IXLogger$info("Board generation attempt: " + $d.toString(count) + "/" + $d.toString(this._maxAttempts));
+
+            var board = $t.$baseType.prototype.asBoard.call(this);
+            if (bestBoard == null)
+                bestBoard = board;
+            else if (board.roomSize() > bestBoard.roomSize())
+                bestBoard = board;
+
+            if (bestBoard.roomSize() >= $t.$baseType.prototype.getMinRoomSize.call(this))
+                break;
+
+            var seed = $t.$baseType.prototype.getSeed.call(this);
+            if (seed >= 0)
+                seed++;
+            else
+                seed--;
+            $t.$baseType.prototype.setSeed.call(this, seed);
+
+            count++;
+        }
+        $t.$baseType.prototype.getLogger.call(this).DungeonGeneration$Logging$IXLogger$info("Board generation completed at attempt: " + $d.toString(count));
+        $t.$baseType.prototype.setBoard.call(this, bestBoard);
+        return bestBoard;
+    };
+});
 DungeonGeneration.Generator.Pickers.CardinalPoint = $d.typeEnum("DungeonGeneration.Generator.Pickers.CardinalPoint", 45, $asm, 257, ["NORD", "EST", "SUD", "WEST"], [0, 1, 2, 3]);
 $d.define(DungeonGeneration.Generator.Pickers.CardinalPointPicker, null, function($t, $p) {
     $t.$ator = function() {
@@ -2720,27 +2549,13 @@ $d.define(DungeonGeneration.Generator.Pickers.CustomSeededPickerStrategy, null, 
         this._logger = logger;
     };
     $p.drawBetween = function CustomSeededPickerStrategy_drawBetween(valueA, valueB) {
-        this._logger.DungeonGeneration$Logging$IXLogger$info("seed: " + $d.toString(this._currentSeed));
-        this._logger.DungeonGeneration$Logging$IXLogger$info("range: " + $d.toString(valueA) + " " + $d.toString(valueB));
-
-
         var baseNumber = System.Math.Sin(this._currentSeed) * 10000;
-        this._logger.DungeonGeneration$Logging$IXLogger$info("base: " + $d.toString(baseNumber));
         var percentage = baseNumber - System.Math.Floor$1(baseNumber);
-        this._logger.DungeonGeneration$Logging$IXLogger$info("percentage: " + $d.toString(percentage));
-
         var rangeDiff = System.Math.Abs(valueB - valueA) + 1;
-        this._logger.DungeonGeneration$Logging$IXLogger$info("rangeDiff: " + $d.toString(rangeDiff));
-
         var sel = percentage * rangeDiff - 1;
-        this._logger.DungeonGeneration$Logging$IXLogger$info("selection: " + $d.toString(sel));
-
         var index = (System.Math.Round$1(sel, 0) | 0);
-        this._logger.DungeonGeneration$Logging$IXLogger$info("index before: " + $d.toString(index));
         if (index < 0)
             index = 0;
-        this._logger.DungeonGeneration$Logging$IXLogger$info("index after: " + $d.toString(index));
-
         var result;
         if (valueA <= valueB) {
             result = valueA + index;
@@ -2748,7 +2563,6 @@ $d.define(DungeonGeneration.Generator.Pickers.CustomSeededPickerStrategy, null, 
         else {
             result = valueA - index;
         }
-        this._logger.DungeonGeneration$Logging$IXLogger$info("result: " + $d.toString(result));
         if (this._originalSeed >= 0)
             this._currentSeed++;
         else
@@ -2756,6 +2570,27 @@ $d.define(DungeonGeneration.Generator.Pickers.CustomSeededPickerStrategy, null, 
         return result;
     };
     $p.DungeonGeneration$Generator$Pickers$IPickerStrategy$drawBetween = $p.drawBetween;
+});
+$d.define(DungeonGeneration.Generator.Pickers.FloatInRangePicker, null, function($t, $p) {
+    $t.$ator = function() {
+        this._max = 0;
+        this._min = 0;
+        this._pickStrategy = null;
+    };
+    $t.ctor = function FloatInRangePicker(min, max, pickStrategy) {
+        $t.$baseType.ctor.call(this);
+        this._min = min;
+        this._max = max;
+        this._pickStrategy = pickStrategy;
+    };
+    $p.draw = function FloatInRangePicker_draw() {
+        var min = ((this._min * 10) | 0);
+        var max = ((this._max * 10) | 0);
+        var picked = this._pickStrategy.DungeonGeneration$Generator$Pickers$IPickerStrategy$drawBetween(min, 
+            max);
+        var result = picked / 10;
+        return result;
+    };
 });
 $d.define(DungeonGeneration.Generator.Pickers.IntInRangePicker, null, function($t, $p) {
     $t.$ator = function() {
@@ -2786,7 +2621,7 @@ $d.define(DungeonGeneration.Generator.Pickers.RandomSeededPickerStrategy, null, 
         this._random = new System.Random.ctor$1(seed);
     };
     $p.drawBetween = function RandomSeededPickerStrategy_drawBetween(min, max) {
-        return this._random.Next$2(min, max);
+        return this._random.Next$2(min, max + 1);
     };
     $p.DungeonGeneration$Generator$Pickers$IPickerStrategy$drawBetween = $p.drawBetween;
 });
@@ -3056,6 +2891,583 @@ $d.define(DungeonGeneration.Logging.NullLogger, null, function($t, $p) {
     $p.DungeonGeneration$Logging$IXLogger$warning = $p.warning;
     $p.DungeonGeneration$Logging$IXLogger$error = $p.error;
     $p.DungeonGeneration$Logging$IXLogger$info = $p.info;
+});
+$d.define(Forest012Plotter, null, function($t, $p) {
+    $t.$intfs = function() { return [ICaveBoardPlotter$1($d.arrayType(System.Int32, 2))]; };
+    $t.$ator = function() {
+        this._grid = null;
+        this._treeTickness = 0;
+    };
+    $t.ctor = function Forest012Plotter() {
+        $t.$baseType.ctor.call(this);
+        this._grid = new OIGrid.ctor$1(0, 0);
+        this._treeTickness = 1;
+    };
+    $t.ctor$1 = function Forest012Plotter(treeTickness) {
+        $t.$baseType.ctor.call(this);
+        this._grid = new OIGrid.ctor$1(0, 0);
+        this._treeTickness = treeTickness;
+    };
+    $p.applyOn = function Forest012Plotter_applyOn(board) {
+        this._grid = new OIGrid.ctor$1(board.rows(), board.cols());
+
+        var populated = new OIGrid.ctor$1(board.rows(), board.cols());
+        for (var $i = 0, $a = board.rooms(), $length = $a.length; $i < $length; $i++)
+            (function() {
+                var eachShape = $a[$i];
+                eachShape.IXShape$forEachCellAbs($d.delegate(function(row, col, value) {
+                    populated.setCellValue(row, col, value);
+                }, this));
+            }).call(this);
+        for (var $i1 = 0, $a1 = board.corridors(), $length1 = $a1.length; $i1 < $length1; $i1++)
+            (function() {
+                var eachShape = $a1[$i1];
+                eachShape.IXShape$forEachCellAbs($d.delegate(function(row, col, value) {
+                    populated.setCellValue(row, col, value);
+                }, this));
+            }).call(this);
+        var inverted = populated.invert();
+        inverted.forEach2($d.delegate(function(row, col, value) {
+            if (value == 1 && inverted.existsCellNeighborValue(row, col, 0)) {
+                this._grid.setCellValue(row, col, 3);
+            }
+            else {
+                this._grid.setCellValue(row, col, 1);
+            }
+        }, this));
+        populated.forEach2($d.delegate(function(row, col, value) {
+            if (value == 1 && this._grid.hasCellValue(row, col, 1)) {
+                this._grid.setCellValue(row, col, 0);
+            }
+            else if (value == 0 && this._grid.hasCellValue(row, col, 3)) {
+                this._grid.setCellValue(row, col, 1);
+            }
+            else {
+                this._grid.setCellValue(row, col, 2);
+            }
+        }, this));
+
+        var edgeSize = this._treeTickness;
+        for (var i = 1; i < edgeSize; i++)
+            (function() {
+                var cloned = this._grid.clone();
+                cloned.forEach2($d.delegate(function(row, col, value) {
+                    if (value == 2 && cloned.existsCellNeighborValue(row, col, 1)) {
+                        this._grid.setCellValue(row, col, 1);
+                    }
+                }, this));
+            }).call(this);
+    };
+    $p.result = function Forest012Plotter_result() {
+        return this._grid.asMatrix();
+    };
+    $p.ICaveBoardPlotter$1$applyOn = $p.applyOn;
+    $p.ICaveBoardPlotter$1$result = $p.result;
+});
+$d.define(Forest01Plotter, null, function($t, $p) {
+    $t.$intfs = function() { return [ICaveBoardPlotter$1($d.arrayType(System.Int32, 2))]; };
+    $t.$ator = function() {
+        this._grid = null;
+        this._treeTickness = 0;
+    };
+    $t.ctor = function Forest01Plotter() {
+        $t.$baseType.ctor.call(this);
+        this._grid = new OIGrid.ctor$1(0, 0);
+        this._treeTickness = 1;
+    };
+    $p.applyOn = function Forest01Plotter_applyOn(board) {
+        this._grid = new OIGrid.ctor$1(board.rows(), board.cols());
+
+        var populated = new OIGrid.ctor$1(board.rows(), board.cols());
+        for (var $i = 0, $a = board.rooms(), $length = $a.length; $i < $length; $i++)
+            (function() {
+                var eachShape = $a[$i];
+                eachShape.IXShape$forEachCellAbs($d.delegate(function(row, col, value) {
+                    populated.setCellValue(row, col, value);
+                }, this));
+            }).call(this);
+        for (var $i1 = 0, $a1 = board.corridors(), $length1 = $a1.length; $i1 < $length1; $i1++)
+            (function() {
+                var eachShape = $a1[$i1];
+                eachShape.IXShape$forEachCellAbs($d.delegate(function(row, col, value) {
+                    populated.setCellValue(row, col, value);
+                }, this));
+            }).call(this);
+        var inverted = populated.invert();
+        inverted.forEach2($d.delegate(function(row, col, value) {
+            if (value == 1 && inverted.existsCellNeighborValue(row, col, 0)) {
+                this._grid.setCellValue(row, col, 3);
+            }
+            else {
+                this._grid.setCellValue(row, col, 1);
+            }
+        }, this));
+        populated.forEach2($d.delegate(function(row, col, value) {
+            if (value == 1 && this._grid.hasCellValue(row, col, 1)) {
+                this._grid.setCellValue(row, col, 0);
+            }
+            else if (value == 0 && this._grid.hasCellValue(row, col, 3)) {
+                this._grid.setCellValue(row, col, 1);
+            }
+            else {
+                this._grid.setCellValue(row, col, 2);
+            }
+        }, this));
+
+        var edgeSize = this._treeTickness;
+        for (var i = 1; i < edgeSize; i++)
+            (function() {
+                var cloned = this._grid.clone();
+                cloned.forEach2($d.delegate(function(row, col, value) {
+                    if (value == 2 && cloned.existsCellNeighborValue(row, col, 1)) {
+                        this._grid.setCellValue(row, col, 1);
+                    }
+                }, this));
+            }).call(this);
+
+        this._grid.forEach2($d.delegate(function(row, col, value) {
+            if (value == 2)
+                this._grid.setCellValue(row, col, 0);
+        }, this));
+    };
+    $p.result = function Forest01Plotter_result() {
+        return this._grid.asMatrix();
+    };
+    $p.ICaveBoardPlotter$1$applyOn = $p.applyOn;
+    $p.ICaveBoardPlotter$1$result = $p.result;
+});
+$d.define(ForestGenUtil, null, function($t, $p) {
+    $t.ctor = function ForestGenUtil() {
+        $t.$baseType.ctor.call(this);
+    };
+    $t.createServerGen = function ForestGenUtil_createServerGen() {
+        var gen = new CaveGeneration.Generator.CaveGenerator.ctor();
+        gen.setPlotter(new Forest01Plotter.ctor());
+        return gen;
+    };
+    $t.createServerGenWithLog = function ForestGenUtil_createServerGenWithLog() {
+        var gen = $t.createServerGen();
+        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
+        return gen;
+    };
+    $t.createClientGen = function ForestGenUtil_createClientGen() {
+        var gen = new CaveGeneration.Generator.CaveGenerator.ctor();
+        gen.setPlotter(new Forest012Plotter.ctor());
+        return gen;
+    };
+    $t.createClientGenWithLog = function ForestGenUtil_createClientGenWithLog() {
+        var gen = $t.createClientGen();
+        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
+        return gen;
+    };
+    $t.printMatrix = function ForestGenUtil_printMatrix(matrix) {
+        var rows = matrix.GetLength(0);
+        var cols = matrix.GetLength(1);
+
+        var result = $d.toString(rows) + " x " + $d.toString(cols) + "\n";
+        for (var i = 0; i < rows; i++) {
+            for (var j = 0; j < cols; j++) {
+                result += $d.toString(matrix[i * matrix.$ranks[1] + j]);
+                if (j != cols - 1)
+                    result += " ";
+            }
+            if (i != rows - 1)
+                result += "\n";
+        }
+        System.Console.WriteLine$10(result);
+    };
+    $t.boardAsMatrix = function ForestGenUtil_boardAsMatrix(board) {
+        var plotter = new Forest01Plotter.ctor();
+        plotter.applyOn(board);
+        return plotter.result();
+    };
+    $t.printBoard = function ForestGenUtil_printBoard(board) {
+        var plotter = new Forest01Plotter.ctor();
+        plotter.applyOn(board);
+        $t.printMatrix(plotter.result());
+    };
+    $t.printForTest = function ForestGenUtil_printForTest(board) {
+        var plotter = new Forest01Plotter.ctor();
+        plotter.applyOn(board);
+        $t.printMatrixWithIndexes(plotter.result());
+
+        System.Console.WriteLine$10("var board = new _CaveBoard(" + $d.toString(board.rows()) + ", " + $d.toString(board.cols()) + ");");
+
+        var currName = null;
+        var prevName = null;
+        for (var i = 0; i < board.all().length; i++) {
+            var current = board.all()[i];
+            prevName = currName;
+            if (i % 2 == 0) {
+                var roomIndex = (i / 2 | 0) + 1;
+                currName = "room" + $d.toString(roomIndex);
+                current.IXShape$accept(new ForestGenUtil.PrepareForTestShapeVisitor.ctor(currName));
+                System.Console.WriteLine$10("board.addRoom(" + currName + ");");
+            }
+            else {
+                currName = "corr" + $d.toString(i) + "" + $d.toString((i + 1));
+                current.IXShape$accept(new ForestGenUtil.PrepareForTestShapeVisitor.ctor(currName));
+                System.Console.WriteLine$10("board.addCorridor(" + currName + ");");
+            }
+        }
+    };
+    $t.printMatrixWithIndexes = function ForestGenUtil_printMatrixWithIndexes(matrix) {
+        var showIndexes = true;
+        var rows = matrix.GetLength(0);
+        var cols = matrix.GetLength(1);
+
+        var result = $d.toString(rows) + " x " + $d.toString(cols) + "\n";
+        if (showIndexes) {
+            result += "\n";
+            for (var n = 0; n < cols; n++) {
+                if (n == 0)
+                    result += "     ";
+                result += $d.toString(n) + ",";
+                if (n < 9)
+                    result += " ";
+            }
+        }
+        result += "\n";
+        for (var i = 0; i < rows; i++) {
+            if (showIndexes && i < 10)
+                result += " " + $d.toString(i) + " ";
+            if (showIndexes && i >= 10)
+                result += $d.toString(i) + " ";
+
+            for (var j = 0; j < cols; j++) {
+                if (j == 0)
+                    result += " {";
+                result += $d.toString(matrix[i * matrix.$ranks[1] + j]);
+                if (j != cols - 1)
+                    result += ", ";
+            }
+            result += "}";
+            if (showIndexes)
+                result += " " + $d.toString(i);
+            if (i != rows - 1)
+                result += ",\n";
+        }
+        if (showIndexes) {
+            result += "\n";
+            for (var m = 0; m < cols; m++) {
+                if (m == 0)
+                    result += "     ";
+                result += $d.toString(m) + ",";
+                if (m < 9)
+                    result += " ";
+            }
+        }
+        System.Console.WriteLine$10(result);
+    };
+    $t.printArray = function ForestGenUtil_printArray(list) {
+        var size = list.GetLength(0);
+
+        var result = "[" + $d.toString(size) + "] ";
+
+        for (var i = 0; i < size; i++) {
+            if (i == 0)
+                result += " {";
+            result += list[i].toString();
+            if (i != size - 1)
+                result += ", ";
+        }
+        result += "}";
+        System.Console.WriteLine$10(result);
+    };
+});
+$d.define(ForestGenUtil.PrepareForTestShapeVisitor, AShapeVisitor, function($t, $p) {
+    $t.$intfs = [IShapeVisitor];
+    $t.$ator = function() {
+        this._varName = null;
+    };
+    $t.ctor = function PrepareForTestShapeVisitor(varName) {
+        $t.$baseType.ctor.call(this);
+        this._varName = varName;
+    };
+    $p._visit$1 = function PrepareForTestShapeVisitor__visit(aShape) {
+        this.printInstance(aShape, "ElliShape");
+        this.printSetMethod(aShape);
+    };
+    $p._visit$4 = function PrepareForTestShapeVisitor__visit(aShape) {
+        this.printInstance(aShape, "RectShape");
+        this.printSetMethod(aShape);
+    };
+    $p._visit$2 = function PrepareForTestShapeVisitor__visit(aShape) {
+        System.Console.WriteLine$10("var " + this._varName + " = new FreeShape();");
+        this.printSetMethod(aShape);
+    };
+    $p.printInstance = function PrepareForTestShapeVisitor_printInstance(aShape, className) {
+        var row = aShape.topLeftVertex().row();
+        var col = aShape.topLeftVertex().col();
+        var rows = aShape.grid().rows();
+        var cols = aShape.grid().columns();
+        System.Console.WriteLine$10("var " + this._varName + " = new " + className + "(new _Cell(" + $d.toString(row) + ", " + $d.toString(col) + "), new _OIGrid(" + $d.toString(rows) + ", " + $d.toString(cols) + "));");
+    };
+    $p.printSetMethod = function PrepareForTestShapeVisitor_printSetMethod(aShape) {
+        aShape.IXShape$forEachCell2($d.delegate(function(row, col, value) {
+            if (value == 1) {
+                var result = this._varName + ".setCellValue(" + $d.toString(row) + ", " + $d.toString(col) + ", 1);";
+                System.Console.WriteLine$10(result);
+            }
+        }, this));
+    };
+});
+$d.define(CaveGenUtil, null, function($t, $p) {
+    $t.ctor = function CaveGenUtil() {
+        $t.$baseType.ctor.call(this);
+    };
+    $t.createServerGen = function CaveGenUtil_createServerGen() {
+        var gen = new CaveGeneration.Generator.CaveGenerator.ctor();
+        gen.setPlotter(new ZeroOneCavePlotter.ctor());
+        return gen;
+    };
+    $t.createServerGen2 = function CaveGenUtil_createServerGen2() {
+        var gen = new CaveGeneration.Generator.CaveGenerator.ctor();
+        gen.setPlotter(new ZeroOneTwoFillerCavePlotter.ctor());
+        return gen;
+    };
+    $t.createServerGenWithLog = function CaveGenUtil_createServerGenWithLog() {
+        var gen = $t.createServerGen();
+        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
+        return gen;
+    };
+    $t.createClientGen = function CaveGenUtil_createClientGen() {
+        var gen = new CaveGeneration.Generator.CaveGenerator.ctor();
+        gen.setPlotter(new ZeroOneFillerCavePlotter.ctor());
+        return gen;
+    };
+    $t.createClientGenWithLog = function CaveGenUtil_createClientGenWithLog() {
+        var gen = $t.createClientGen();
+        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
+        return gen;
+    };
+    $t.printMatrix = function CaveGenUtil_printMatrix(matrix) {
+        var rows = matrix.GetLength(0);
+        var cols = matrix.GetLength(1);
+
+        var result = $d.toString(rows) + " x " + $d.toString(cols) + "\n";
+        for (var i = 0; i < rows; i++) {
+            for (var j = 0; j < cols; j++) {
+                result += $d.toString(matrix[i * matrix.$ranks[1] + j]);
+                if (j != cols - 1)
+                    result += " ";
+            }
+            if (i != rows - 1)
+                result += "\n";
+        }
+        System.Console.WriteLine$10(result);
+    };
+    $t.boardAsMatrix = function CaveGenUtil_boardAsMatrix(board) {
+        var plotter = new ZeroOneFillerCavePlotter.ctor();
+        plotter.applyOn(board);
+        return plotter.result();
+    };
+    $t.boardAsMatrix2 = function CaveGenUtil_boardAsMatrix2(board) {
+        var plotter = new ZeroOneTwoFillerCavePlotter.ctor();
+        plotter.applyOn(board);
+        return plotter.result();
+    };
+    $t.printBoard = function CaveGenUtil_printBoard(board) {
+        var plotter = new ZeroOneFillerCavePlotter.ctor();
+        plotter.applyOn(board);
+        $t.printMatrix(plotter.result());
+    };
+    $t.printForTest = function CaveGenUtil_printForTest(board) {
+        var plotter = new ZeroOneTwoFillerCavePlotter.ctor();
+        plotter.applyOn(board);
+        $t.printMatrixWithIndexes(plotter.result());
+
+        System.Console.WriteLine$10("var board = new _CaveBoard(" + $d.toString(board.rows()) + ", " + $d.toString(board.cols()) + ");");
+
+        var currName = null;
+        var prevName = null;
+        for (var i = 0; i < board.all().length; i++) {
+            var current = board.all()[i];
+            prevName = currName;
+            if (i % 2 == 0) {
+                var roomIndex = (i / 2 | 0) + 1;
+                currName = "room" + $d.toString(roomIndex);
+                current.IXShape$accept(new CaveGenUtil.PrepareForTestShapeVisitor.ctor(currName));
+                System.Console.WriteLine$10("board.addRoom(" + currName + ");");
+            }
+            else {
+                currName = "corr" + $d.toString(i) + "" + $d.toString((i + 1));
+                current.IXShape$accept(new CaveGenUtil.PrepareForTestShapeVisitor.ctor(currName));
+                System.Console.WriteLine$10("board.addCorridor(" + currName + ");");
+            }
+        }
+    };
+    $t.printMatrixWithIndexes = function CaveGenUtil_printMatrixWithIndexes(matrix) {
+        var showIndexes = true;
+        var rows = matrix.GetLength(0);
+        var cols = matrix.GetLength(1);
+
+        var result = $d.toString(rows) + " x " + $d.toString(cols) + "\n";
+        if (showIndexes) {
+            result += "\n";
+            for (var n = 0; n < cols; n++) {
+                if (n == 0)
+                    result += "     ";
+                result += $d.toString(n) + ",";
+                if (n < 9)
+                    result += " ";
+            }
+        }
+        result += "\n";
+        for (var i = 0; i < rows; i++) {
+            if (showIndexes && i < 10)
+                result += " " + $d.toString(i) + " ";
+            if (showIndexes && i >= 10)
+                result += $d.toString(i) + " ";
+
+            for (var j = 0; j < cols; j++) {
+                if (j == 0)
+                    result += " {";
+                result += $d.toString(matrix[i * matrix.$ranks[1] + j]);
+                if (j != cols - 1)
+                    result += ", ";
+            }
+            result += "}";
+            if (showIndexes)
+                result += " " + $d.toString(i);
+            if (i != rows - 1)
+                result += ",\n";
+        }
+        if (showIndexes) {
+            result += "\n";
+            for (var m = 0; m < cols; m++) {
+                if (m == 0)
+                    result += "     ";
+                result += $d.toString(m) + ",";
+                if (m < 9)
+                    result += " ";
+            }
+        }
+        System.Console.WriteLine$10(result);
+    };
+    $t.printArray = function CaveGenUtil_printArray(list) {
+        var size = list.GetLength(0);
+
+        var result = "[" + $d.toString(size) + "] ";
+
+        for (var i = 0; i < size; i++) {
+            if (i == 0)
+                result += " {";
+            result += list[i].toString();
+            if (i != size - 1)
+                result += ", ";
+        }
+        result += "}";
+        System.Console.WriteLine$10(result);
+    };
+    $t.newBoard = function CaveGenUtil_newBoard(rowSize, colSize) {
+        return new CaveBoard.ctor(new OIGrid.ctor$1(rowSize, colSize));
+    };
+    $t.newRoom = function CaveGenUtil_newRoom(topLeftVertexRow, topLeftVertexCol, rowSize, colSize) {
+        var filler = new ShapeCellularAutomaton.ctor(48, 60, 5);
+        var result = new RectShape.ctor(new DungeonGeneration.Generator.Domain.Cell.ctor(topLeftVertexRow, 
+            topLeftVertexCol), new OIGrid.ctor$1(rowSize, colSize));
+        filler.applyOn(result);
+        result.deleteRegionsButTheBiggest();
+        return result;
+    };
+    $t.newCorridor = function CaveGenUtil_newCorridor(fromRoom, toRoom, width) {
+        return CaveCorridorFactory.createCorrShape(fromRoom, toRoom, width);
+    };
+});
+$d.define(CaveGenUtil.PrepareForTestShapeVisitor, AShapeVisitor, function($t, $p) {
+    $t.$intfs = [IShapeVisitor];
+    $t.$ator = function() {
+        this._varName = null;
+    };
+    $t.ctor = function PrepareForTestShapeVisitor(varName) {
+        $t.$baseType.ctor.call(this);
+        this._varName = varName;
+    };
+    $p._visit$1 = function PrepareForTestShapeVisitor__visit(aShape) {
+        this.printInstance(aShape, "ElliShape");
+        this.printSetMethod(aShape);
+    };
+    $p._visit$4 = function PrepareForTestShapeVisitor__visit(aShape) {
+        this.printInstance(aShape, "RectShape");
+        this.printSetMethod(aShape);
+    };
+    $p._visit$2 = function PrepareForTestShapeVisitor__visit(aShape) {
+        System.Console.WriteLine$10("var " + this._varName + " = new FreeShape();");
+        this.printSetMethod(aShape);
+    };
+    $p.printInstance = function PrepareForTestShapeVisitor_printInstance(aShape, className) {
+        var row = aShape.topLeftVertex().row();
+        var col = aShape.topLeftVertex().col();
+        var rows = aShape.grid().rows();
+        var cols = aShape.grid().columns();
+        System.Console.WriteLine$10("var " + this._varName + " = new " + className + "(new _Cell(" + $d.toString(row) + ", " + $d.toString(col) + "), new _OIGrid(" + $d.toString(rows) + ", " + $d.toString(cols) + "));");
+    };
+    $p.printSetMethod = function PrepareForTestShapeVisitor_printSetMethod(aShape) {
+        aShape.IXShape$forEachCell2($d.delegate(function(row, col, value) {
+            if (value == 1) {
+                var result = this._varName + ".setCellValue(" + $d.toString(row) + ", " + $d.toString(col) + ", 1);";
+                System.Console.WriteLine$10(result);
+            }
+        }, this));
+    };
+});
+$d.define(DunGenUtil, null, function($t, $p) {
+    $t.ctor = function DunGenUtil() {
+        $t.$baseType.ctor.call(this);
+    };
+    $t.createServerGen = function DunGenUtil_createServerGen() {
+        var gen = new DungeonGeneration.Generator.DungeonGenerator.ctor();
+        gen.setPlotter(new DungeonGeneration.Generator.Plotters.ZeroOneTilesPlotter.ctor());
+        return gen;
+    };
+    $t.createServerGenWithLog = function DunGenUtil_createServerGenWithLog() {
+        var gen = $t.createServerGen();
+        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
+        return gen;
+    };
+    $t.createClientGen = function DunGenUtil_createClientGen() {
+        var gen = new DungeonGeneration.Generator.DungeonGenerator.ctor();
+        gen.setPlotter(new DungeonGeneration.Generator.Plotters.DetailedTilesPlotter.ctor());
+        return gen;
+    };
+    $t.createClientGenWithLog = function DunGenUtil_createClientGenWithLog() {
+        var gen = $t.createClientGen();
+        gen.setLogger(new DungeonGeneration.Logging.ConsoleLogger.ctor());
+        return gen;
+    };
+    $t.printMatrix = function DunGenUtil_printMatrix(matrix) {
+        var rows = matrix.GetLength(0);
+        var cols = matrix.GetLength(1);
+
+        var result = $d.toString(rows) + " x " + $d.toString(cols) + "\n";
+        for (var i = 0; i < rows; i++) {
+            for (var j = 0; j < cols; j++) {
+                if (j == 0)
+                    result += " {";
+                result += $d.toString(matrix[i * matrix.$ranks[1] + j]);
+                if (j != cols - 1)
+                    result += ", ";
+            }
+            result += "}";
+            if (i != rows - 1)
+                result += ",\n";
+        }
+        System.Console.WriteLine$10(result);
+    };
+    $t.newBoard = function DunGenUtil_newBoard(rowSize, colSize) {
+        return new DungeonGeneration.Generator.Domain.Board.ctor(new DungeonGeneration.Generator.Domain.Grid.ctor(rowSize, 
+            colSize));
+    };
+    $t.newRoom = function DunGenUtil_newRoom(topLeftVertexRow, topLeftVertexCol, rowSize, colSize) {
+        return new Room.ctor(new DungeonGeneration.Generator.Domain.Cell.ctor(topLeftVertexRow, topLeftVertexCol), 
+            new DungeonGeneration.Generator.Domain.Grid.ctor(rowSize, colSize));
+    };
+    $t.newCorridor = function DunGenUtil_newCorridor(topLeftVertexRow, topLeftVertexCol, rowSize, colSize, orientation) {
+        var versus = orientation.Equals$1("horizontal") ? 0 : 1;
+        return new Corridor.ctor(new DungeonGeneration.Generator.Domain.Cell.ctor(topLeftVertexRow, topLeftVertexCol), 
+            new DungeonGeneration.Generator.Domain.Grid.ctor(rowSize, colSize), versus);
+    };
 });
 return $asm;
 })();

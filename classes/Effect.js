@@ -215,6 +215,10 @@ var Effect = function (data) {
 		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
 	};
 
+	/*
+		Movement Negators
+	 */
+
 	this.Movement_Negator_Immunity = function (character) {
 		// Return true if immunity already active
 		for (var n = 0; n < character.effects.length; n++) {
@@ -276,6 +280,18 @@ var Effect = function (data) {
 		var data = {e: Effect.EffectTypes.Half_Stagger, c: character.id};
 		this.io.to(this.matchID).emit(Event.output.EFFECT, data);
 	};
+
+	/*
+		Misc Effects
+	 */
+
+	this.Flying = function (character, duration) {
+
+	};
+
+	this.Invisibility = function (character, duration) {
+
+	};
 };
 
 Effect.EffectTypes = {
@@ -294,7 +310,9 @@ Effect.EffectTypes = {
 	Wrath_Of_Fire_Miasma: "WrathOfFireMiasma",
 	Movement_Negator_Immunity: "MNI",
 	Poison: "Poison",
-	Poison_Instance: "I_Poison"
+	Poison_Instance: "I_Poison",
+	Flying: "Flying",
+	Invisibility: "Invisibility"
 };
 
 module.exports = Effect;

@@ -1,5 +1,5 @@
-var MinPickStrategy = require("./picker/MinPickStrategy.js");
-var RandomPickStrategy = require("./picker/RandomPickStrategy.js");
+var MinPickStrategy = require("../picker/MinPickStrategy.js");
+var RandomPickStrategy = require("../picker/RandomPickStrategy.js");
 
 function BaseSpawningAlgorithm(pickerFactorySelector) {
     this.pickerFactorySelector = pickerFactorySelector;

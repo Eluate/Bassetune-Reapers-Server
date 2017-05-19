@@ -1,5 +1,5 @@
 var CavePickerFactorySelector = require("./picker/selector/CavePickerFactorySelector.js");
-var BaseSpawningAlgorithm = require("./BaseSpawningAlgorithm.js");
+var BaseSpawningAlgorithm = require("./spawner/BaseSpawningAlgorithm.js");
 
 function CaveSpawningGenerator() {
     this.algo = new BaseSpawningAlgorithm(new CavePickerFactorySelector());
