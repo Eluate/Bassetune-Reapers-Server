@@ -295,24 +295,24 @@ var Effect = function (data) {
 };
 
 Effect.EffectTypes = {
-	Regeneration: "Regen",
-	Acid: "Acid",
+	Regeneration: "R",
+	Acid: "A",
 	Acid_Instance: "I_Acid",
-	Heal: "Heal",
-	Burn: "Burn",
-	Freeze: "Freeze",
-	Bleed: "Bleed",
+	Heal: "H",
+	Burn: "BU",
+	Freeze: "F",
+	Bleed: "BL",
 	Bleed_Instance: "I_Bleed",
-	Stun: "Stun",
-	Stagger: "Stagger",
-	Half_Stagger: "H_Stagger",
-	Purge: "Purge",
-	Wrath_Of_Fire_Miasma: "WrathOfFireMiasma",
+	Stun: "S",
+	Stagger: "ST",
+	Half_Stagger: "H",
+	Purge: "PU",
+	Wrath_Of_Fire_Miasma: "W",
 	Movement_Negator_Immunity: "MNI",
-	Poison: "Poison",
+	Poison: "P",
 	Poison_Instance: "I_Poison",
-	Flying: "Flying",
-	Invisibility: "Invisibility"
+	Flying: "FLY",
+	Invisibility: "I"
 };
 
 module.exports = Effect;
