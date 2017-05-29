@@ -13,7 +13,8 @@ MinionAI.prototype.execute = function() {
     var minions = selectMinions(this.characters);
     var knights = selectKnights(this.characters);
 
-    for (var minion of minions) {
+    for (var i=0; i < minions.length; i++) {
+        var minion = minions[i];
         var knightToAggroFound = nearestKnightWithinRadius(minion, knights, this.aggroRadius);
         if (!knightToAggroFound) {
             //PATROLLING or CHECK IF IS TO FAR FROM ORIGINAL SPAWN POINT
@@ -31,7 +32,8 @@ var nearestKnightWithinRadius = function(minion, knights, aggroRadius) {
     var nearestSqrDist = Number.MAX_VALUE;
 
     var sqrRadius = Math.pow(aggroRadius, 2);
-    for (var knight of knights) {
+    for (var i=0; i< knights.length; i++) {
+        var knight = knights[i];
         //minion is the center of the circle
         var sqrDist = Math.pow(knight.position.x - minion.position.x, 2) + Math.pow(knight.position.y - minion.position.y, 2);
         if (sqrDist < sqrRadius && sqrDist < nearestSqrDist)  {
@@ -44,14 +46,16 @@ var nearestKnightWithinRadius = function(minion, knights, aggroRadius) {
 
 var selectMinions = function(characters) {
     var result = [];
-    for(var each of characters) {
+    for (var i=0; i<characters.length; i++) {
+        var each = characters[i];
         if (Item.ItemType.isMinion(each.entity)) result.push(each);
     }
     return result;
 };
 var selectKnights = function(characters) {
     var result = [];
-    for(var each of characters) {
+    for (var i=0; i<characters.length; i++) {
+        var each = characters[i];
         if (Item.ItemType.isKnight(each.entity)) result.push(each);
     }
     return result;

@@ -138,7 +138,8 @@ var LocationMock = function() {
         return this.callCount == count;
     };
     this.hasUpdatedCharWithDestination = function(charId, x, y) {
-        for (var each of this.updatedChars) {
+        for (var i=0; i< this.updatedChars.length; i++) {
+            var each = this.updatedChars[i];
             if (each.char._id == charId && each.dest[0] == x && each.dest[1] == y) return true;
         }
         return false;
