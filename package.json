@@ -2,6 +2,9 @@
   "name": "backendGame",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "test": "jasmine"
+  },
   "dependencies": 
   {
     "express": "4.15.2",
@@ -15,5 +18,8 @@
     "multer" : "1.3.0",
     "pathfinding" : "0.4.18",
     "sat": "0.6.0"
+  },
+  "devDependencies": {
+    "jasmine": "2.5.3"
   }
 }

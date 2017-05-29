@@ -1,11 +1,12 @@
 // Get all modules required for initialization
 var Chat = require('./Chat');
 var Location = require('./Location');
-var Map = require('./Map');1
+var Map = require('./Map');
 var MySQLHandler = require('./mysqlHandler');
 var Finder = require('./Finder');
 var Event = require('./EventEnum');
 var CharacterManager = require('./CharacterManager');
+var MinionAI = require("./ai/MinionAI");
 
 
 var Room = function (io, matchID, config) {
@@ -33,6 +34,10 @@ var Room = function (io, matchID, config) {
 
 	// Options
 	this.tick = 32;
+
+	this.minionAI = new MinionAI(this.characters, this.location);
+	//set aggro radius for minion. Default is 5
+	//this.minionAI.setAggroRadius(5); 
 
 	/*
 	 Get player Data
@@ -257,6 +262,8 @@ var Room = function (io, matchID, config) {
 	 Send Updates
 	 */
 	var sendUpdates = function (self) {
+		self.minionAI.execute();
+
 		// Locations
 		self.location.UpdateCharacterPositions();
 		self.location.SendCharacterLocations();
