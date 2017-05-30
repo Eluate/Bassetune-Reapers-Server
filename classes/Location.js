@@ -9,8 +9,8 @@ var SAT = require("sat");
 var Location = function (self) {
 	this.PF = require("pathfinding");
 	this.pathfinder = new this.PF.AStarFinder();
-	this.characters = []
-	this.knights = []
+	this.characters = [];
+	this.knights = [];
 	this.lastTime = new Date().getTime() / 1000;
 	this.map = self.map;
 	this.io = self.io;
@@ -66,8 +66,6 @@ Location.prototype = {
 			};
 
 			while (distanceTravelled < speed && character.path && character.path.length > 0) {
-				// Change rotation prior to position
-				character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevPosition)), (time - this.lastTime) * 16);
 				var prevPosition = character.position;
 				var distanceToPoint = Vec2.distanceTo(destination, prevPosition);
 				// Handle speed Limits
@@ -86,9 +84,6 @@ Location.prototype = {
 						character.path = null;
 						continue;
 					} else {
-						// Change rotation prior to position
-						character.rotation = Vec2.lerp(character.rotation, Vec2.normalise(Vec2.sub(destination, prevPosition)), (time - this.lastTime) * 4);
-
 						prevPosition = destination;
 						distanceTravelled += speed;
 						// Remove element from path
