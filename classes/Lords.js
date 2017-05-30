@@ -4,7 +4,7 @@
 var Ability = require('./Ability');
 var Vector2 = require('./Vector2');
 
-var Bosses = [];
+var Lords = [];
 
 var TheSavageTillBeast = function () {
 	this.hp = 620;
@@ -162,14 +162,14 @@ var GohIncarnate = function () {
 
 };
 
-Bosses.push(TheSavageTillBeast);
-Bosses.push(BeholderOfTheUniversalSun);
-Bosses.push(BreatherOfLife);
-Bosses.push(SaghericNentileFiend);
-Bosses.push(CorruptedKnight);
-Bosses.push(BeyewsSummoner);
-Bosses.push(AyapakunArcher);
-Bosses.push(AyapakunWarrior);
-Bosses.push(GohIncarnate);
+Lords.push(TheSavageTillBeast);
+Lords.push(BeholderOfTheUniversalSun);
+Lords.push(BreatherOfLife);
+Lords.push(SaghericNentileFiend);
+Lords.push(CorruptedKnight);
+Lords.push(BeyewsSummoner);
+Lords.push(AyapakunArcher);
+Lords.push(AyapakunWarrior);
+Lords.push(GohIncarnate);
 
-module.exports.Bosses = Bosses;
+module.exports.Lords = Lords;

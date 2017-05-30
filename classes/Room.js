@@ -24,15 +24,17 @@ var Room = function (io, matchID, config) {
 	this.players = [];
 	// All characters
 	this.characters = [];
+	this.location.characters = this.characters;
 	// All knights (character objects)
 	this.knights = [];
-	this.location.characters = this.characters;
+	this.location.knights = this.knights;
 	// Dungeon Floors
 	this.dungeonCompositions = [];
 	this.currentFloor = 0;
 
 	// Options
 	this.tick = 32;
+	this.finishedLoadingPlayerData = false;
 
 	/*
 	 Get player Data
@@ -188,12 +190,13 @@ var Room = function (io, matchID, config) {
 								var entity = self.dungeonCompositions[i][n][0];
 								// Lord
 								if (Item.ItemType.isLord(entity)) {
-									var character = self.characterManager.SpawnBoss(player.sID, entity);
+									var character = self.characterManager.SpawnLord(player.sID, entity);
 									self.characters.push(character);
 								}
 								// Lesser Lord
 								else if (Item.ItemType.isLesserLord(entity)) {
-
+									var character = self.characterManager.SpawnLesserLord(player.sID, entity);
+									self.characters.push(character);
 								}
 								// Minion
 								else if (Item.ItemType.isMinion(entity)) {
@@ -211,6 +214,7 @@ var Room = function (io, matchID, config) {
 						finishedCount = finishedCount + 1;
 						if (finishedCount == playerIDs.length) {
 							SpawnMapAndCharacters(self);
+							self.finishedLoadingPlayerData = true;
 						}
 					}
 				});
@@ -257,10 +261,43 @@ var Room = function (io, matchID, config) {
 	 Send Updates
 	 */
 	var sendUpdates = function (self) {
+		if (!self.finishedLoadingPlayerData) return;
 		// Locations
 		self.location.UpdateCharacterPositions();
 		self.location.SendCharacterLocations();
-		self.location.UpdateTime();
+		// Victory Conditions
+		if (self.map.dungeonType == "normal") {
+			if (self.location.isKnightZoneWin()) {
+				// Move on to next part of the dungeon
+				self.map.SpawnLordRoom();
+				// Emit win condition event
+				var winCondition = {
+					side: "knight", // Knight side won
+					type: "progress" // Progress to lord dungeon
+				};
+				self.io.to(this.matchID).emit(Event.output.WIN_CONDITION_MET, winCondition);
+			} else if (function () { // All knights are dead
+					for (var i = 0; i < self.knights.length; i++) {
+						if (!self.knights[i].isDead()) {
+							return false;
+						}
+					}
+				}) {
+				// TODO: Implement end of game code, (results, etc)
+				// Emit win condition event
+				var winCondition = {
+					side: "lord", // Knight side won
+					type: "end" // End Match
+				};
+				self.io.to(this.matchID).emit(Event.output.WIN_CONDITION_MET, winCondition);
+			}
+		} else {
+			if (self.map.dungeonType == "boss" && false /* Lord is dead */) {
+				// TODO: Move on to next dungeon or End Game
+			} else if (false /* All knights are dead */) {
+				// TODO: End Game as win for Lord side
+			}
+		}
 		// HP
 		var hp = {d: []};
 		self.characters.forEach(function (character) {
@@ -272,6 +309,8 @@ var Room = function (io, matchID, config) {
 		if (hp.d.length > 0) {
 			self.io.to(self.matchID).emit(Event.output.CHAR_HP, hp);
 		}
+		// Update time passed since last tick
+		self.location.UpdateTime();
 	};
 	// Start Game Loop
 	setInterval(sendUpdates, 1000 / this.tick, this);

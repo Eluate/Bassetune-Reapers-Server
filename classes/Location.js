@@ -9,11 +9,13 @@ var SAT = require("sat");
 var Location = function (self) {
 	this.PF = require("pathfinding");
 	this.pathfinder = new this.PF.AStarFinder();
-	this.characters = [];
+	this.characters = []
+	this.knights = []
 	this.lastTime = new Date().getTime() / 1000;
 	this.map = self.map;
 	this.io = self.io;
 	this.matchID = self.matchID;
+	this.zoneCount = 0;
 };
 
 Location.prototype = {
@@ -44,7 +46,7 @@ Location.prototype = {
 	},
 
 	UpdateCharacterPositions: function () {
-		var time = new Date().getTime() / 1000; // todo rotation
+		var time = new Date().getTime() / 1000;
 		for (var key in this.characters) {
 			var character = this.characters[key];
 			if (!this.characters.hasOwnProperty(key)) return;
@@ -98,6 +100,7 @@ Location.prototype = {
 			this.characters[key].position = prevPosition;
 		}
 	},
+
 	CheckCollision: function (prevPosition, destination) {
 		var playerToDestinationRawDistance = Vec2.rawDistanceTo(prevPosition, destination) + 0.71;
 		var collisionCircle = new SAT.Circle(new SAT.Vector(destination.x, destination.y), 0.7);
@@ -139,6 +142,51 @@ Location.prototype = {
 		if (data.length > 0) {
 			this.io.to(this.matchID).emit(Event.output.CHAR_LOCATIONS, {"d": data});
 		}
+	},
+
+	isKnightZoneWin: function () {
+		var time = new Date().getTime() / 1000;
+		// Loop through all knights and check if any one is in the zone
+		var knightInZone = false;
+		for (var i = 0; i < this.knights.length; i++) {
+			// Check if near lord door and not blocked by wall
+			var knightPosition = this.knights[i].position;
+			if (Vec2.distanceTo(knightPosition, this.map.doorLocation) <= 3) {
+				// Check if collides with wall or not first
+				var knightHasCollided = false;
+				for (var p = 0; p < this.map.grid.length; p++) {
+					for (var j = 0; j < this.map.grid[0].length; j++) {
+						if (this.map.grid[p][j] == 0 || {x: p, y: j}.toString() == this.map.doorLocation) continue;
+						// Broad Phase
+						if (Vec2.distanceTo(knightPosition, {x: p, y: j}) > 3) {
+							continue;
+						}
+						// Narrow Phase
+						var wall = {
+							x: p,
+							y: j,
+							r: 0.5
+						};
+						if (Vec2.lineToCircleCollision(wall, knightPosition, this.map.doorLocation)) {
+							// Collision occurred
+							knightHasCollided = true;
+						}
+					}
+				}
+				if (!knightHasCollided) {
+					knightInZone = true;
+				}
+			}
+		}
+
+		if (knightInZone) {
+			this.zoneCount += time - this.lastTime;
+			console.log(this.zoneCount);
+		} else {
+			this.zoneCount = 0;
+		}
+
+		return this.zoneCount >= 30;
 	}
 };
 

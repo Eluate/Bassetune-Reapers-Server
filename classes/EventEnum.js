@@ -31,6 +31,7 @@ exports.output = {
 	TRAP_TRIGGERED: 't',
 	CHAR_CREATED: 'nc',
 	SERVER: "s",
+	WIN_CONDITION_MET: "WCM",
 
 	knight: {
 		ITEM_INVENTORY: "inv",

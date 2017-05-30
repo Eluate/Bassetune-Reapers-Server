@@ -8,9 +8,13 @@ var PF = require('pathfinding');
 var Map = function (self) {
 
 	this.seed = parseInt(Math.random() * 10000);
-	this.pfGrid = new PF.Grid(40, 50);
+	this.pfGrid = null; // Pathfinding grid for movement of AI
+	this.doorLocation = {x: 0, y: 0}; // The location of the door for checking win conditions
+	this.dungeonType = "normal"; // "normal" or "lord", determines type of dungeon to be generated
+	this.dungeonCount = 0; // Increment when knights successfully complete normal + lord dungeon
 
 	this.SpawnDungeon = function() {
+		this.pfGrid = new PF.Grid(40, 50);
 		/***********************************/
 		/******* DUNGEON GENERATION ********/
 		/***********************************/
@@ -63,22 +67,32 @@ var Map = function (self) {
 			}
 		}
 
+		// Set location of boss door
+		for (var i = 0; i < spawnPoints.length; i++) {
+			if (spawnPoints[i].characterID == "lorddoor") {
+				this.doorLocation = spawnPoints[i].location;
+			}
+		}
+
 		SpawnGenUtil.print(dunMatrix, spawnPoints, self);
 
 		return spawnPoints;
 	};
 
-	function SpawnLordRoom() {
+	this.SpawnLordRoom = function () {
+		this.pfGrid = new PF.Grid(20, 20);
 		/***********************************/
 		/******* DUNGEON GENERATION ********/
 		/***********************************/
 		//var gen = DunGenUtil.createServerGenWithLog();
 		var dunGen = DunGenUtil.createServerGen();
-		dunGen.setMapSize(10, 10);
+		dunGen.setMapSize(20, 20);
 		dunGen.setRoomsNumberRange(1, 1);
-		dunGen.setRoomSizeRange(10, 10);
-		//dunGen.setCorridorSizeRange(0, 0);
-		//dunGen.setSeed(0);
+		dunGen.setRoomSizeRange(20, 20);
+		dunGen.setCorridorLengthRange(0, 0);
+		dunGen.setCorridorWidthRange(0, 0);
+
+		dunGen.setSeed(self.map.seed);
 
 		var dunMatrix = dunGen.asMatrix();
 		//DunGenUtil.printMatrix(matrix);
@@ -87,17 +101,34 @@ var Map = function (self) {
 		/******** SPAWN GENERATION *********/
 		/***********************************/
 		var board = dunGen.asBoard();
-		var knightIds = SpawnGenUtil.ids(101, 3);
-		var lordIds = SpawnGenUtil.ids(201, 1);
+		var knightIds = SpawnGenUtil.sortCharacters(self.characters, "knight");
+		var lordIds = SpawnGenUtil.sortCharacters(self.characters, "lord");
+		var lordDoorId = "lorddoor";
 
 		var spawnGen = new SpawningGenerator();
 		spawnGen.setBoard(board);
 		spawnGen.setKnightIds(knightIds);
 		spawnGen.setLordIds(lordIds);
+		spawnGen.setLordDoorId(lordDoorId);
 
 		var spawnPoints = spawnGen.result();
+		self.map.grid = CSharpUtil.csMatrixToJs(dunMatrix);
+
+		// Loop through map and set pathfinding grid
+		for (var x = 0; x < self.map.grid.length; x++) {
+			for (var y = 0; y < self.map.grid[x].length; y++) {
+				if (self.map.grid[x][y] == 0) {
+					self.map.pfGrid.setWalkableAt(x, y, true);
+				}
+				else {
+					self.map.pfGrid.setWalkableAt(x, y, false);
+				}
+			}
+		}
 
 		SpawnGenUtil.print(dunMatrix, spawnPoints, self);
+
+		return spawnPoints;
 	}
 };
 
