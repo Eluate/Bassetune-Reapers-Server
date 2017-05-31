@@ -3417,7 +3417,7 @@ $d.define(DunGenUtil, null, function($t, $p) {
         $t.$baseType.ctor.call(this);
     };
     $t.createServerGen = function DunGenUtil_createServerGen() {
-        var gen = new DungeonGeneration.Generator.DungeonGenerator.ctor();
+        var gen = new DungeonGeneration.Generator.ForcedDungeonGenerator.ctor(10);
         gen.setPlotter(new DungeonGeneration.Generator.Plotters.ZeroOneTilesPlotter.ctor());
         return gen;
     };
@@ -3427,7 +3427,7 @@ $d.define(DunGenUtil, null, function($t, $p) {
         return gen;
     };
     $t.createClientGen = function DunGenUtil_createClientGen() {
-        var gen = new DungeonGeneration.Generator.DungeonGenerator.ctor();
+        var gen = new DungeonGeneration.Generator.ForcedDungeonGenerator.ctor(10);
         gen.setPlotter(new DungeonGeneration.Generator.Plotters.DetailedTilesPlotter.ctor());
         return gen;
     };
