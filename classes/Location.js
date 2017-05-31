@@ -36,6 +36,7 @@ Location.prototype = {
 			var grid = this.map.pfGrid.clone();
 			var path = this.pathfinder.findPath(parseInt(character.position.x), parseInt(character.position.y), parseInt(vector.x), parseInt(vector.y), grid);
 			path = this.PF.Util.compressPath(path);
+			path.shift();
 			character.path = path;
 			console.log("Updated path");
 			console.log(character.path)
