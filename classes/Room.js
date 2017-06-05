@@ -236,6 +236,7 @@ var Room = function (io, matchID, config) {
 			spawnPoints.forEach(function (point) {
 				if (character.id == point.characterID) {
 					character.position = point.location;
+					character.spawnPosition = point.location; //keeping original position for ai
 				}
 			});
 		});

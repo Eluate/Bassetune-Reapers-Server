@@ -183,6 +183,16 @@ Location.prototype = {
 		}
 
 		return this.zoneCount >= 30;
+	},
+
+	distance: function (fromPosition, toPosition) {
+		var fromX = parseInt(fromPosition.x);
+		var fromY = parseInt(fromPosition.y);
+		var toX = parseInt(toPosition.x);
+		var toY = parseInt(toPosition.y);
+		var grid = this.map.pfGrid.clone(); //one shoot grid for pathfinder //see: https://www.npmjs.com/package/pathfinding
+		var path = this.pathfinder.findPath(fromX, fromY, toX, toY, grid);
+		return path.length;
 	}
 };
 
