@@ -185,7 +185,7 @@ Location.prototype = {
 		return this.zoneCount >= 30;
 	},
 
-	distance: function (fromPosition, toPosition) {
+	distance: function(fromPosition, toPosition) {
 		var fromX = parseInt(fromPosition.x);
 		var fromY = parseInt(fromPosition.y);
 		var toX = parseInt(toPosition.x);
@@ -193,6 +193,44 @@ Location.prototype = {
 		var grid = this.map.pfGrid.clone(); //one shoot grid for pathfinder //see: https://www.npmjs.com/package/pathfinding
 		var path = this.pathfinder.findPath(fromX, fromY, toX, toY, grid);
 		return path.length;
+	},
+
+	/* Calculate dinamically walkable place around a 'centerPosition' at 'ray' distance.
+	 * At the moment, used to find place to go for patrol. 
+	 * NOTE: Eventually patrol spots could be pre-calculated at start-up for each npc.
+	*/
+	walkablePlacesAround: function(centerPosition, ray) {
+		var result = [];
+		var grid = this.map.grid;
+		var gridRows = grid.length;
+		var gridCols = grid[0].length;
+		//X is Row or Y is Row???
+		//looking at isKnightZoneWin function, it seems X is ROW
+		var centerRow = parseInt(centerPosition.x);
+		var centerCol = parseInt(centerPosition.y);
+		if (!(centerRow >= 0 && centerRow < gridRows)) return result;
+		if (!(centerCol >= 0 && centerCol < gridCols)) return result;
+		
+		var fromRow = centerRow - ray;
+		if (fromRow < 0) fromRow = 0;
+		var toRow = centerRow + ray;
+		if (toRow >= gridRows) toRow = gridRows-1;
+
+		var fromCol = centerCol - ray;
+		if (fromCol < 0) fromCol = 0;
+		var toCol = centerCol + ray;
+		if (toCol >= gridCols) toCol = gridCols-1;
+
+		for(var row = fromRow; row <= toRow; row++) {
+			for(var col = fromCol; col <= toCol; col++) {
+				//if is walkable, store it
+				if (grid[row][col] === 0) result.push({"x": row, "y": col});
+			}
+		}
+
+		//If no walkable cell found, try to reduce ray by 1 and retry.
+		if (result.length === 0 && ray > 0) this.walkablePlacesAround(centerPosition, ray-1);
+		else return result;
 	}
 };
 

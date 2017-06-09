@@ -1,8 +1,12 @@
 var Item = require("../Item");
 
-var MinionAI = function (characters, location) {
+//charaters [mandatory]: array of characters 
+//location [mandatory]: Location object
+//intPicker [optional]: random picker selector 
+var MinionAI = function (characters, location, intPicker) {
 	this.location = location;
 	this.characters = characters;
+    this.intPicker = intPicker ? intPicker : new IntPicker();
     this.setAggroRadius = function(radius) {
         this.aggroRadius = radius;
     }
@@ -16,14 +20,14 @@ var MinionAI = function (characters, location) {
         var minions = selectMinions(this.characters);
         var knights = selectKnights(this.characters);
 
-        var stateProvider = new MinionStateProvider(knights);
+        var stateProvider = new MinionStateProvider(knights, this.intPicker);
         for (var i=0; i < minions.length; i++) {
             var rawMinion = minions[i];
             var state = null;
             if (rawMinion.ai) state = stateProvider.from(rawMinion.ai.state);
             else state = stateProvider.idle();
             
-            var smartMinion = new MinionAdapter(rawMinion, this.location, this.aggroRadius, this.maxDistance);
+            var smartMinion = new MinionAdapter(rawMinion, this.location, this.aggroRadius, this.maxDistanceFromHome);
             smartMinion.setState(state);
             smartMinion.behave();
             rawMinion.ai = {"state": smartMinion.getState().asString()};
@@ -32,8 +36,9 @@ var MinionAI = function (characters, location) {
 
 };
 
-var MinionStateProvider = function(knights) {
+var MinionStateProvider = function(knights, intPicker) {
     this.knights = knights;
+    this.intPicker = intPicker;
     this.idle = function() {
         return new IdleState(this, this.knights);
     };
@@ -44,7 +49,7 @@ var MinionStateProvider = function(knights) {
         return new HeadHomeState(this, this.knights);
     };
     this.patrol = function() {
-        return new PatrolState(this, this.knights);
+        return new PatrolState(this, this.knights, this.intPicker);
     };
     this.from = function(stateString) {
         if (stateString === "IDLE") return this.idle();
@@ -71,12 +76,13 @@ var MinionAdapter = function(minionCharacter, location, aggroRadius, maxDistance
     this.behave = function() {
         this.state.executeOn(this);
     };
-    this.goTo = function(destination) {
-        this.location.UpdateDestination(this.minion, destination);
-    }
+    this.goTo = function(position) {
+        var dest = [position.x, position.y];
+        this.location.UpdateDestination(this.minion, dest);
+    };
     this.spawnPosition = function() {
         return this.minion.spawnPosition;
-    }
+    };
     this.hasHomeAsDestination = function() {
         var path = this.minion.path;
         if (!path) return false;
@@ -85,7 +91,20 @@ var MinionAdapter = function(minionCharacter, location, aggroRadius, maxDistance
         if (destination[0] != this.spawnPosition().x) return false;
         if (destination[1] != this.spawnPosition().y) return false;
         return true;
-    }
+    };
+
+    this.hasDestination = function() {
+        var path = this.minion.path;
+        if (!path) return false;
+        if (path.length == 0) return false;
+        return true;
+    };
+
+    this.walkablePlacesAroundHome = function() {
+        var home = this.spawnPosition();
+        var ray = this.maxDistance;
+        return this.location.walkablePlacesAround(home, ray);
+    };
 
     this.nearestKnightWithinRadius = function(knights) {
         var nearestKnight = null;
@@ -108,8 +127,12 @@ var MinionAdapter = function(minionCharacter, location, aggroRadius, maxDistance
     };
 
     this.isAtHome = function() {
-        if (this.minion.position.x != this.minion.spawnPosition.x)  return false;
-        if (this.minion.position.y != this.minion.spawnPosition.y)  return false;
+        return this.isAt(this.spawnPosition());
+    };
+
+    this.isAt = function(position) {
+        if (this.minion.position.x != position.x)  return false;
+        if (this.minion.position.y != position.y)  return false;
         return true;
     };
 
@@ -149,8 +172,7 @@ var AggroState = function(stateProvider, knights) {
     this.executeOn = function(minionAdapter) {
         var found = minionAdapter.nearestKnightWithinRadius(this.knights);
         if (found) {
-            var destination = [found.position.x, found.position.y]
-            minionAdapter.goTo(destination);
+            minionAdapter.goTo(found.position);
         } else {
             minionAdapter.setState(this.stateProvider.idle());
         }
@@ -168,15 +190,14 @@ var HeadHomeState = function(stateProvider, knights) {
         } else if (minionAdapter.isAtHome()) {
             minionAdapter.setState(this.stateProvider.patrol());
         } else if (!minionAdapter.hasHomeAsDestination()) { 
-            var destination = [minionAdapter.spawnPosition().x, minionAdapter.spawnPosition().y];
-            minionAdapter.goTo(destination);
+            minionAdapter.goTo(minionAdapter.spawnPosition());
         } else {
             //keep going home 
         }
     };
 }
 
-var PatrolState = function(stateProvider, knights) {
+var PatrolState = function(stateProvider, knights, intPicker) {
     this.knights = knights;
     this.stateProvider = stateProvider;
     //this.isPatrolling = function() {return true;};
@@ -186,11 +207,23 @@ var PatrolState = function(stateProvider, knights) {
             minionAdapter.setState(this.stateProvider.aggro());
         } else if (minionAdapter.isTooFarFromHome()) {
             minionAdapter.setState(this.stateProvider.headHome());
-        } else { 
-            console.log("Minion is patrolling ... ");
-            // CHOOSE DESTINATION FOR PATROL
-            //var destination = [X, Y];
-            //minionAdapter.goTo(destination);
+        } else if (!minionAdapter.hasDestination()) { 
+            var coords = minionAdapter.walkablePlacesAroundHome();            
+            
+            //remove current position where minion already is.
+            ////NOTE: Is necessary to check and remove position that collides with other minion???
+            var toRemove = null;
+            for(var i=0; i<coords.length; i++) {
+                if (minionAdapter.isAt(coords[i])) {toRemove = i; break;}
+            }
+            if (toRemove) coords = coords.splice(toRemove);
+            if (coords.length === 0) return;
+            //Pick one random coord TBD
+            var index = intPicker.sortBetween(0, coords.length-1);
+            var selected = coords[index];
+            minionAdapter.goTo(selected);
+        } else {
+            // Minion is already following a patrol path
         }
     };
 };
@@ -210,6 +243,12 @@ var selectKnights = function(characters) {
         if (Item.ItemType.isKnight(each.entity)) result.push(each);
     }
     return result;
+};
+
+var IntPicker = function() {
+    this.sortBetween = function(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    };
 };
 
 module.exports = MinionAI;
