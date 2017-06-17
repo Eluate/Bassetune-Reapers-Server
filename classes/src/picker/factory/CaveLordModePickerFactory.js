@@ -2,9 +2,9 @@ var CompositeCellPicker = require("../CompositeCellPicker.js");
 var SpiralCellPicker = require("../SpiralCellPicker.js");
 var NoDuplicateCellPicker = require("../NoDuplicateCellPicker.js");
 
-function CaveLordModePickerFactory(place, pickStrategy) {
+function CaveLordModePickerFactory(place, pickStrategy, excludeCellNextToWall) {
     this.place = place;
-    this.cells = this.place.walkableCells();
+    this.cells = this.place.walkableCells(excludeCellNextToWall);
     this.pickStrategy = pickStrategy;
     
     this.pickerForKnights = null;
