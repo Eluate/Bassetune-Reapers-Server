@@ -14,6 +14,7 @@ var Map = function (self) {
 	this.dungeonCount = 0; // Increment when knights successfully complete normal + lord dungeon
 
 	this.SpawnDungeon = function() {
+		this.dungeonType = "normal";
 		this.pfGrid = new PF.Grid(40, 50);
 		/***********************************/
 		/******* DUNGEON GENERATION ********/
@@ -80,6 +81,7 @@ var Map = function (self) {
 	};
 
 	this.SpawnLordRoom = function () {
+		this.dungeonType = "lord";
 		this.pfGrid = new PF.Grid(20, 20);
 		/***********************************/
 		/******* DUNGEON GENERATION ********/

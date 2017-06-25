@@ -34,7 +34,7 @@ var Room = function (io, matchID, config) {
 	this.currentFloor = 0;
 
 	// Options
-	this.tick = 32;
+	this.tick = 16;
 	this.finishedLoadingPlayerData = false;
 
 	this.minionAI = new MinionAI(this.characters, this.location);
@@ -191,15 +191,11 @@ var Room = function (io, matchID, config) {
 						for (var i = 0; i < self.dungeonCompositions.length; i++) {
 							if (i != self.currentFloor) continue;
 
-							for (var n = 0; n < self.dungeonCompositions[i].length; n ++) {
+							for (var n = 0; n < self.dungeonCompositions[i].length; n++) {
 								var entity = self.dungeonCompositions[i][n][0];
-								// Lord
-								if (Item.ItemType.isLord(entity)) {
-									var character = self.characterManager.SpawnLord(player.sID, entity);
-									self.characters.push(character);
-								}
+
 								// Lesser Lord
-								else if (Item.ItemType.isLesserLord(entity)) {
+								if (Item.ItemType.isLesserLord(entity)) {
 									var character = self.characterManager.SpawnLesserLord(player.sID, entity);
 									self.characters.push(character);
 								}
@@ -229,7 +225,6 @@ var Room = function (io, matchID, config) {
 	StorePlayerData(this);
 
 	var SpawnMapAndCharacters = function (self) {
-		var Item = require("./Item");
 		var spawnPoints = self.map.SpawnDungeon();
 
 		self.characters.forEach(function (character) {
@@ -274,32 +269,162 @@ var Room = function (io, matchID, config) {
 		// Victory Conditions
 		if (self.map.dungeonType == "normal") {
 			if (self.location.isKnightZoneWin()) {
-				// Move on to next part of the dungeon
-				self.map.SpawnLordRoom();
 				// Emit win condition event
 				var winCondition = {
 					side: "knight", // Knight side won
 					type: "progress" // Progress to lord dungeon
 				};
-				self.io.to(this.matchID).emit(Event.output.WIN_CONDITION_MET, winCondition);
-			} else if (function () { // All knights are dead
-					for (var i = 0; i < self.knights.length; i++) {
-						if (!self.knights[i].isDead()) {
-							return false;
+				self.io.to(self.matchID).emit(Event.output.WIN_CONDITION_MET, winCondition);
+
+				// Remove minions and minibosses
+				for (var i = 0; i < self.characters.length; i++) {
+					if (!self.characters[i].knight) {
+						self.characters.splice(i, 1);
+						i--;
+					}
+				}
+
+				// Revive any dead knights (restore 10% hp)
+				for (var i = 0; i < self.characters.length; i++) {
+					if (self.characters[i].dead()) {
+						self.characters[i].hp = self.characters[i].maxhp * 0.1;
+					}
+				}
+
+				// Spawn Lord (loop through dungeon compositions and find it)
+				var Item = require("./Item");
+				var player = self.players[0];
+				// Find lord player ID
+				for (var i = 0; i < self.players.length; i++) {
+					if (self.players[i].side == "boss") {
+						player = self.players[i];
+					}
+				}
+				for (var i = 0; i < self.dungeonCompositions.length; i++) {
+					if (i != self.currentFloor) continue;
+					for (var n = 0; n < self.dungeonCompositions[i].length; n++) {
+						var entity = self.dungeonCompositions[i][n][0];
+						// Check if item is lord
+						if (Item.ItemType.isLord(entity)) {
+							var character = self.characterManager.SpawnLord(player.sID, entity);
+							self.characters.push(character);
 						}
 					}
-				}) {
+				}
+
+				// Move on to next part of the dungeon
+				var spawnPoints = self.map.SpawnLordRoom();
+
+				self.characters.forEach(function (character) {
+					spawnPoints.forEach(function (point) {
+						if (character.id == point.characterID) {
+							character.position = point.location;
+						}
+					});
+				});
+
+				// Emit the characters
+				self.characters.forEach(function (character) {
+					self.io.to(self.matchID).emit(Event.output.CHAR_CREATED,
+						{I: character.id, O: character.owner, E: character.entity, H: character.hp, L: character.position, M: character.maxhp});
+				});
+			} else if (self.knights.every(function(knight) { // Check if all knights are dead
+					if (knight.dead()) return true;
+				})) {
 				// TODO: Implement end of game code, (results, etc)
 				// Emit win condition event
 				var winCondition = {
 					side: "lord", // Knight side won
 					type: "end" // End Match
 				};
-				self.io.to(this.matchID).emit(Event.output.WIN_CONDITION_MET, winCondition);
+				self.io.to(self.matchID).emit(Event.output.WIN_CONDITION_MET, winCondition);
 			}
 		} else {
-			if (self.map.dungeonType == "boss" && false /* Lord is dead */) {
+			if (self.map.dungeonType == "lord" && function () { // Check if Lord is dead
+					for (var i = 0; i < self.characters.length; i++) {
+						if (self.characters[i].boss && self.characters[i].dead()) {
+							return true;
+						}
+					}
+				}) {
 				// TODO: Move on to next dungeon or End Game
+
+				if (self.currentFloor + 1 < self.dungeonCompositions.length) {
+					// Continue to next floor
+					self.currentFloor += 1;
+
+					// Emit win condition event
+					var winCondition = {
+						side: "knight", // Knight side won
+						type: "progress" // Progress to lord dungeon
+					};
+					self.io.to(self.matchID).emit(Event.output.WIN_CONDITION_MET, winCondition);
+
+					// Remove boss
+					for (var i = 0; i < self.characters.length; i++) {
+						if (!self.characters[i].knight) {
+							self.characters.splice(i, 1);
+							i--;
+						}
+					}
+
+					// Revive any dead knights (restore 10% hp)
+					for (var i = 0; i < self.characters.length; i++) {
+						if (self.characters[i].dead()) {
+							self.characters[i].hp = self.characters[i].maxhp * 0.1;
+						}
+					}
+
+					// Spawn Lord (loop through dungeon compositions and find it)
+					var Item = require("./Item");
+					var player = self.players[0];
+					// Find lord player ID
+					for (var i = 0; i < self.players.length; i++) {
+						if (self.players[i].side == "boss") {
+							player = self.players[i];
+						}
+					}
+					for (var i = 0; i < self.dungeonCompositions.length; i++) {
+						if (i != self.currentFloor) continue;
+						for (var n = 0; n < self.dungeonCompositions[i].length; n++) {
+							var entity = self.dungeonCompositions[i][n][0];
+							// Lesser Lord
+							if (Item.ItemType.isLesserLord(entity)) {
+								var character = self.characterManager.SpawnLesserLord(player.sID, entity);
+								self.characters.push(character);
+							}
+							// Minion
+							else if (Item.ItemType.isMinion(entity)) {
+								var character = self.characterManager.SpawnMinion(player.sID, entity);
+								self.characters.push(character);
+							}
+							// Trap
+							else if (Item.ItemType.isTrap(entity)) {
+
+							}
+						}
+					}
+
+					// Move on to next part of the dungeon
+					var spawnPoints = self.map.SpawnLordRoom();
+
+					self.characters.forEach(function (character) {
+						spawnPoints.forEach(function (point) {
+							if (character.id == point.characterID) {
+								character.position = point.location;
+							}
+						});
+					});
+
+					// Emit the characters
+					self.characters.forEach(function (character) {
+						self.io.to(self.matchID).emit(Event.output.CHAR_CREATED,
+							{I: character.id, O: character.owner, E: character.entity, H: character.hp, L: character.position, M: character.maxhp});
+					});
+
+				} else {
+					// End Game
+				}
 			} else if (false /* All knights are dead */) {
 				// TODO: End Game as win for Lord side
 			}
@@ -338,7 +463,7 @@ Room.prototype.onRegister = function (socket, data) {
 		return;
 	}
 	// Emit the seed for map generation
-	socket.emit("seed", {"s": this.map.seed});
+	socket.emit("seed", {"s": this.map.seed, "t": this.map.dungeonType});
 	// Emit the characters
 	this.characters.forEach(function (character) {
 		socket.emit(Event.output.CHAR_CREATED,

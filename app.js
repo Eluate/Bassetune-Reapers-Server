@@ -125,10 +125,6 @@ if (cluster.isWorker) {
 			console.log("Worker ID: " + process.env.workerID + " - Socket.IO running and accepting connections.");
 		}
 
-		http.listen(app.get('port'), function () {
-			// Listening
-		});
-
 		io.on('connection', function (socket) {
 			var socketID = socket.id;
 			var clientIP = socket.request.connection.remoteAddress;
@@ -189,6 +185,10 @@ if (cluster.isWorker) {
 				if (socket.roomInstance)
 					socket.roomInstance.onBossAbilityStart(socket, data);
 			});
+		});
+
+		http.listen(app.get('port'), function () {
+			// Listening
 		});
 	});
 }

@@ -38,8 +38,8 @@ Location.prototype = {
 			path = this.PF.Util.compressPath(path);
 			path.shift();
 			character.path = path;
-			console.log("Updated path");
-			console.log(character.path)
+			//console.log("Updated path");
+			//console.log(character.path)
 		} else {
 			character.path = null;
 		}
@@ -182,7 +182,7 @@ Location.prototype = {
 			this.zoneCount = 0;
 		}
 
-		return this.zoneCount >= 30;
+		return this.zoneCount >= 15;
 	}
 };
 

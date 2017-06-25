@@ -7,11 +7,10 @@ var Vector2 = require('./Vector2');
 var Lords = [];
 
 var TheSavageTillBeast = function () {
-	this.hp = 620;
-	this.base_damage = 18;
-	this.armor = 5;
+	this.hp = 500;
+	this.base_damage = 900;
+	this.armor = 0.5;
 	this.busy = false;
-	this.base_range = 2;
 	this.curCoolDowns = [0, 0, 0, 0, 0];
 	this.blocking = false;
 	this.speed = 3;
