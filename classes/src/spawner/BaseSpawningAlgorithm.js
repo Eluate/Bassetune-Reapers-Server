@@ -22,6 +22,10 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
         this.pickStrategy = new MinPickStrategy();
     };
 
+    this.excludeCellNextToWall = false;
+    this.setCellNextWallExclusionMode = function() {
+        this.excludeCellNextToWall = true;
+    };
     this.setBoard = function(aBoard) {
         this.board = aBoard;
         if (this.board.rooms().length > 1) {
@@ -284,7 +288,7 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
         this.roomCellPickers = new Array();
         var rooms = this.board.rooms();
         for(var i=0; i<rooms.length; i++) {
-            var fact = this.pickerFactorySelector.forRoom(this.isDungeonMode, rooms[i], this.pickStrategy);
+            var fact = this.pickerFactorySelector.forRoom(this.isDungeonMode, rooms[i], this.pickStrategy, this.excludeCellNextToWall);
             fact.label = "room" + i;
             this.roomCellPickers.push(fact);
         }
@@ -293,7 +297,7 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
         this.corrCellPickers = new Array();
         corrs = this.board.corridors();
         for(i=0; i<corrs.length; i++) {
-            var fact = this.pickerFactorySelector.forCorridor(this.isDungeonMode, corrs[i], this.pickStrategy);
+            var fact = this.pickerFactorySelector.forCorridor(this.isDungeonMode, corrs[i], this.pickStrategy, this.excludeCellNextToWall);
             fact.label = "corr" + i;
             this.corrCellPickers.push(fact);
         }

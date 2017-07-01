@@ -7,6 +7,9 @@ function DungSpawningGenerator() {
     this.setPredictiveMode = function() {
         this.algo.setPredictiveMode();
     };
+    this.setCellNextWallExclusionMode = function() {
+        this.algo.setCellNextWallExclusionMode();
+    };
     this.setBoard = function(aBoard) {
         this.algo.setBoard(aBoard);
     };

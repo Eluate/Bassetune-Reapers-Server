@@ -444,14 +444,37 @@ $d.define(APolyShape, null, function($t, $p) {
     $p.containsCell = function APolyShape_containsCell(aCell) {
         return aCell.isWithin$1(this.topLeftVertex(), this.bottomRightVertex());
     };
-    $p.walkableCells = function APolyShape_walkableCells() {
+    $p.walkableCells = function APolyShape_walkableCells(excludeCellNextToWall) {
         var result = new (System.Collections.Generic.List$1(DungeonGeneration.Generator.Domain.Cell, 
             14885).ctor)();
         this.forEachCellAbs($d.delegate(function(row, col, value) {
-            if (value == XTile().FLOOR)
+            if (value == XTile().FLOOR && !excludeCellNextToWall) {
                 result.Add(new DungeonGeneration.Generator.Domain.Cell.ctor(row, col));
+            }
+            else if (value == XTile().FLOOR && excludeCellNextToWall && !this.isCellNextToWallOrToAnotValidAbs(row, 
+                col)) {
+                result.Add(new DungeonGeneration.Generator.Domain.Cell.ctor(row, col));
+            }
         }, this));
         return result.ToArray();
+    };
+    $p.isCellNextToWallOrToAnotValidAbs = function APolyShape_isCellNextToWallOrToAnotValidAbs(rowAbs, colAbs) {
+        var row = rowAbs - this.topLeftVertex().row();
+        var col = colAbs - this.topLeftVertex().col();
+
+        for (var neighbourX = row - 1; neighbourX <= row + 1; neighbourX++) {
+            for (var neighbourY = col - 1; neighbourY <= col + 1; neighbourY++) {
+                if (!this.isCellValid(neighbourX, neighbourY))
+                    return true;
+
+                if (neighbourX != row || neighbourY != col) {
+                    if (this.hasCellValue(neighbourX, neighbourY, XTile().WALL)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     };
     $p.setIncoming = function APolyShape_setIncoming(incoming) {
         this._incoming = incoming;
@@ -922,8 +945,21 @@ $d.define(FreeShape, null, function($t, $p) {
             doFunct(each.row(), each.col(), XTile().FLOOR);
         }
     };
-    $p.walkableCells = function FreeShape_walkableCells() {
-        return this._cells.ToArray();
+    $p.walkableCells = function FreeShape_walkableCells(excludeCellNextToWall) {
+        if (!excludeCellNextToWall)
+            return this._cells.ToArray();
+
+        var edgeCells = this.edge();
+        var result = new (System.Collections.Generic.List$1(DungeonGeneration.Generator.Domain.Cell, 
+            14885).ctor)();
+        var $iter = this._cells;
+        var $enumerator = $iter.System$Collections$IEnumerable$GetEnumerator();
+        while ($enumerator.System$Collections$IEnumerator$MoveNext()) {
+            var each = $enumerator.System$Collections$IEnumerator$get_Current();
+            if (!edgeCells.Contains(each))
+                result.Add(each);
+        }
+        return result.ToArray();
     };
     $p.setIncoming = function FreeShape_setIncoming(incoming) {
         this._incoming = incoming;
@@ -1727,7 +1763,6 @@ $d.define(DungeonGeneration.Generator.Domain.Cell, null, function($t, $p) {
             min = other;
             max = this;
         }
-
         var cellsNumber = this.distance(other);
         var result = $d.array(DungeonGeneration.Generator.Domain.Cell, cellsNumber);
 
@@ -1928,17 +1963,26 @@ $d.define(Corridor, null, function($t, $p) {
     $p.ToString = function Corridor_ToString() {
         return "Corridor: " + $d.toString(this.topLeftVertex()) + " " + $d.toString(this._grid);
     };
-    $p.walkableCells = function Corridor_walkableCells() {
+    $p.walkableCells = function Corridor_walkableCells(excludeCellNextToWall) {
         var innerA = null;
         var innerB = null;
+
+        var cellExclusion = 1;
+        if (excludeCellNextToWall)
+            cellExclusion = 2;
+
         if (this.isOrizontal()) {
-            innerA = this.topLeftVertex().plusCell(1, 0);
-            innerB = this.bottomRightVertex().minusCell(1, 0);
+            innerA = this.topLeftVertex().plusCell(cellExclusion, 0);
+            innerB = this.bottomRightVertex().minusCell(cellExclusion, 0);
         }
         else {
-            innerA = this.topLeftVertex().plusCell(0, 1);
-            innerB = this.bottomRightVertex().minusCell(0, 1);
+            innerA = this.topLeftVertex().plusCell(0, cellExclusion);
+            innerB = this.bottomRightVertex().minusCell(0, cellExclusion);
         }
+
+        if (innerA.isGreatherThan(innerB))
+            return $d.array(DungeonGeneration.Generator.Domain.Cell, 0);
+
         return innerA.cells(innerB);
     };
     $p.grid = function Corridor_grid() {
@@ -2036,13 +2080,17 @@ $d.define(Room, null, function($t, $p) {
     $p.containsCell = function Room_containsCell(aCell) {
         return aCell.isWithin$1(this._topLeftVertex, this._botRightVertex);
     };
-    $p.walkableCells = function Room_walkableCells() {
-        var result = new (System.Collections.Generic.List$1(DungeonGeneration.Generator.Domain.Cell, 
-            14885).ctor)();
-        var innerTopLeft = this.topLeftVertex().plusCell(1, 1);
-        var innerBotRight = this.bottomRightVertex().minusCell(1, 1);
-        result.AddRange(innerTopLeft.cells(innerBotRight));
-        return result.ToArray();
+    $p.walkableCells = function Room_walkableCells(excludeCellNextToWall) {
+        var cellExclusion = 1;
+        if (excludeCellNextToWall)
+            cellExclusion = 2;
+
+        var innerTopLeft = this.topLeftVertex().plusCell(cellExclusion, cellExclusion);
+        var innerBotRight = this.bottomRightVertex().minusCell(cellExclusion, cellExclusion);
+
+        if (innerTopLeft.isGreatherThan(innerBotRight))
+            return $d.array(DungeonGeneration.Generator.Domain.Cell, 0);
+        return innerTopLeft.cells(innerBotRight);
     };
     $p.hasCorridorAtEast = function Room_hasCorridorAtEast() {
         return this.isEast(this._incomingCorridor) || this.isEast(this._outcomingCorridor);
@@ -3417,7 +3465,7 @@ $d.define(DunGenUtil, null, function($t, $p) {
         $t.$baseType.ctor.call(this);
     };
     $t.createServerGen = function DunGenUtil_createServerGen() {
-        var gen = new DungeonGeneration.Generator.DungeonGenerator.ctor();
+        var gen = new DungeonGeneration.Generator.ForcedDungeonGenerator.ctor(10);
         gen.setPlotter(new DungeonGeneration.Generator.Plotters.ZeroOneTilesPlotter.ctor());
         return gen;
     };
@@ -3427,7 +3475,7 @@ $d.define(DunGenUtil, null, function($t, $p) {
         return gen;
     };
     $t.createClientGen = function DunGenUtil_createClientGen() {
-        var gen = new DungeonGeneration.Generator.DungeonGenerator.ctor();
+        var gen = new DungeonGeneration.Generator.ForcedDungeonGenerator.ctor(10);
         gen.setPlotter(new DungeonGeneration.Generator.Plotters.DetailedTilesPlotter.ctor());
         return gen;
     };

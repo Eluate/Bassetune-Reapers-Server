@@ -3,10 +3,10 @@ var SpiralCellPicker = require("../SpiralCellPicker.js");
 var NoDuplicateCellPicker = require("../NoDuplicateCellPicker.js");
 var DoorCellPicker = require("../DoorCellPicker.js");
 
-function DungFullModePickerFactory(isRoom, place, pickStrategy) {
+function DungFullModePickerFactory(isRoom, place, pickStrategy, excludeCellNextToWall) {
     this.isRoom = isRoom;
     this.place = place;
-    this.cells = this.place.walkableCells();
+    this.cells = this.place.walkableCells(excludeCellNextToWall);
     this.pickStrategy = pickStrategy;
     
     this.pickerForKnights = null;

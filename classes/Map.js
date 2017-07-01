@@ -45,7 +45,7 @@ var Map = function (self) {
 
 		var spawnGen = new SpawningGenerator();
 		//spawnGen.setPredictiveMode();
-
+		spawnGen.setCellNextWallExclusionMode();
 		spawnGen.setBoard(board);
 		spawnGen.setKnightIds(knightIds);
 		spawnGen.setLesserLordIds(lesserLordIds);
@@ -108,6 +108,7 @@ var Map = function (self) {
 		var lordDoorId = "lorddoor";
 
 		var spawnGen = new SpawningGenerator();
+		spawnGen.setCellNextWallExclusionMode();
 		spawnGen.setBoard(board);
 		spawnGen.setKnightIds(knightIds);
 		spawnGen.setLordIds(lordIds);
