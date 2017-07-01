@@ -21,8 +21,8 @@ var Location = function (self) {
 Location.prototype = {
 	UpdateDestination: function (character, vector) {
 		var vector = {
-			x: Number(vector[0]).toFixed(2),
-			y: Number(vector[1]).toFixed(2)
+			x: parseFloat(vector[0]).toFixed(2),
+			y: parseFloat(vector[1]).toFixed(2)
 		};
 
 		if (isNaN(vector.x) || isNaN(vector.y)) return;

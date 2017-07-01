@@ -2,7 +2,7 @@ var cluster = require('cluster');
 var exitHandler = require('./modules/appExitHandler').cleanup();
 if (cluster.isMaster) {
 	//master should communicate with face instances using http on startPort
-	var startPort = process.env.PORT || 3000;//startPort is reserved for http server to communicate with backendFace
+	var startPort = process.env.PORT || 30000;//startPort is reserved for http server to communicate with backendFace
 	var redisClient = require('./modules/redisHandler').redisClient;
 	var uuid = require('node-uuid');
 
@@ -49,7 +49,6 @@ if (cluster.isWorker) {
 
 		app.use(bodyParser.json()); // for parsing application/json
 		app.use(bodyParser.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
-		var http = require("http").Server(app);
 		var Room = require("./classes/Room");
 		var rooms = {};
 
@@ -119,7 +118,15 @@ if (cluster.isWorker) {
 		//});
 
 		// Set up servers
-		var io = require('socket.io')(http);
+		var server = app.listen(app.get('port'));
+		var io = require('socket.io')(server, {
+			serveClient: false,
+			// below are engine.IO options
+			pingInterval: 30000,
+			pingTimeout: 5000,
+			cookie: false,
+			transports: ["websocket"]
+		});
 
 		if (io) {
 			console.log("Worker ID: " + process.env.workerID + " - Socket.IO running and accepting connections.");
@@ -185,10 +192,6 @@ if (cluster.isWorker) {
 				if (socket.roomInstance)
 					socket.roomInstance.onBossAbilityStart(socket, data);
 			});
-		});
-
-		http.listen(app.get('port'), function () {
-			// Listening
 		});
 	});
 }
