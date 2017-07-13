@@ -2,6 +2,7 @@
  Model class for inventories.
  */
 var Item = require('./Item');
+var Armor = require('./Armor');
 
 var Inventory = function () {
 	this.slots = {};
@@ -18,7 +19,28 @@ var Inventory = function () {
 
 	// TODO : create appropriate classes for stuff
 	this.weapons = [null, null];
-	this.armor = null;
+	
+	var armorType = Armor.ArmorTypes.Unarmored;
+	this.armor = function() {
+		return armorType;
+	};
+	this.setArmor = function (itemID) {
+		switch (itemID) {
+			case 1800:
+				armorType = Armor.ArmorTypes.Unarmored;
+				break;
+			case 1801:
+				armorType = Armor.ArmorTypes.Light_Armor;
+				break;
+			case 1802:
+				armorType = Armor.ArmorTypes.Medium_Armor;
+				break;
+			case 1803:
+				armorType = Armor.ArmorTypes.Heavy_Armor;
+				break;
+		}
+	}
+	
 	this.ammo = null;
 	this.abilities = null;
 };

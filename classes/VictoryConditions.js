@@ -58,7 +58,7 @@ var ConditionCheck = function (self) {
 			setTimeout(function () {
 				// Emit the seed for map generation
 				self.io.to(self.matchID).emit("seed", {"s": self.map.seed, "t": self.map.dungeonType});
-			}, 2000);
+			}, 5000);
 
 			self.characters.forEach(function (character) {
 				spawnPoints.forEach(function (point) {

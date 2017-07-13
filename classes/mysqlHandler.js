@@ -7,7 +7,7 @@ var mysql = require('mysql');
 // Connection settings
 var connection = mysql.createPool(
 	{
-		host: 'mainbr.czcedyst2rii.us-west-2.rds.amazonaws.com',
+		host: '127.0.0.1',
 		port: 3306,
 		user: 'Static',
 		password: 'BRPrototype101',

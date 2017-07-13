@@ -6,10 +6,12 @@ var Inventory = require('./Inventory');
 var EventEnum = require('./EventEnum');
 var Ability = require('./Ability');
 var Item = require('./Item');
+var Armor = require('./Armor');
 
 var Knight = function (character) {
 	this.character = character;
 	this.inventory = new Inventory();
+	this.inventory.armor = new Armor();
 	this.abilities = [];
 };
 
@@ -97,14 +99,18 @@ Knight.prototype.ChangeEquipped = function (data, slotID, target) {
 					self.inventory.weapons[1] = slot;
 					slot[3] = 9;
 				}
-				else if (target == 4) {
-					// Armor
-					if (self.inventory.armor) self.inventory.armor[3] = 0;
-					self.inventory.armor = slot;
-					slot[3] = 4;
-				}
 				data.io.to(data.matchID).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": self.character.owner});
 			}, 3000);
+		}
+		else if (target == 4) {
+				// Armor
+				if (this.inventory.armor) {
+					this.inventory.armor[3] = 0;
+					this.inventory.setArmor(1800);
+				} else {
+					this.inventory.setArmor(slot[0]);
+					slot[3] = 4;
+				}
 		}
 		else {
 			data.io.to(data.matchID).emit(EventEnum.output.knight.END_CHANGE_EQUIPPED, {"i": slot[2], "t": target, "p": this.character.owner});
