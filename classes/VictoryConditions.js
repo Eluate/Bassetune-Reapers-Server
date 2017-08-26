@@ -57,7 +57,7 @@ var ConditionCheck = function (self) {
 
 			setTimeout(function () {
 				// Emit the seed for map generation
-				self.io.to(self.matchID).emit("seed", {"s": self.map.seed, "t": self.map.dungeonType});
+				self.io.to(self.matchID).emit("seed", { "s": self.map.seed, "t": self.map.dungeonType });
 			}, 5000);
 
 			self.characters.forEach(function (character) {
@@ -72,11 +72,9 @@ var ConditionCheck = function (self) {
 			// Emit the characters
 			self.characters.forEach(function (character) {
 				self.io.to(self.matchID).emit(Event.output.CHAR_CREATED,
-					{I: character.id, O: character.owner, E: character.entity, H: character.hp, L: character.position, M: character.maxhp});
+					{ I: character.id, O: character.owner, E: character.entity, H: character.hp, L: character.position, M: character.maxhp });
 			});
-		} else if (self.knights.every(function(knight) { // Check if all knights are dead
-				if (knight.dead()) return true;
-			})) {
+		} else if (areKnightsDead(self)) {
 			// TODO: Implement end of game code, (results, etc)
 			// Emit win condition event
 			var winCondition = {
@@ -89,13 +87,8 @@ var ConditionCheck = function (self) {
 
 	// Lord Side Dungeon Type
 	if (self.map.dungeonType == "lord") {
-		if (self.characters.some(function (character) {
-				if (character.boss && character.dead()) {
-					return true;
-				}
-			})) {
+		if (isBossDead(self)) {
 			// TODO: Move on to next dungeon or End Game
-
 			if (self.currentFloor + 1 < self.dungeonCompositions.length) {
 				// Continue to next floor
 				self.currentFloor += 1;
@@ -158,7 +151,7 @@ var ConditionCheck = function (self) {
 
 				setTimeout(function () {
 					// Emit the seed for map generation
-					self.io.to(self.matchID).emit("seed", {"s": self.map.seed, "t": self.map.dungeonType});
+					self.io.to(self.matchID).emit("seed", { "s": self.map.seed, "t": self.map.dungeonType });
 				}, 5000);
 
 				self.characters.forEach(function (character) {
@@ -173,7 +166,7 @@ var ConditionCheck = function (self) {
 				// Emit the characters
 				self.characters.forEach(function (character) {
 					self.io.to(self.matchID).emit(Event.output.CHAR_CREATED,
-						{I: character.id, O: character.owner, E: character.entity, H: character.hp, L: character.position, M: character.maxhp});
+						{ I: character.id, O: character.owner, E: character.entity, H: character.hp, L: character.position, M: character.maxhp });
 				});
 
 			} else {
@@ -190,13 +183,7 @@ var ConditionCheck = function (self) {
 
 				// TODO: Save game data in mysql
 			}
-		} else if (self.characters.every(function (character) { // All Knights are Dead
-				if (!character.knight) {
-					return true;
-				} else if (character.dead()) {
-					return true;
-				}
-			})) {
+		} else if (areKnightsDead(self)) {
 			// Emit win condition event
 			var winCondition = {
 				side: "lord", // Lord side won
@@ -206,5 +193,22 @@ var ConditionCheck = function (self) {
 		}
 	}
 };
+
+var isBossDead = function (self) {
+	var isDead = self.characters.some(function (character) {
+		if (character.boss && character.dead()) {
+			return true;
+		}
+	});
+	return isDead;
+};
+
+var areKnightsDead = function(self) {
+	var allDead = self.knights.every(function (knight) { // Check if all knights are dead
+		if (knight.dead()) return true;
+	});
+	return allDead;
+}
+
 
 module.exports.Check = ConditionCheck;

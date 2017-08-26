@@ -1,4 +1,4 @@
-/*
+	/*
  Model class for location (characters, traps...)
  */
 var Event = require('./EventEnum');
