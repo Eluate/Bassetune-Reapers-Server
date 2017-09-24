@@ -50,7 +50,7 @@ Location.prototype = {
 		var time = new Date().getTime() / 1000;
 		for (var key in this.characters) {
 			var character = this.characters[key];
-			if (!this.characters.hasOwnProperty(key)) return;
+			if (!this.characters.hasOwnProperty(key)) continue;
 			if (character.path == null || character.path == undefined || character.path.length == 0) continue;
 			// Disable pathfinding if character starts channelling
 			if (character.channelling != false || character.stunned()) {
