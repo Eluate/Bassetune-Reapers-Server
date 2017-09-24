@@ -78,18 +78,18 @@ var Room = function (io, matchID, config) {
 						var abilitySlots = [];
 						var knightItems = [];
 						var lordItems = [];
-						for (var i = 0; i < itm_results.length; i++) {
-							if (itm_results[i].item_id == null)
+						for (var i = 0; i < results.length; i++) {
+							if (results[i].item_id == null || results[i].item_id == 0)
 								continue;
-
-							if (!itm_results[i].item_tag) {
-								lordItems.push([itm_results[i].item_id, itm_results[i].slot_id, itm_results[i].dungeon_id]);
+					  
+							if (results[i].dungeon_id == null && results[i].item_tag == null) {
+								abilitySlots.push([results[i].item_id, results[i].slot_id]);
 							}
-							else if (itm_results[i].item_id < 2500 || itm_results[i].item_id >= 3000) {
-								knightItems.push([itm_results[i].item_id, itm_results[i].slot_id, itm_results[i].item_tag]);
+							else if (results[i].item_tag == null) {
+								lordItems.push([results[i].item_id, results[i].slot_id, results[i].dungeon_id]);
 							}
 							else {
-								abilitySlots.push([itm_results[i].item_id, itm_results[i].slot_id]);
+								knightItems.push([results[i].item_id, results[i].slot_id, results[i].item_tag]);
 							}
 						}
 
@@ -119,7 +119,7 @@ var Room = function (io, matchID, config) {
 									if (itemFile[n].item_id == itemResults[i][0]) {
 										inventory[itemResults[i][1]] = itemResults[i];
 										// All consumables have 1 item use
-										inventory[itemResults[i]].push(1);
+										inventory[itemResults[i][1]].push(1);
 									}
 								}
 
@@ -203,27 +203,41 @@ var Room = function (io, matchID, config) {
 							finishedCount = finishedCount + 1;
 							if (finishedCount == playerIDs.length) {
 								SpawnMapAndCharacters(self);
+								self.finishedLoadingPlayerData = true;
 							}
 
 							// TODO: Calculate proper starting positions
 						}
 						// Sort boss data
 						else if (config.bosses.indexOf(accountID) > -1) {
-							var bossSlots = lordItems;
-							if (bossSlots == [] || bossSlots == {}) {
+							var bossSlots = [];
+							if (lordItems == [] || lordItems == {}) {
 								// TODO: End match, not a valid boss inventory (auto boss loss && no knight win)
 								return;
 							}
 							else {
+								// Fill bossSlots array with required dungeonComp arrays
+								var maxDungeons = 1;
+								for (var p = 0; p < lordItems.length; p++) {
+									if (lordItems[2] + 1 > maxDungeons) {
+										maxDungeons = lordItems[2] + 1;
+									}
+								}
+								for (var p = 0; p < maxDungeons; p++) {
+									bossSlots.push([]);
+								}
+
+								for (var p = 0; p < lordItems.length; p++) {
+									bossSlots[lordItems[p][2]].push([lordItems[p][0], lordItems[p][1]]);
+								}
 								self.dungeonCompositions = bossSlots;
 							}
 
 							var Item = require("./Item");
 							for (var i = 0; i < self.dungeonCompositions.length; i++) {
-								for (var n = 0; n < bossSlots.length; n++) {
-									var entity = bossSlots[n];
-									if (i != entity[2]) continue;
-
+								if (i != self.currentFloor) continue;
+								for (var n = 0; n < bossSlots[i].length; n++) {
+									var entity = bossSlots[i][n][0];
 									// Lesser Lord
 									if (Item.ItemType.isLesserLord(entity)) {
 										var character = self.characterManager.SpawnLesserLord(player.sID, entity);
@@ -346,7 +360,7 @@ Room.prototype.onRegister = function (socket, data) {
 	});
 	socket.emit(Event.output.PLAYER, playerData);
 	// Wait 1s until sending inventories
-	setTimeout(this.sendInventories(this.characters, socket), 1000);
+	setTimeout(this.sendInventories, 1000, this.characters, socket);
 };
 /*
  Listeners: Input from the player
@@ -390,6 +404,8 @@ Room.prototype.onMove = function (socket, data) {
 			}
 			if (playerID == character.owner) {
 				this.location.UpdateDestination(character, data[key]);
+				console.log(character.path);
+				console.log("updated ds");
 				break;
 			}
 		}
