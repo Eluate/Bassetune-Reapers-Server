@@ -39,7 +39,8 @@ var Character = function (id, owner, type, entity) {
 
 Character.prototype = {
 	stunned: function () {
-		this.dead() || this.effects.some(function (effect) {
+		if (this.dead()) return true;
+		if (this.effects.some(function (effect) {
 			if (effect.Effect == Effects.EffectTypes.Stun || effect.Effect == Effects.EffectTypes.Freeze ||
 				effect.Effect == Effects.EffectTypes.Stagger || effect.Effect == Effects.EffectTypes.Half_Stagger) {
 				if (effect.Active) {
@@ -47,7 +48,11 @@ Character.prototype = {
 				}
 			}
 			return false;
-		});
+		})) {
+			return true;
+		} else {
+			return false;
+		}
 	},
 	dead: function () {
 		return this.hp <= 0;
