@@ -1,0 +1,5 @@
+{
+  "Redis": {
+    "connectionUri": "tcp://staging:6379"
+  }
+}

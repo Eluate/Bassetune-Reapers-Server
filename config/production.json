@@ -1,0 +1,5 @@
+{
+  "Redis": {
+    "connectionUri": "tcp://production:6379"
+  }
+}
