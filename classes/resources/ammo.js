@@ -3,7 +3,7 @@
  */
 
 var Ammo = [
-	// Ammo list here in json format
+    // Ammo list here in json format
 
 ];
 

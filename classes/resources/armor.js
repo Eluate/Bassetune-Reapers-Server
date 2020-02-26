@@ -3,7 +3,7 @@
  */
 
 var Armor = [
-	// Armor list here in json format
+    // Armor list here in json format
 
 ];
 

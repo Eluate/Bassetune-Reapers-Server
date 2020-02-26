@@ -8,14 +8,14 @@ function DungFullModePickerFactory(isRoom, place, pickStrategy, excludeCellNextT
     this.place = place;
     this.cells = this.place.walkableCells(excludeCellNextToWall);
     this.pickStrategy = pickStrategy;
-    
+
     this.pickerForKnights = null;
     this.pickerForDoor = null;
     this.pickerForCreatures = null;
     this.pickerForTraps = null;
     this.pickerForLesserLords = null;
 
-    this.forKnights = function() {
+    this.forKnights = function () {
         if (!this.pickerForKnights) {
             var height = this.place.height();
             var width = this.place.width();
@@ -26,11 +26,11 @@ function DungFullModePickerFactory(isRoom, place, pickStrategy, excludeCellNextT
         return this.pickerForKnights;
     };
 
-    this.forLords = function() {
+    this.forLords = function () {
         return new NoDuplicateCellPicker(this.cells, this.pickStrategy);
     };
 
-    this.forLesserLords = function() {
+    this.forLesserLords = function () {
         if (!this.pickerForLesserLords) {
             var height = this.place.height();
             var width = this.place.width();
@@ -41,7 +41,7 @@ function DungFullModePickerFactory(isRoom, place, pickStrategy, excludeCellNextT
         return this.pickerForLesserLords;
     };
 
-    this.forTraps = function() {
+    this.forTraps = function () {
         if (!this.pickerForTraps) {
             if (!this.isRoom) {
                 this.pickerForTraps = new NoDuplicateCellPicker(this.cells, this.pickStrategy);
@@ -50,7 +50,7 @@ function DungFullModePickerFactory(isRoom, place, pickStrategy, excludeCellNextT
 
                 var height = this.place.height();
                 var width = this.place.width();
-                
+
                 var facingCells = this.place.cellsFacingIncomingCorridor();
                 var size = facingCells.length;
                 if (size != 0) {
@@ -76,19 +76,19 @@ function DungFullModePickerFactory(isRoom, place, pickStrategy, excludeCellNextT
         return this.pickerForTraps;
     };
 
-    this.forCreatures = function() {
+    this.forCreatures = function () {
         if (!this.pickerForCreatures) {
             this.pickerForCreatures = new NoDuplicateCellPicker(this.cells, this.pickStrategy);
         }
         return this.pickerForCreatures;
     };
 
-    this.forLordDoor = function() {
+    this.forLordDoor = function () {
         if (!this.pickerForDoor) {
             this.pickerForDoor = new DoorCellPicker(this.place, this.pickStrategy);
         }
         return this.pickerForDoor;
     };
-} 
+}
 
 module.exports = DungFullModePickerFactory;

@@ -5,12 +5,12 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
     this.pickerFactorySelector = pickerFactorySelector;
 
     this.board = null;
-    this.knightIds = new Array();
-    this.lordIds = new Array();
-    this.lesserLordIds = new Array();
-    this.creatureIds = new Array();
-    this.trapIds = new Array();
-    this.lordDoorId = null;    
+    this.knightIds = [];
+    this.lordIds = [];
+    this.lesserLordIds = [];
+    this.creatureIds = [];
+    this.trapIds = [];
+    this.lordDoorId = null;
 
     this.roomCellPickers = null;
     this.corrCellPickers = null;
@@ -18,15 +18,15 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
     this.isDungeonMode = null;
 
     this.pickStrategy = new RandomPickStrategy();
-    this.setPredictiveMode = function() {
+    this.setPredictiveMode = function () {
         this.pickStrategy = new MinPickStrategy();
     };
 
     this.excludeCellNextToWall = false;
-    this.setCellNextWallExclusionMode = function() {
+    this.setCellNextWallExclusionMode = function () {
         this.excludeCellNextToWall = true;
     };
-    this.setBoard = function(aBoard) {
+    this.setBoard = function (aBoard) {
         this.board = aBoard;
         if (this.board.rooms().length > 1) {
             this.isDungeonMode = true;
@@ -34,29 +34,29 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
             this.isDungeonMode = false;
         }
     };
-    this.setKnightIds = function(ids) {
+    this.setKnightIds = function (ids) {
         this.knightIds = ids;
     };
-    this.setLordIds = function(ids) {
+    this.setLordIds = function (ids) {
         this.lordIds = ids;
     };
-    this.setLesserLordIds = function(ids) {
+    this.setLesserLordIds = function (ids) {
         this.lesserLordIds = ids;
     };
-    this.setCreatureIds = function(ids) {
+    this.setCreatureIds = function (ids) {
         this.creatureIds = ids;
     };
-    this.setTrapIds = function(ids) {
+    this.setTrapIds = function (ids) {
         this.trapIds = ids;
     };
-    this.setLordDoorId = function(id) {
+    this.setLordDoorId = function (id) {
         this.lordDoorId = id;
     };
 
-    this.result = function() {
+    this.result = function () {
         this.priv_initCellPickers();
-    
-        var spawnPoints = new Array();
+
+        var spawnPoints = [];
         if (this.isDungeonMode) {
             this.priv_spawnKnightsOn(spawnPoints);
             this.priv_spawnLesserLordsOn(spawnPoints);
@@ -70,16 +70,16 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
         return spawnPoints;
     };
 
-    this.priv_spawnKnightsOn = function(spawnPointArray) {
+    this.priv_spawnKnightsOn = function (spawnPointArray) {
         var roomSize = this.board.rooms().length;
         var knightSize = this.knightIds.length;
 
-        if ( roomSize === 0) return;
-        if ( knightSize === 0) return;
+        if (roomSize === 0) return;
+        if (knightSize === 0) return;
 
         var cellPicker = this.priv_firstRoomCellPicker().forKnights();
 
-        for(i=0; i < knightSize; i++) {
+        for (i = 0; i < knightSize; i++) {
             id = this.knightIds[i];
             cell = cellPicker.draw();
             if (!cell) return;
@@ -87,15 +87,15 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
             y = cell.col();
             spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
         }
-    }
+    };
 
-    this.priv_spawnLordsOn = function(spawnPointArray) {
+    this.priv_spawnLordsOn = function (spawnPointArray) {
         if (this.board.rooms().length === 0) return;
         if (this.lordIds.length === 0) return;
 
         var cellPicker = this.priv_lastRoomCellPicker().forLords();
 
-        for(i=0; i < this.lordIds.length; i++) {
+        for (i = 0; i < this.lordIds.length; i++) {
             id = this.lordIds[i];
             cell = cellPicker.draw();
             if (!cell) return;
@@ -103,15 +103,15 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
             y = cell.col();
             spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
         }
-    }
+    };
 
-    this.priv_spawnLesserLordsOn = function(spawnPointArray) {
+    this.priv_spawnLesserLordsOn = function (spawnPointArray) {
         if (this.board.rooms().length === 0) return;
         if (this.lesserLordIds.length === 0) return;
 
         cellPicker = this.priv_lastRoomCellPicker().forLesserLords();
 
-        for(i=0; i < this.lesserLordIds.length; i++) {
+        for (i = 0; i < this.lesserLordIds.length; i++) {
             id = this.lesserLordIds[i];
             cell = cellPicker.draw();
             if (!cell) return;
@@ -119,9 +119,9 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
             y = cell.col();
             spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
         }
-    }
+    };
 
-    this.priv_spawnTrapsOn = function(spawnPointArray) {
+    this.priv_spawnTrapsOn = function (spawnPointArray) {
         var trapSize = this.trapIds.length;
         var roomSize = this.board.rooms().length;
         var corrSize = this.board.corridors().length;
@@ -136,10 +136,10 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
         var distribRest = this.trapIds.length - (distribAvg * placeSize);
 
         var trapIndex = 0;
-        if (distribAvg !== 0) {    
+        if (distribAvg !== 0) {
             //Distributing AVG Traps in Rooms excluded First
-            for(var roomIndex=1; roomIndex < roomSize; roomIndex++) {
-                for(var t=0; t < distribAvg; t++) {
+            for (var roomIndex = 1; roomIndex < roomSize; roomIndex++) {
+                for (var t = 0; t < distribAvg; t++) {
                     var id = this.trapIds[trapIndex];
                     var cell = this.priv_cellPickerForRoom(roomIndex).forTraps().draw();
                     if (!cell) {
@@ -150,38 +150,38 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
                     y = cell.col();
                     spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
                     trapIndex++;
-                }            
-            }  
+                }
+            }
 
             //Distributing AVG Traps in corridors
-            for(corrIndex=0; corrIndex < corrSize; corrIndex++) {
-                for(t=0; t < distribAvg; t++) {
+            for (corrIndex = 0; corrIndex < corrSize; corrIndex++) {
+                for (t = 0; t < distribAvg; t++) {
                     id = this.trapIds[trapIndex];
                     cell = this.priv_cellPickerForCorridor(corrIndex).forTraps().draw();
                     //Se non riesco a piazzare l'elememento corrente
                     //aggiungo 1 al resto e continuo
                     //NOTA OTTIMIZZABILE: quando non riesco a piazzare, prendo la differenza, la sommo al resto e faccio break
-                    if (!cell) { 
-                        distribRest++; 
+                    if (!cell) {
+                        distribRest++;
                         continue;
                     }
                     x = cell.row();
                     y = cell.col();
                     spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
                     trapIndex++;
-                }            
+                }
             }
         }
         //Distributing Rest Traps in Rooms and then Corridors
         if (distribRest > 0) {
-            cellPickers = new Array();
+            cellPickers = [];
             cellPickers = cellPickers.concat(this.roomCellPickers);
             cellPickers.splice(0, 1); //Rimuovo First Room 
             cellPickers = cellPickers.concat(this.corrCellPickers);
 
             pickerIndex = 0;
             atLeastOneSpawn = false;
-            for(t=0; t < distribRest; t++) {
+            for (t = 0; t < distribRest; t++) {
                 id = this.trapIds[trapIndex];
                 cell = cellPickers[pickerIndex].forTraps().draw();
                 if (cell) {
@@ -193,19 +193,19 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
                 } else {
                     t--;
                 }
-                
+
                 pickerIndex++;
                 if (pickerIndex === cellPickers.length) {
                     if (!atLeastOneSpawn) break;
                     pickerIndex = 0;
                     atLeastOneSpawn = false;
                 }
-            }            
+            }
         }
 
-    }
+    };
 
-    this.priv_spawnCreaturesOn = function(spawnPointArray) {
+    this.priv_spawnCreaturesOn = function (spawnPointArray) {
         creatureSize = this.creatureIds.length;
         roomSize = this.board.rooms().length;
         if (creatureSize === 0) return;
@@ -218,20 +218,20 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
         if (placeSize === 0) return;
 
         distribAvg = Math.floor(creatureSize / placeSize);
-        distribRest = creatureSize - (distribAvg * placeSize); 
-        
+        distribRest = creatureSize - (distribAvg * placeSize);
+
         creatureIndex = 0;
         if (distribAvg !== 0) {
             //Distributing AVG Creatures in Rooms excluded First
-            for(roomIndex=1; roomIndex < roomSize; roomIndex++) {
-                for(t=0; t < distribAvg; t++) {
+            for (roomIndex = 1; roomIndex < roomSize; roomIndex++) {
+                for (t = 0; t < distribAvg; t++) {
                     id = this.creatureIds[creatureIndex];
                     cell = this.priv_cellPickerForRoom(roomIndex).forCreatures().draw();
                     //Se non riesco a piazzare l'elememento corrente
                     //aggiungo 1 al resto e continuo
                     //NOTA OTTIMIZZABILE: quando non riesco a piazzare, prendo la differenza, la sommo al resto e faccio break
-                    if (!cell) { 
-                        distribRest++; 
+                    if (!cell) {
+                        distribRest++;
                         continue;
                     }
 
@@ -239,39 +239,39 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
                     y = cell.col();
                     spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
                     creatureIndex++;
-                }            
-            }  
+                }
+            }
         }
 
         //Distributing Rest Creatures in Rooms
         if (distribRest > 0) {
-                roomIndex = 1;
-                atLeastOneSpawn = false;
-                for(t=0; t < distribRest; t++) {
-                    id = this.creatureIds[creatureIndex];
-                    cell = this.priv_cellPickerForRoom(roomIndex).forCreatures().draw();
-                    if (cell) {
-                        atLeastOneSpawn = true;
-                        x = cell.row();
-                        y = cell.col();
-                        spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
-                        creatureIndex++;
-                    } else {
-                        t--;
-                    }
-                    
-                    //OTTIMIZZABILE: Tenendo un array delle stanze che hanno celle libere, finche non si azzera.
-                    roomIndex++;
-                    if (roomIndex === roomSize) {
-                        if (!atLeastOneSpawn) break;
-                        roomIndex = 1;
-                        atLeastOneSpawn = false;
-                    }
-                }            
-        }
-    }
+            roomIndex = 1;
+            atLeastOneSpawn = false;
+            for (t = 0; t < distribRest; t++) {
+                id = this.creatureIds[creatureIndex];
+                cell = this.priv_cellPickerForRoom(roomIndex).forCreatures().draw();
+                if (cell) {
+                    atLeastOneSpawn = true;
+                    x = cell.row();
+                    y = cell.col();
+                    spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
+                    creatureIndex++;
+                } else {
+                    t--;
+                }
 
-    this.priv_spawnLordDoorOn = function(spawnPointArray) {
+                //OTTIMIZZABILE: Tenendo un array delle stanze che hanno celle libere, finche non si azzera.
+                roomIndex++;
+                if (roomIndex === roomSize) {
+                    if (!atLeastOneSpawn) break;
+                    roomIndex = 1;
+                    atLeastOneSpawn = false;
+                }
+            }
+        }
+    };
+
+    this.priv_spawnLordDoorOn = function (spawnPointArray) {
         if (!this.lordDoorId) return;
         if (!this.board.rooms().length === 0) return;
 
@@ -280,47 +280,47 @@ function BaseSpawningAlgorithm(pickerFactorySelector) {
         x = cell.row();
         y = cell.col();
         spawnPointArray.push(this.priv_createSpawnPoint(id, x, y));
-    
-    }
 
-    this.priv_initCellPickers = function() {        
+    };
+
+    this.priv_initCellPickers = function () {
         //ROOMS
-        this.roomCellPickers = new Array();
+        this.roomCellPickers = [];
         var rooms = this.board.rooms();
-        for(var i=0; i<rooms.length; i++) {
+        for (var i = 0; i < rooms.length; i++) {
             var fact = this.pickerFactorySelector.forRoom(this.isDungeonMode, rooms[i], this.pickStrategy, this.excludeCellNextToWall);
             fact.label = "room" + i;
             this.roomCellPickers.push(fact);
         }
 
         //CORRIDORS
-        this.corrCellPickers = new Array();
+        this.corrCellPickers = [];
         corrs = this.board.corridors();
-        for(i=0; i<corrs.length; i++) {
+        for (i = 0; i < corrs.length; i++) {
             var fact = this.pickerFactorySelector.forCorridor(this.isDungeonMode, corrs[i], this.pickStrategy, this.excludeCellNextToWall);
             fact.label = "corr" + i;
             this.corrCellPickers.push(fact);
         }
-    }
+    };
 
-    this.priv_firstRoomCellPicker = function() {
+    this.priv_firstRoomCellPicker = function () {
         return this.priv_cellPickerForRoom(0);
     };
-    this.priv_lastRoomCellPicker = function() {
+    this.priv_lastRoomCellPicker = function () {
         roomSize = this.board.rooms().length;
-        return this.priv_cellPickerForRoom(roomSize-1);
+        return this.priv_cellPickerForRoom(roomSize - 1);
     };
-    this.priv_cellPickerForRoom = function(index) {
+    this.priv_cellPickerForRoom = function (index) {
         return this.roomCellPickers[index];
     };
 
-    this.priv_cellPickerForCorridor = function(index) {
+    this.priv_cellPickerForCorridor = function (index) {
         return this.corrCellPickers[index];
     };
 
-    this.priv_createSpawnPoint = function(id, cellRow, cellColumn) {
+    this.priv_createSpawnPoint = function (id, cellRow, cellColumn) {
         return {"characterID": id, "location": {"x": cellRow, "y": cellColumn}}
     };
-} 
+}
 
 module.exports = BaseSpawningAlgorithm;

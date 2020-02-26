@@ -6,28 +6,28 @@ function CaveLordModePickerFactory(place, pickStrategy, excludeCellNextToWall) {
     this.place = place;
     this.cells = this.place.walkableCells(excludeCellNextToWall);
     this.pickStrategy = pickStrategy;
-    
+
     this.pickerForKnights = null;
     this.pickerForLords = null;
-    
+
     this.cards = ["EAST", "SOUTH", "WEST", "NORTH"];
     this.selectedCardIndex = -1;
 
-    this.forKnights = function() {
+    this.forKnights = function () {
         if (!this.pickerForKnights) {
             this.pickerForKnights = this.priv_createPicker();
         }
         return this.pickerForKnights;
     };
 
-    this.forLords = function() {
+    this.forLords = function () {
         if (!this.pickerForLords) {
             this.pickerForLords = this.priv_createPicker();
         }
         return this.pickerForLords;
     };
 
-    this.priv_createPicker = function() {
+    this.priv_createPicker = function () {
         var selectedCard = null;
         if (this.selectedCardIndex !== -1) { //Seleziona la cardinalita opposta
             var index = (this.selectedCardIndex + 2) % 4;
@@ -63,23 +63,23 @@ function CaveLordModePickerFactory(place, pickStrategy, excludeCellNextToWall) {
             type = "horizontal";
         }
         return new SpiralCellPicker(height, width, barycenterRow, barycenterCol, this.cells, type);
-    }
+    };
 
-    this.forLesserLords = function() {
+    this.forLesserLords = function () {
         return null;
     };
 
-    this.forTraps = function() {
+    this.forTraps = function () {
         return null;
     };
 
-    this.forCreatures = function() {
+    this.forCreatures = function () {
         return null;
     };
 
-    this.forLordDoor = function() {
+    this.forLordDoor = function () {
         return null;
     };
-} 
+}
 
 module.exports = CaveLordModePickerFactory;

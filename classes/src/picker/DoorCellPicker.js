@@ -1,10 +1,10 @@
 function DoorCellPicker(room, pickStrategy) {
     this.room = room;
     this.pickStrategy = pickStrategy;
-    
-    this.draw = function() {
+
+    this.draw = function () {
         //seleziona i lati senza corridoio.
-        ranges = new Array();
+        ranges = [];
         if (!this.room.hasCorridorAtEast()) {
             cellMin = this.room.topRightVertex();
             cellMax = this.room.bottomRightVertex();
@@ -25,16 +25,16 @@ function DoorCellPicker(room, pickStrategy) {
             cellMax = this.room.topRightVertex();
             ranges.push(cellMin.cells(cellMax));
         }
-        
+
         //Seleziono le celle di uno dei lati
-        index = pickStrategy.drawBetween(0, ranges.length-1);
-        cells = ranges[index];       
-        
+        index = pickStrategy.drawBetween(0, ranges.length - 1);
+        cells = ranges[index];
+
         //Seleziono la cella nel mezzo di quel lato
         index = Math.floor(cells.length / 2);
         selected = cells[index];
         return selected;
     };
-} 
+}
 
 module.exports = DoorCellPicker;
