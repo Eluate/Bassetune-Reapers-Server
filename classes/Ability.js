@@ -405,8 +405,7 @@ Ability.GetWeaponInfo = function (entityID) {
         }
     }
 
-    if (weapon == null)
-    else
+    if (weapon !== null)
     return {
         type: weapon.weapon_type,
         damage: weapon.damage
