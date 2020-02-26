@@ -1,10 +1,10 @@
-var redis = require('then-redis');
+const redis = require('then-redis');
+const config = require('config');
 
-//this instance is to set and get data
-var redisClient = redis.createClient("tcp://rediscluster.htotck.0001.use1.cache.amazonaws.com:6379", function () {
+const redisConfig = config.get('Redis.connectionUri');
+const redisClient = redis.createClient(redisConfig, function () {
     console.log("redisHandler connection success.");
-});//("tcp://rediscluster.htotck.0001.use1.cache.amazonaws.com:6379");//link should be user here , optins may be added to call, look at redis-node doc
-
+});
 
 // Client closed
 redisClient.on('close', function (error) {
@@ -20,9 +20,6 @@ redisClient.on('call-error', function (error) {
 redisClient.on('error', function (error) {
     console.log("RedisHandler error : " + error)
 });
-
-module.exports.redisClient = redisClient;
-
 
 /*
 
@@ -44,3 +41,5 @@ module.exports.redisClient = redisClient;
  Default: 256
 
  */
+
+module.exports.redisClient = redisClient;
