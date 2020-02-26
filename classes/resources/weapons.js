@@ -3,7 +3,7 @@
 */
 
 var Weapons = [
-    // Weapon list here in json format
+  // Weapon list here in json format
 
 ];
 

@@ -3,7 +3,7 @@
 */
 
 var Items = [
-    // Item list here in json format
+  // Item list here in json format
 
 ];
 

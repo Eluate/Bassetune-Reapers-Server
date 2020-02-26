@@ -3,6 +3,6 @@
  */
 
 exports.disconnect = function (socketID) {
-    // TODO: Disconnect User
-    console.log(socketID + " left.")
+  // TODO: Disconnect User
+  console.log(socketID + " left.")
 };

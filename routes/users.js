@@ -5,20 +5,20 @@ var router = express.Router();
 //this route only execs if logged in, must add check
 router.param('user', function (req, res, next, id) {
 
-    //find user in database and set req.user
-    req.user = id;
-    next();
+  //find user in database and set req.user
+  req.user = id;
+  next();
 });
 
 router.get('/', function (req, res) {
-    res.send('unautorized.');
+  res.send('unautorized.');
 });
 
 router.get('/:user', function (req, res) {
-    //this will respond with a json object containing the user data
-    //fetch data in database
-    //and send back
-    res.send('user : ' + req.user);
+  //this will respond with a json object containing the user data
+  //fetch data in database
+  //and send back
+  res.send('user : ' + req.user);
 });
 
 module.exports = router;
