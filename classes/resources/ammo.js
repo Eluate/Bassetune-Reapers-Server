@@ -2,7 +2,7 @@
  This should contain all ammo information
  */
 
-var Ammo = [
+const Ammo = [
     // Ammo list here in json format
 
 ];

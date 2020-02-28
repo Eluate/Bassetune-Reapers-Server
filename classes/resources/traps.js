@@ -2,7 +2,7 @@
  This should contain information on all types of traps
  */
 
-var Traps = [
+const Traps = [
     // Trap list here in json format
     {
         "id": 1,

@@ -2,7 +2,7 @@
  This should contain all weapon information
  */
 
-var Weapons = [
+const Weapons = [
     // Weapon list here in json format
     {
         "item_id": 2000,

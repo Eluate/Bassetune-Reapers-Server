@@ -2,7 +2,7 @@
  This should contain all ability information
  */
 
-var Abilities = [
+const Abilities = [
     {
         "item_id": 2500,
         "required_type": "melee",

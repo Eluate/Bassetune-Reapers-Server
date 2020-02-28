@@ -2,7 +2,7 @@
  This should contain all item information
  */
 
-var Items = [
+const Items = [
     {
         "item_id": 1000,
         "name": "Healing Herb I",

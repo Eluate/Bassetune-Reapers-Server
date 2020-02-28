@@ -2,7 +2,7 @@
  This should contain all armor information
  */
 
-var Armor = [
+const Armor = [
     // Armor list here in json format
 
 ];
