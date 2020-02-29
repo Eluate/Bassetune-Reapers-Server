@@ -2,7 +2,7 @@
 -- Schema bassetune
 -- -----------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS `bassetune` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci ;
-USE `brprototype001` ;
+USE `bassetune` ;
 
 -- -----------------------------------------------------
 -- Table `bassetune`.`br_ability_slots`
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`br_ability_slots` (
   `item_id` MEDIUMINT NOT NULL,
   PRIMARY KEY (`account_id`, `slot_id`))
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`br_account` (
   UNIQUE INDEX `last_uuid_UNIQUE` (`last_uuid` ASC) VISIBLE)
 ENGINE = InnoDB
 AUTO_INCREMENT = 6
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`br_friends` (
   INDEX `account_id_idx` (`account_id` ASC) VISIBLE,
   INDEX `friend_id_idx` (`friend_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`br_items` (
   PRIMARY KEY (`item_id`),
   UNIQUE INDEX `item_id_UNIQUE` (`item_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`br_knight_slots` (
   PRIMARY KEY (`account_id`, `slot_id`),
   UNIQUE INDEX `slot_id_account_id_UNIQUE` (`account_id` ASC, `slot_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -91,9 +91,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`br_lord_slots` (
   PRIMARY KEY (`account_id`, `dungeon_id`, `slot_id`),
   UNIQUE INDEX `account_id_dungeon_id_slot_id UNIQUE` (`account_id` ASC, `dungeon_id` ASC, `slot_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8
-COMMENT = 'Apply changes to br_lord_slots';
-
+DEFAULT CHARACTER SET = utf8mb4;
 
 -- -----------------------------------------------------
 -- Table `bassetune`.`br_matches`
@@ -112,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`br_matches` (
   PRIMARY KEY (`match_id`),
   UNIQUE INDEX `match_id_UNIQUE` (`match_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -133,7 +131,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`br_player` (
   PRIMARY KEY (`account_id`),
   INDEX `playerToAccount_idx` (`account_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -145,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`br_purchases` (
   `purchase_date` DATETIME NOT NULL,
   PRIMARY KEY (`account_id`, `item_id`))
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -176,7 +174,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`di_abilities` (
   PRIMARY KEY (`item_id`),
   UNIQUE INDEX `ability_id_UNIQUE` (`item_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -189,7 +187,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`di_armor` (
   PRIMARY KEY (`item_id`),
   UNIQUE INDEX `item_id_UNIQUE` (`item_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -209,7 +207,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`di_consumables` (
   PRIMARY KEY (`item_id`),
   UNIQUE INDEX `item_id_UNIQUE` (`item_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -226,7 +224,7 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`di_equipables` (
   PRIMARY KEY (`item_id`),
   UNIQUE INDEX `item_id_UNIQUE` (`item_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
 
 
 -- -----------------------------------------------------
@@ -239,4 +237,10 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`di_weapons` (
   PRIMARY KEY (`item_id`),
   UNIQUE INDEX `weapon_id_UNIQUE` (`item_id` ASC) VISIBLE)
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+DEFAULT CHARACTER SET = utf8mb4;
+
+-- -----------------------------------------------------
+-- TODO: As newer version of MySQL does not support old authentication this is required
+-- -----------------------------------------------------
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Bassetune-reapers';
+FLUSH PRIVILEGES;
