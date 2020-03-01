@@ -56,7 +56,7 @@ var Room = function (io, matchID, config) {
         // Loop through each player accountID from matchmaking data
         playerIDs.forEach(function (accountID) {
             MySQLHandler.connection.query("SELECT * FROM br_account WHERE account_id = ?", [accountID], function (err, results) {
-                if (err) throw err; // TODO: End game
+                if (err || !results || results.length === 0) throw err; // TODO: End game
 
                 // Set player instance id for character owners
                 results[0].sID = sortedIDs.indexOf(accountID);

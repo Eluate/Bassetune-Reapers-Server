@@ -1,8 +1,8 @@
 const redis = require('then-redis');
 const config = require('config');
 
-const redisConfig = config.get('Redis.connectionUri');
-const redisClient = redis.createClient(redisConfig, function () {
+const redisUri = config.get('Redis.connectionUri');
+const redisClient = redis.createClient(redisUri, function () {
     console.log("redisHandler connection success.");
 });
 

@@ -1,5 +1,16 @@
 {
   "Redis": {
     "connectionUri": "tcp://staging:6379"
-  }
+  },
+  "MySql": {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "password": "Bassetune-reapers",
+    "database": "bassetune",
+    "acquireTimeout": 30000,
+    "connectTimeout": 40000,
+    "insecureAuth" : true
+  },
+  "Environment": "staging"
 }
