@@ -34,8 +34,8 @@ var cleanup = function (callback) {
     //catch uncaught exceptions, trace, then exit normally
     process.on('uncaughtException', function (e) {
         //killConnections();
-        console.log('Uncaught Exception...');
-        console.log(e.stack);
+        console.error('Uncaught Exception...');
+        console.error(e);
         process.exit(99);
     });
 };

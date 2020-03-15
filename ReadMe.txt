@@ -1,4 +1,12 @@
-# Bassetune Reapers Server
+# Bassetune Reapers
+
+## Web
+Contains the code for the main menu/registration
+
+## Matchmaker
+Contains the code for matching players to a game
+
+## Instance
 Contains the code for the backend-game which includes the actual game instance.
 It includes:
 * Accepting the request for a new room from matchmaker
