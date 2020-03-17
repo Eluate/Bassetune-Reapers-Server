@@ -24,6 +24,6 @@
   },
   "scripts": {
     "test": "mocha",
-    "start": "node app.js"
+    "start": "set NODE_CONFIG_DIR=../config&& node app.js"
   }
 }

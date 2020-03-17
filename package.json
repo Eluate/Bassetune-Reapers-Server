@@ -7,13 +7,13 @@
   },
   "scripts": {
     "test": "mocha",
-    "install-instance": "cd Instance && npm install",
-    "install-server": "cd Matchmaker && npm install",
-    "install-web": "cd Web && npm install",
+    "install-instance": "cd instance && npm install",
+    "install-server": "cd matchmaker && npm install",
+    "install-web": "cd web && npm install",
     "postinstall": "concurrently \"npm run install-instance\" \"npm run install-server\" \"npm run install-web\"",
-    "start-instance": "cd Instance && npm start",
-    "start-server": "cd Matchmaker && npm start",
-    "start-web": "cd Web && npm start",
+    "start-instance": "cd instance && npm start",
+    "start-server": "cd matchmaker && npm start",
+    "start-web": "cd web && npm start",
     "start": "concurrently \"npm run start-instance\" \"npm run start-server\" \"npm run start-web\""
   }
 }

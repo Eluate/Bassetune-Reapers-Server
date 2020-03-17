@@ -2,21 +2,17 @@
  Class that handles the MySQL connection and encryption/decryption dependencies
  */
 
-var mysql = require('mysql');
-var crypto = require('crypto'),
-    algorithm = 'aes-256-ctr',//needs to be unhardcoded
-    password = 'K4n8g29WUV6977Yf';//needs to be unhardcoded
+const mysql = require('mysql');
+const config = require('config');
 
 // Connection settings
-var connection = mysql.createPool(
-    {
-        host: 'mainbr.czcedyst2rii.us-west-2.rds.amazonaws.com',
-        port: 3306,
-        user: 'Static',
-        password: 'BRPrototype101',
-        database: 'brprototype001',
-        connectTimeout: 40000
-    });
+var connection = mysql.createPool(config.get('MySql'));
+
+connection.getConnection(function (err, connection) {
+    // Use the connection again on error
+    if (err) throw err;
+    if (connection) connection.release();
+});
 
 connection.getConnection(function (err, connection) {
     // Use the connection again on error
