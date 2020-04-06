@@ -1,0 +1,5 @@
+language: node_js
+node_js:
+  - "0.10"
+notifications:
+  slack: bassetune:QtBpNX1BD7B7qgiPdyNZ8DhD
