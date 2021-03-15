@@ -6,7 +6,7 @@
     "aws-sdk": "2.1.40",
     "body-parser": "^1.19.0",
     "config": "3.2.6",
-    "debug": "~2.0.0",
+    "debug": "~2.6.9",
     "express": "^4.17.1",
     "mysql": "2.18.1",
     "node-uuid": "~1.4.2",
