@@ -1,45 +1,16 @@
 const redis = require('then-redis');
 const config = require('config');
 
-const redisUri = config.get('Redis.connectionUri');
-const redisClient = redis.createClient(redisUri, function () {
-    console.log("redisHandler connection success.");
+const redisConfig = config.get('Redis');
+const redisClient = redis.createClient({
+    host: redisConfig.get('host'),
+    port: redisConfig.get('port'),
+    password: process.env.REDIS_PW
 });
 
-// Client closed
-redisClient.on('close', function (error) {
-    console.log("RedisHandler error : " + error)
-});
-
-// Non-fatal error response when callback omitted
-redisClient.on('call-error', function (error) {
-    console.log("RedisHandler error : " + call - error)
-});
-
-// Fatal client error
-redisClient.on('error', function (error) {
-    console.log("RedisHandler error : " + error)
-});
-
-/*
-
- RedisClient options
-
- port
- Type: number
- Default: 6379
- host
- Type: string
- Default: 127.0.0.1
- path
- Type: string // unix domain socket
- db
- Type: number
- Default: 0
- maxCallbackDepth
- Type: number
- Default: 256
-
- */
+redisClient.on('connect', () => console.log("Redis client created: " + redisClient.host + ":" + redisConfig.port));
+redisClient.on('close', (error) => console.error("Redis closing: " + error));
+redisClient.on('end', (error) => console.error("Redis closed: " + error));
+redisClient.on('error', (error) => console.error("Redis error: " + error));
 
 module.exports.redisClient = redisClient;

@@ -1,16 +1,12 @@
 {
   "Redis": {
-    "connectionUri": "tcp://127.0.0.1:6379"
+    "host": "localhost",
+    "port": 6379
   },
   "MySql": {
-    "host": "127.0.0.1",
+    "host": "database-1.ci9pxakqao2u.us-east-1.rds.amazonaws.com",
     "port": 3306,
-    "user": "root",
-    "password": "Bassetune-reapers",
-    "database": "bassetune",
-    "acquireTimeout": 30000,
-    "connectTimeout": 40000,
-    "insecureAuth" : true
+    "database": "bassetune"
   },
   "Environment": "default",
   "Server": {

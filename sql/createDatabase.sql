@@ -238,9 +238,3 @@ CREATE TABLE IF NOT EXISTS `bassetune`.`di_weapons` (
   UNIQUE INDEX `weapon_id_UNIQUE` (`item_id` ASC) VISIBLE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
-
--- -----------------------------------------------------
--- TODO: As newer version of MySQL does not support old authentication this is required
--- -----------------------------------------------------
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Bassetune-reapers';
-FLUSH PRIVILEGES;
