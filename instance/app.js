@@ -1,11 +1,11 @@
 const cluster = require('cluster');
 const config = require('config');
-require('./modules/appExitHandler').cleanup();
+require('../global/appExitHandler').cleanup();
 
 if (cluster.isMaster) {
     //master should communicate with face instances using http on startPort
     let startPort = config.get('Server.port'); //startPort is reserved for http server to communicate with backendFace
-    let redisClient = require('./modules/redisHandler').redisClient;
+    let redisClient = require('../global/redisHandler').redisClient;
     let uuid = require('node-uuid');
 
     // Count the machine's CPUs
@@ -44,7 +44,7 @@ const event = require('./classes/EventEnum');
 const room = require("./classes/Room");
 const bodyParser = require('body-parser');
 const app = require('express')();
-const redisClient = require('./modules/redisHandler').redisClient;
+const redisClient = require('../global/redisHandler').redisClient;
 const getExternalIp = require('external-ip')();
 
 getExternalIp(function (err, ip) {

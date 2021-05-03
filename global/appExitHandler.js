@@ -1,32 +1,41 @@
-var redisClient = require('./redisHandler').redisClient;
+var mysqlConnection = require('./MySQLHandler').connection;
+var redisClient = require('./RedisHandler').redisClient;
+
 
 function killConnections() {
-    redisClient.quit(function (error) {
-        if (error) console.error(error);
-        console.log('Disconnected from Redis');
-    });
+    if (mysqlConnection && mysqlConnection.destroy) {
+        mysqlConnection.destroy();
+    }
+    if (redisClient) {
+        redisClient.quit();
+    }
 }
 
+
 var cleanup = function (callback) {
+
     // attach user callback to the process event emitter
     // if no callback, it will still exit gracefully on Ctrl-C
     callback = callback || killConnections;
     process.on('cleanup', callback);
 
     // do app specific cleaning before exiting
-    process.on('exit', () => process.emit('cleanup'));
+    process.on('exit', function () {
+        process.emit('cleanup');
+    });
 
     // catch ctrl+c event and exit normally
     process.on('SIGINT', function () {
         console.log('Ctrl-C...');
-        killConnections();
+        //callback();
         process.exit(2);
     });
 
     //catch uncaught exceptions, trace, then exit normally
     process.on('uncaughtException', function (e) {
-        console.error('Uncaught Exception: ' + e);
-        killConnections();
+        //killConnections();
+        console.log('Uncaught Exception...');
+        console.log(e.stack);
         process.exit(99);
     });
 };

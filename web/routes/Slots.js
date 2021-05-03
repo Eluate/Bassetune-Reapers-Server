@@ -1,5 +1,5 @@
-var redisClient = require('../modules/RedisHandler').redisClient;
-var mysqlConnection = require('../modules/MySQLHandler').connection;
+var redisClient = require('../../global/RedisHandler').redisClient;
+var mysqlConnection = require('../../global/MySQLHandler').connection;
 var validSlotTypes = ["knight_slots", "ability_slots", "lord_slots"];
 
 var Slots = function (req, res, next) {

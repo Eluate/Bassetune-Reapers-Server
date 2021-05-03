@@ -1,4 +1,4 @@
-var mysqlHandler = require('../modules/MySQLHandler');
+var mysqlHandler = require('../../global/MySQLHandler');
 
 var Login = function (req, res, next) {
     var username = req.body.username.toString();

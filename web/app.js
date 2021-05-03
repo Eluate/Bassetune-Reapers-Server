@@ -20,7 +20,7 @@ var modules = {
     loadUserData: require('./modules/LoadUserData'),
     getInventory: require('./modules/GetInventory'),
     setInventory: require('./modules/Shop_Items'),
-    appExitHandler: require('./modules/AppExitHandler').cleanup()
+    appExitHandler: require('../global/AppExitHandler').cleanup()
 };
 
 app.use(bodyParser.json({limit: '1mb'}));

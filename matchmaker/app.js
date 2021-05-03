@@ -1,8 +1,8 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var redisClient = require('./modules/redisHandler').redisClient;
-var eventEnum = require('./modules/eventEnum');
+var redisClient = require('../global/redisHandler').redisClient;
+var eventEnum = require('./eventEnum.js');
 var request = require('request');
 
 // Tracking variables

@@ -3,8 +3,8 @@
 * - knight items and boss items
 * */
 
-var redisClient = require('./RedisHandler').redisClient;
-var mysqlConnection = require('./MySQLHandler').connection;
+var mysqlConnection = require('../../global/mysqlHandler').connection;
+var redisClient = require("../../global/redisHandler").redisClient;
 var dateFormatter = require('../modules/DateFormatter').toMysqlFormat;
 
 var ItemShop = function (req, res) {

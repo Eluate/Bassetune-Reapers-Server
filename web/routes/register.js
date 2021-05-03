@@ -1,4 +1,4 @@
-var mysqlHandler = require('../modules/MySQLHandler');
+var mysqlHandler = require('../../global/MySQLHandler');
 var dateFormatter = require('../modules/DateFormatter').toMysqlFormat;
 // Regex used for checking if usernames and nicknames are valid
 var alphanumericRegex = new RegExp("^[a-zA-Z0-9]+$");

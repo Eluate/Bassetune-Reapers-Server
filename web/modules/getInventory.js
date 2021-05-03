@@ -1,7 +1,5 @@
-var redisClient = require('./RedisHandler').redisClient;
-
-//mysql and credentials + encryption deps
-var mysqlConnection = require('./MySQLHandler').connection;
+var mysqlConnection = require('../../global/mysqlHandler').connection;
+var redisClient = require("../../global/redisHandler").redisClient;
 
 var getInventory = function (req, res, next) {
     if (req.body.uuid == undefined) {

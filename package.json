@@ -5,6 +5,13 @@
   "devDependencies": {
     "concurrently": "5.1.0"
   },
+  "dependencies": {
+    "mysql": "2.18.1",
+    "config": "3.2.6",
+    "redis-commands": "1.5.0",
+    "redis": "3.0.2",
+    "then-redis": "2.0.1"
+  },
   "scripts": {
     "test": "mocha",
     "install-instance": "cd instance && npm install",

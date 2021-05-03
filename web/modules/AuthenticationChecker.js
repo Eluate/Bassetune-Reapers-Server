@@ -1,4 +1,4 @@
-var redisClient = require("./RedisHandler").redisClient;
+var redisClient = require("../../global/redisHandler").redisClient;
 
 var checkAuth = function (req, res, next) {
     console.log("Checking Authentication --> Session id: " + req.body.uuid);

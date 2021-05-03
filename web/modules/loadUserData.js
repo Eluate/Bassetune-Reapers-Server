@@ -1,5 +1,5 @@
-var mysqlConnection = require('./MySQLHandler').connection;
-var redisClient = require('./RedisHandler').redisClient;
+var mysqlConnection = require('../../global/mysqlHandler').connection;
+var redisClient = require("../../global/redisHandler").redisClient;
 var uuid = require('node-uuid');
 
 var loadUserData = function (req, res)//no next() called here, returns successful login to client
